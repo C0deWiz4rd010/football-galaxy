@@ -11,11 +11,10 @@ const standingsFixture: LeagueStandings = {
   leagueId: 'premier-league',
   leagueLabel: 'Premier League',
   season: {
-    startDate: '2025-08-15',
-    endDate: '2026-05-24',
+    label: '2025-2026',
     currentMatchday: 12,
   },
-  source: 'football-data.org',
+  source: 'the-sports-db',
   standings: [
     {
       position: 1,
@@ -48,9 +47,9 @@ function renderDashboard(provider: StandingsProvider) {
   })
 
   return render(
-    <MemoryRouter initialEntries={['/']}>
+      <MemoryRouter initialEntries={['/']}>
       <QueryClientProvider client={queryClient}>
-        <StandingsDashboard provider={provider} />
+        <StandingsDashboard provider={provider} language="en" />
       </QueryClientProvider>
     </MemoryRouter>,
   )

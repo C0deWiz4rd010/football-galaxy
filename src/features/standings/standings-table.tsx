@@ -1,11 +1,19 @@
 import type { LeagueStandings } from '../../services'
+import {
+  getDashboardCopy,
+  type LanguageCode,
+} from '../../shared/i18n/dashboard-locale'
+import { TeamEmblem } from '../../shared/ui/team-emblem'
 import { StandingsRow } from './standings-row'
 
 type StandingsTableProps = {
   standings: LeagueStandings
+  language: LanguageCode
 }
 
-export function StandingsTable({ standings }: StandingsTableProps) {
+export function StandingsTable({ standings, language }: StandingsTableProps) {
+  const copy = getDashboardCopy(language)
+
   return (
     <section className="dashboard-panel overflow-hidden rounded-[30px]">
       <div className="flex flex-col gap-3 border-b border-[var(--color-border-subtle)] px-6 py-5 sm:flex-row sm:items-end sm:justify-between">
@@ -14,14 +22,14 @@ export function StandingsTable({ standings }: StandingsTableProps) {
             {standings.leagueLabel}
           </p>
           <h2 className="font-[var(--font-display)] text-2xl font-semibold tracking-[-0.03em] text-[var(--color-text-primary)] sm:text-3xl">
-            Current standings
+            {copy.currentStandings}
           </h2>
         </div>
         <div className="text-sm text-[var(--color-text-secondary)]">
           <div className="dashboard-pill inline-flex items-center gap-2 px-3 py-2">
             <span className="h-2 w-2 rounded-full bg-[var(--color-accent-warm)]" />
             <p>
-              Matchday{' '}
+              {copy.matchdayLabel}{' '}
               <span className="font-semibold text-[var(--color-text-primary)]">
                 {standings.season.currentMatchday ?? 'TBD'}
               </span>
@@ -58,6 +66,12 @@ export function StandingsTable({ standings }: StandingsTableProps) {
                   >
                     {row.position}
                   </span>
+                  <TeamEmblem
+                    crestUrl={row.team.crestUrl}
+                    fallback={row.team.tla}
+                    teamName={row.team.name}
+                    className="h-10 w-10 shrink-0"
+                  />
                   <div className="min-w-0">
                     <p className="truncate text-base font-semibold text-[var(--color-text-primary)]">
                       {row.team.shortName}
@@ -68,14 +82,14 @@ export function StandingsTable({ standings }: StandingsTableProps) {
                   </div>
                 </div>
                 <div className="rounded-full bg-[linear-gradient(135deg,var(--league-accent),var(--league-accent-strong))] px-3 py-1.5 text-sm font-semibold text-[#071119] shadow-[0_14px_28px_var(--league-accent-glow)]">
-                  {row.points} pts
+                  {row.points} {copy.pointsShort}
                 </div>
               </div>
 
               <dl className="mt-4 grid grid-cols-3 gap-3 text-sm text-[var(--color-text-secondary)]">
                 <div className="rounded-[20px] bg-[rgba(255,255,255,0.05)] px-3 py-3">
                   <dt className="text-[11px] uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
-                    Played
+                    {copy.played}
                   </dt>
                   <dd className="mt-1 font-semibold text-[var(--color-text-primary)] tabular-nums">
                     {row.played}
@@ -83,7 +97,7 @@ export function StandingsTable({ standings }: StandingsTableProps) {
                 </div>
                 <div className="rounded-[20px] bg-[rgba(255,255,255,0.05)] px-3 py-3">
                   <dt className="text-[11px] uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
-                    Record
+                    {copy.record}
                   </dt>
                   <dd className="mt-1 font-semibold text-[var(--color-text-primary)] tabular-nums">
                     {row.won}-{row.draw}-{row.lost}
@@ -91,7 +105,7 @@ export function StandingsTable({ standings }: StandingsTableProps) {
                 </div>
                 <div className="rounded-[20px] bg-[rgba(255,255,255,0.05)] px-3 py-3">
                   <dt className="text-[11px] uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
-                    Goal diff
+                    {copy.goalDiff}
                   </dt>
                   <dd className="mt-1 font-semibold text-[var(--color-text-primary)] tabular-nums">
                     {row.goalDifference > 0 ? '+' : ''}
@@ -110,14 +124,14 @@ export function StandingsTable({ standings }: StandingsTableProps) {
             <tr className="text-left text-[11px] uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
               <th className="px-5 py-4 font-semibold">Pos</th>
               <th className="px-5 py-4 font-semibold">Club</th>
-              <th className="px-4 py-4 text-center font-semibold">P</th>
+              <th className="px-4 py-4 text-center font-semibold">{copy.playedShort}</th>
               <th className="px-4 py-4 text-center font-semibold">W</th>
               <th className="px-4 py-4 text-center font-semibold">D</th>
               <th className="px-4 py-4 text-center font-semibold">L</th>
               <th className="px-4 py-4 text-center font-semibold">GF</th>
               <th className="px-4 py-4 text-center font-semibold">GA</th>
-              <th className="px-4 py-4 text-center font-semibold">GD</th>
-              <th className="px-5 py-4 text-center font-semibold">Pts</th>
+              <th className="px-4 py-4 text-center font-semibold">{copy.goalDifferenceShort}</th>
+              <th className="px-5 py-4 text-center font-semibold">{copy.pointsShort}</th>
             </tr>
           </thead>
           <tbody>
@@ -126,9 +140,15 @@ export function StandingsTable({ standings }: StandingsTableProps) {
             ))}
           </tbody>
         </table>
-        <div className="border-t border-[var(--color-border-subtle)] px-5 py-3 text-[11px] uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
-          <span className="league-accent-text font-semibold">Top 4</span> mark
-          European places, while the red zone indicates relegation pressure.
+        <div className="flex flex-wrap items-center gap-4 border-t border-[var(--color-border-subtle)] px-5 py-3 text-[11px] uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+          <span className="inline-flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-[var(--league-accent)]" />
+            {copy.top4Legend}: {copy.championsLeagueLegend}
+          </span>
+          <span className="inline-flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-[var(--color-danger)]" />
+            {copy.relegationLegend}
+          </span>
         </div>
       </div>
     </section>

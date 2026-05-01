@@ -1,29 +1,37 @@
 import type { LeagueConfig, LeagueId } from '../../services'
+import {
+  getDashboardCopy,
+  type LanguageCode,
+} from '../../shared/i18n/dashboard-locale'
 
 type LeagueSelectorProps = {
   leagues: readonly LeagueConfig[]
   selectedLeagueId: LeagueId
   onSelect: (leagueId: LeagueId) => void
+  language: LanguageCode
 }
 
 export function LeagueSelector({
   leagues,
   selectedLeagueId,
   onSelect,
+  language,
 }: LeagueSelectorProps) {
+  const copy = getDashboardCopy(language)
+
   return (
-    <section className="dashboard-panel rounded-[28px] p-3 sm:p-4">
-      <div className="flex items-center justify-between gap-3 px-2 pb-3">
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--color-text-muted)]">
-            Competition
+            {copy.leagueSwitcherEyebrow}
           </p>
-          <h2 className="mt-1 font-[var(--font-display)] text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">
-            Switch league
+          <h2 className="mt-1 font-[var(--font-display)] text-[1.02rem] font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">
+            {copy.leagueSwitcherTitle}
           </h2>
         </div>
         <span className="hidden text-xs text-[var(--color-text-muted)] sm:inline">
-          Cached league views stay ready as you browse.
+          {copy.cacheHint}
         </span>
       </div>
 
@@ -39,38 +47,24 @@ export function LeagueSelector({
               aria-pressed={isSelected}
               aria-label={`${league.country} ${league.label}`}
               className={[
-                'dashboard-pill min-w-fit snap-start px-4 py-3 text-left duration-200',
+                'dashboard-pill min-w-fit snap-start px-3.5 py-2.5 text-left duration-200',
                 isSelected
-                  ? 'border-[var(--league-accent-strong)] bg-[linear-gradient(135deg,var(--league-accent-soft),rgba(255,255,255,0.08))] text-[var(--color-text-primary)] shadow-[0_16px_34px_var(--league-accent-glow)]'
-                  : 'text-[var(--color-text-primary)]',
+                  ? 'border-[color:var(--league-accent)] bg-[linear-gradient(135deg,var(--league-accent-soft),rgba(255,255,255,0.04))] text-[var(--color-text-primary)] shadow-[inset_0_0_0_1px_var(--league-accent-soft)]'
+                  : 'text-[var(--color-text-primary)] hover:border-[var(--color-border-strong)]',
               ].join(' ')}
             >
-              <span
-                className={[
-                  'block text-[11px] font-semibold uppercase tracking-[0.24em]',
-                  isSelected
-                    ? 'league-accent-text'
-                    : 'text-[var(--color-text-muted)]',
-                ].join(' ')}
-              >
-                {league.country}
+              <span className="flex items-center gap-2">
+                <span className="text-sm" aria-hidden="true">
+                  {league.flag}
+                </span>
+                <span className="block text-[13px] font-semibold sm:text-[14px]">
+                  {league.label}
+                </span>
               </span>
-              <span className="mt-1 block text-sm font-semibold sm:text-[15px]">
-                {league.label}
-              </span>
-              <span
-                aria-hidden="true"
-                className={[
-                  'mt-2 block h-0.5 rounded-full transition-all duration-200',
-                  isSelected
-                    ? 'w-full bg-[var(--league-accent)] opacity-100'
-                    : 'w-0 bg-transparent opacity-0',
-                ].join(' ')}
-              />
             </button>
           )
         })}
       </div>
-    </section>
+    </div>
   )
 }

@@ -27,11 +27,10 @@ export const leagueStandingsSchema = z.object({
   leagueId: leagueIdSchema,
   leagueLabel: z.string().min(1),
   season: z.object({
-    startDate: z.iso.date(),
-    endDate: z.iso.date(),
+    label: z.string().min(1),
     currentMatchday: z.number().int().positive().nullable(),
   }),
-  source: z.literal('football-data.org'),
+  source: z.literal('the-sports-db'),
   standings: z.array(standingRowSchema),
 })
 

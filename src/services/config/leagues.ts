@@ -14,7 +14,8 @@ export type LeagueConfig = {
   id: LeagueId
   label: string
   country: string
-  competitionCode: string
+  flag: string
+  theSportsDbLeagueId: string
 }
 
 export const LEAGUES: readonly LeagueConfig[] = [
@@ -22,31 +23,36 @@ export const LEAGUES: readonly LeagueConfig[] = [
     id: 'premier-league',
     label: 'Premier League',
     country: 'England',
-    competitionCode: 'PL',
+    flag: '🏴',
+    theSportsDbLeagueId: '4328',
   },
   {
     id: 'la-liga',
     label: 'La Liga',
     country: 'Spain',
-    competitionCode: 'PD',
+    flag: '🇪🇸',
+    theSportsDbLeagueId: '4335',
   },
   {
     id: 'bundesliga',
     label: 'Bundesliga',
     country: 'Germany',
-    competitionCode: 'BL1',
+    flag: '🇩🇪',
+    theSportsDbLeagueId: '4331',
   },
   {
     id: 'serie-a',
     label: 'Serie A',
     country: 'Italy',
-    competitionCode: 'SA',
+    flag: '🇮🇹',
+    theSportsDbLeagueId: '4332',
   },
   {
     id: 'ligue-1',
     label: 'Ligue 1',
     country: 'France',
-    competitionCode: 'FL1',
+    flag: '🇫🇷',
+    theSportsDbLeagueId: '4334',
   },
 ] as const
 

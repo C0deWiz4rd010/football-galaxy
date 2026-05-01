@@ -1,16 +1,26 @@
 import { StandingsState } from './standings-state'
+import {
+  getDashboardCopy,
+  type LanguageCode,
+} from '../../shared/i18n/dashboard-locale'
 
 type StandingsLoadingProps = {
   leagueLabel: string
+  language: LanguageCode
 }
 
-export function StandingsLoading({ leagueLabel }: StandingsLoadingProps) {
+export function StandingsLoading({
+  leagueLabel,
+  language,
+}: StandingsLoadingProps) {
+  const copy = getDashboardCopy(language)
+
   return (
     <div className="space-y-6">
       <StandingsState
-        eyebrow="Loading"
-        title={`Fetching ${leagueLabel}`}
-        message="Pulling the latest table, form context, and ranking details for the selected competition."
+        eyebrow={copy.loadingEyebrow}
+        title={copy.loadingTitle(leagueLabel)}
+        message={copy.loadingMessage}
       >
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 4 }).map((_, index) => (

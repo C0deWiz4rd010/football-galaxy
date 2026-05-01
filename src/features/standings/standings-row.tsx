@@ -1,4 +1,5 @@
 import type { StandingRow as StandingRowModel } from '../../services'
+import { TeamEmblem } from '../../shared/ui/team-emblem'
 
 type StandingsRowProps = {
   row: StandingRowModel
@@ -35,9 +36,12 @@ export function StandingsRow({ row }: StandingsRowProps) {
       </td>
       <td className="px-5 py-4">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border-subtle)] bg-[rgba(255,255,255,0.06)] text-xs font-semibold text-[var(--color-text-primary)]">
-            {row.team.tla}
-          </span>
+          <TeamEmblem
+            crestUrl={row.team.crestUrl}
+            fallback={row.team.tla}
+            teamName={row.team.name}
+            className="h-10 w-10 shrink-0"
+          />
           <div className="min-w-0">
             <p className="truncate font-semibold text-[var(--color-text-primary)]">
               {row.team.shortName}

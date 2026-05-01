@@ -1,9 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 
 import type { StandingsProvider } from '../api/provider'
-import {
-  footballDataStandingsProvider,
-} from '../api/football-data-provider'
+import { theSportsDbStandingsProvider } from '../api/the-sports-db-provider'
 import type { LeagueId } from '../config/leagues'
 import { standingsQueryKeys } from './query-keys'
 
@@ -16,7 +14,7 @@ export function useLeagueStandings(
   leagueId: LeagueId,
   options: UseLeagueStandingsOptions = {},
 ) {
-  const provider = options.provider ?? footballDataStandingsProvider
+  const provider = options.provider ?? theSportsDbStandingsProvider
 
   return useQuery({
     queryKey: standingsQueryKeys.byLeague(leagueId),

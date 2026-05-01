@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 
-import type { LeagueStandings, StandingsProvider } from '../../services'
+import { LEAGUES, type LeagueStandings, type StandingsProvider } from '../../services'
 import { StandingsFeature } from './standings-feature'
 
 function createWrapper(provider: StandingsProvider) {
@@ -16,9 +16,15 @@ function createWrapper(provider: StandingsProvider) {
   })
 
   return render(
-    <MemoryRouter>
+      <MemoryRouter>
       <QueryClientProvider client={queryClient}>
-        <StandingsFeature leagueId="premier-league" provider={provider} />
+        <StandingsFeature
+          leagueId="premier-league"
+          provider={provider}
+          language="en"
+          leagues={LEAGUES}
+          onLeagueSelect={() => {}}
+        />
       </QueryClientProvider>
     </MemoryRouter>,
   )
@@ -28,11 +34,10 @@ const standingsFixture: LeagueStandings = {
   leagueId: 'premier-league',
   leagueLabel: 'Premier League',
   season: {
-    startDate: '2025-08-15',
-    endDate: '2026-05-24',
+    label: '2025-2026',
     currentMatchday: 12,
   },
-  source: 'football-data.org',
+  source: 'the-sports-db',
   standings: [
     {
       position: 1,

@@ -10,31 +10,26 @@ The first milestone is a standings dashboard for the top 5 European leagues:
 - Serie A
 - Ligue 1
 
-This repository currently contains the Phase 1 project foundation:
+This repository currently contains a working standings dashboard foundation with live league table integration:
 
 - React + Vite + TypeScript
 - Tailwind CSS
 - TanStack Query
 - Zod
 - Vitest + Testing Library
+- TheSportsDB free API integration
 
 ## Current Scope
 
-Phase 1 sets up the app foundation only:
+The current app includes:
 
-- project scaffold
 - app shell
-- routing foundation
-- global styles and design tokens
-- testing setup
-- folder structure for future features and services
-
-Not included yet:
-
-- API integration
-- standings data
-- feature-specific UI components
-- business logic
+- URL-driven league switching
+- live standings for the top 5 European leagues
+- responsive standings table and mobile cards
+- derived summary cards
+- loading, error, and empty states
+- design tokens and premium dashboard styling
 
 ## Tech Stack
 
@@ -75,7 +70,14 @@ npm run build
 
 ## Environment Variables
 
-Phase 1 does not call any external API yet, but `.env.example` is included so the project is ready for Phase 2.
+The dashboard uses TheSportsDB free API. By default it works with the public free key `123`, so no registration is required to run the current standings experience.
+
+Optional override:
+
+```bash
+VITE_THESPORTSDB_API_BASE_URL=https://www.thesportsdb.com/api/v1/json
+VITE_THESPORTSDB_API_KEY=123
+```
 
 ## Project Structure
 
@@ -93,7 +95,7 @@ src/
 The finalized milestone direction is:
 
 - static-first MVP
-- `football-data.org`
+- `TheSportsDB` free API (`123` public key, no signup required)
 - standings + derived summary cards only
 
 Richer statistics, scorers, and form are intentionally deferred to a later milestone to keep the first release simple, polished, and easy to host.
