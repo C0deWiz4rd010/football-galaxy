@@ -40,10 +40,10 @@ export function StandingsRow({ row }: StandingsRowProps) {
             crestUrl={row.team.crestUrl}
             fallback={row.team.tla}
             teamName={row.team.name}
-            className="h-10 w-10 shrink-0"
+            className="h-9 w-9 shrink-0"
           />
           <div className="min-w-0">
-            <p className="truncate font-semibold text-[var(--color-text-primary)]">
+            <p className="truncate text-[14px] font-semibold text-[var(--color-text-primary)]">
               {row.team.shortName}
             </p>
             <p className="truncate text-xs text-[var(--color-text-muted)]">

@@ -29,6 +29,7 @@ export const leagueStandingsSchema = z.object({
   season: z.object({
     label: z.string().min(1),
     currentMatchday: z.number().int().positive().nullable(),
+    selectedMatchday: z.number().int().positive().nullable(),
   }),
   source: z.literal('the-sports-db'),
   standings: z.array(standingRowSchema),

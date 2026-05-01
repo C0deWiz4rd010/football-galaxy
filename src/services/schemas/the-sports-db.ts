@@ -1,34 +1,29 @@
 import { z } from 'zod'
 
-export const theSportsDbStandingsResponseSchema = z.object({
-  table: z
-    .array(
-      z.object({
-        idStanding: z.string().min(1),
-        intRank: z.coerce.number().int().positive(),
-        idTeam: z.coerce.number().int().nonnegative(),
-        strTeam: z.string().min(1),
-        strBadge: z.url().nullable().optional(),
-        idLeague: z.string().min(1),
-        strLeague: z.string().min(1),
-        strSeason: z.string().min(1),
-        strForm: z.string().nullable().optional(),
-        strDescription: z.string().nullable().optional(),
-        intPlayed: z.coerce.number().int().nonnegative(),
-        intWin: z.coerce.number().int().nonnegative(),
-        intLoss: z.coerce.number().int().nonnegative(),
-        intDraw: z.coerce.number().int().nonnegative(),
-        intGoalsFor: z.coerce.number().int().nonnegative(),
-        intGoalsAgainst: z.coerce.number().int().nonnegative(),
-        intGoalDifference: z.coerce.number().int(),
-        intPoints: z.coerce.number().int().nonnegative(),
-        dateUpdated: z.string().min(1).optional(),
-      }),
-    )
-    .nullable()
-    .transform((table) => table ?? []),
+const theSportsDbEventSchema = z.object({
+  idEvent: z.string().min(1),
+  idLeague: z.string().min(1),
+  strLeague: z.string().min(1),
+  strSeason: z.string().min(1),
+  strHomeTeam: z.string().min(1),
+  strAwayTeam: z.string().min(1),
+  idHomeTeam: z.coerce.number().int().nonnegative(),
+  idAwayTeam: z.coerce.number().int().nonnegative(),
+  strHomeTeamBadge: z.url().nullable().optional(),
+  strAwayTeamBadge: z.url().nullable().optional(),
+  intHomeScore: z.coerce.number().int().nullable(),
+  intAwayScore: z.coerce.number().int().nullable(),
+  intRound: z.coerce.number().int().positive().nullable(),
+  dateEvent: z.string().min(1).nullable().optional(),
+  strStatus: z.string().nullable().optional(),
+  strPostponed: z.string().nullable().optional(),
 })
 
-export type TheSportsDbStandingsResponse = z.infer<
-  typeof theSportsDbStandingsResponseSchema
+export const theSportsDbSeasonEventsResponseSchema = z.object({
+  events: z.array(theSportsDbEventSchema).nullable().transform((events) => events ?? []),
+})
+
+export type TheSportsDbEvent = z.infer<typeof theSportsDbEventSchema>
+export type TheSportsDbSeasonEventsResponse = z.infer<
+  typeof theSportsDbSeasonEventsResponseSchema
 >

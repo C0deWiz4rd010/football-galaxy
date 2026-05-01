@@ -3,6 +3,7 @@ import {
   type LanguageCode,
   getDashboardCopy,
 } from '../i18n/dashboard-locale'
+import { FlagIcon } from './flag-icon'
 
 type LanguageSelectorProps = {
   language: LanguageCode
@@ -32,13 +33,17 @@ export function LanguageSelector({
               aria-label={option.label}
               aria-pressed={isActive}
               className={[
-                'rounded-full px-2.5 py-1.5 text-xs font-medium transition-[background-color,color,transform] duration-200',
+                'flex h-8 w-8 items-center justify-center rounded-full transition-[background-color,color,transform,border-color,box-shadow] duration-200',
                 isActive
-                  ? 'bg-[var(--league-accent-soft)] text-[var(--color-text-primary)] shadow-[inset_0_0_0_1px_var(--league-accent-soft)]'
+                  ? 'bg-[linear-gradient(135deg,var(--league-accent-soft),rgba(255,255,255,0.05))] text-[var(--color-text-primary)] shadow-[inset_0_0_0_1px_var(--league-accent-soft)]'
                   : 'text-[var(--color-text-muted)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[var(--color-text-primary)]',
               ].join(' ')}
             >
-              <span className="text-sm">{option.flag}</span>
+              <FlagIcon
+                code={option.flagCode}
+                title={option.label}
+                className="h-4 w-4"
+              />
             </button>
           )
         })}

@@ -91,27 +91,29 @@ export function SummaryCards({ standings, language }: SummaryCardsProps) {
         <article
           key={metric.label}
           className={[
-            'dashboard-panel rounded-[28px] p-5 transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-1 hover:border-[var(--league-accent-strong)] hover:shadow-[0_20px_40px_var(--league-accent-glow)] sm:p-6',
+            'dashboard-panel rounded-[24px] p-4 transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-[var(--league-accent-strong)] hover:shadow-[0_18px_36px_var(--league-accent-glow)]',
             index === 0 ? 'dashboard-glow' : '',
           ].join(' ')}
         >
-          <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[var(--color-text-muted)]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">
             {metric.label}
           </p>
-          <div className="mt-4 flex items-center gap-3">
-            <TeamEmblem
-              crestUrl={metric.crestUrl}
-              fallback={metric.tla}
-              teamName={metric.value}
-              className="h-11 w-11 shrink-0"
-            />
-            <h2 className="font-[var(--font-display)] text-[1.08rem] font-semibold tracking-[-0.03em] text-[var(--color-text-primary)] sm:text-[1.25rem]">
-              {metric.value}
-            </h2>
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <TeamEmblem
+                crestUrl={metric.crestUrl}
+                fallback={metric.tla}
+                teamName={metric.value}
+                className="h-9 w-9 shrink-0"
+              />
+              <h2 className="truncate font-[var(--font-display)] text-[0.98rem] font-semibold tracking-[-0.02em] text-[var(--color-text-primary)] sm:text-[1.05rem]">
+                {metric.value}
+              </h2>
+            </div>
+            <p className="shrink-0 text-right text-[12px] font-medium text-[var(--color-text-secondary)]">
+              {metric.detail}
+            </p>
           </div>
-          <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
-            {metric.detail}
-          </p>
         </article>
       ))}
     </section>

@@ -23,7 +23,9 @@ function createWrapper(provider: StandingsProvider) {
           provider={provider}
           language="en"
           leagues={LEAGUES}
+          selectedMatchday={null}
           onLeagueSelect={() => {}}
+          onMatchdaySelect={() => {}}
         />
       </QueryClientProvider>
     </MemoryRouter>,
@@ -36,6 +38,7 @@ const standingsFixture: LeagueStandings = {
   season: {
     label: '2025-2026',
     currentMatchday: 12,
+    selectedMatchday: 12,
   },
   source: 'the-sports-db',
   standings: [
@@ -66,10 +69,7 @@ describe('StandingsFeature', () => {
       getStandings: async () => standingsFixture,
     })
 
-    expect(
-      await screen.findByRole('heading', { name: /current standings/i }),
-    ).toBeInTheDocument()
-    expect(screen.getAllByText('Liverpool').length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('Liverpool')).length).toBeGreaterThan(0)
     expect(screen.getAllByText('29 pts').length).toBeGreaterThan(0)
   })
 

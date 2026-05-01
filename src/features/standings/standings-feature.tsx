@@ -5,6 +5,7 @@ import {
   getDashboardCopy,
   type LanguageCode,
 } from '../../shared/i18n/dashboard-locale'
+import { FlagIcon } from '../../shared/ui/flag-icon'
 import { SummaryCards } from './summary-cards'
 import { LeagueSelector } from './league-selector'
 import { StandingsLoading } from './standings-loading'
@@ -17,7 +18,9 @@ type StandingsFeatureProps = {
   provider?: StandingsProvider
   language: LanguageCode
   leagues: readonly LeagueConfig[]
+  selectedMatchday: number | null
   onLeagueSelect: (leagueId: LeagueId) => void
+  onMatchdaySelect: (matchday: number) => void
 }
 
 export function StandingsFeature({
@@ -25,41 +28,52 @@ export function StandingsFeature({
   provider,
   language,
   leagues,
+  selectedMatchday,
   onLeagueSelect,
+  onMatchdaySelect,
 }: StandingsFeatureProps) {
   const league = getLeagueConfig(leagueId)
   const copy = getDashboardCopy(language)
   const { data, error, isLoading, isError, isFetching, refetch, dataUpdatedAt } =
     useLeagueStandings(leagueId, {
       provider,
+      matchday: selectedMatchday,
     })
 
   const header = (
-    <section className="dashboard-panel dashboard-glow overflow-hidden rounded-[32px] px-5 py-5 sm:px-6 sm:py-5.5">
+    <section className="dashboard-panel dashboard-glow overflow-hidden rounded-[28px] px-4 py-4 sm:px-5 sm:py-4.5">
       <div className="dashboard-grid absolute inset-0 opacity-25" />
-      <div className="space-y-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="relative space-y-2">
-            <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--color-text-muted)]">
-              <span className="text-sm">{league.flag}</span>
+      <div className="space-y-3.5">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="relative min-w-0 space-y-1.5">
+            <p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">
+              <FlagIcon
+                code={league.flagCode}
+                title={league.country}
+                className="h-4 w-4 shrink-0"
+              />
               {league.country}
             </p>
             <div className="space-y-1">
-              <h2 className="font-[var(--font-display)] text-[1.7rem] font-semibold tracking-[-0.05em] text-[var(--color-text-primary)] sm:text-[2.1rem]">
+              <h2 className="font-[var(--font-display)] text-[1.35rem] font-semibold tracking-[-0.04em] text-[var(--color-text-primary)] sm:text-[1.72rem]">
                 {data?.leagueLabel ?? league.label}
               </h2>
-              <p className="text-[14px] leading-6 text-[var(--color-text-secondary)] sm:text-[15px]">
-                {copy.matchdayLabel} {data?.season.currentMatchday ?? 'TBD'} -{' '}
+              <p className="text-[13px] leading-5 text-[var(--color-text-secondary)]">
+                {copy.matchdayLabel}{' '}
+                {data?.season.selectedMatchday ??
+                  data?.season.currentMatchday ??
+                  'TBD'}{' '}
+                ·{' '}
                 {copy.seasonLabel} {data?.season.label ?? 'Current season'}
               </p>
             </div>
           </div>
 
-          <div className="relative flex flex-col items-start gap-2 text-sm text-[var(--color-text-secondary)] lg:items-end">
-            <span className="dashboard-pill inline-flex items-center gap-2 px-3 py-2">
+          <div className="relative flex flex-col items-start gap-1.5 text-sm text-[var(--color-text-secondary)] lg:items-end">
+            <span className="dashboard-pill inline-flex items-center gap-2 px-3 py-1.5 text-[12px]">
               <span
                 className={[
-                  'h-2.5 w-2.5 rounded-full',
+                  'h-2 w-2 rounded-full',
                   isFetching || isLoading
                     ? 'bg-[var(--color-accent-warm)]'
                     : 'bg-[var(--league-accent)]',
@@ -68,7 +82,7 @@ export function StandingsFeature({
               {isFetching || isLoading ? copy.updating : copy.upToDate}
             </span>
             {!isLoading && data ? (
-              <p className="text-xs text-[var(--color-text-muted)]">
+              <p className="text-[11px] text-[var(--color-text-muted)]">
                 {formatLastUpdated(dataUpdatedAt, language)}
               </p>
             ) : null}
@@ -142,7 +156,11 @@ export function StandingsFeature({
       {header}
 
       <SummaryCards standings={data} language={language} />
-      <StandingsTable standings={data} language={language} />
+      <StandingsTable
+        standings={data}
+        language={language}
+        onMatchdaySelect={onMatchdaySelect}
+      />
     </div>
   )
 }

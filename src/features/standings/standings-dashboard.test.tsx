@@ -13,6 +13,7 @@ const standingsFixture: LeagueStandings = {
   season: {
     label: '2025-2026',
     currentMatchday: 12,
+    selectedMatchday: 12,
   },
   source: 'the-sports-db',
   standings: [
@@ -68,13 +69,14 @@ describe('StandingsDashboard', () => {
     })
 
     expect(
-      await screen.findByRole('heading', { name: /premier league/i }),
-    ).toBeInTheDocument()
+      (await screen.findAllByRole('heading', { name: /premier league/i }))
+        .length,
+    ).toBeGreaterThan(0)
 
     await user.click(screen.getByRole('button', { name: /spain la liga/i }))
 
     expect(
-      await screen.findByRole('heading', { name: /^la liga$/i }),
-    ).toBeInTheDocument()
+      (await screen.findAllByRole('heading', { name: /^la liga$/i })).length,
+    ).toBeGreaterThan(0)
   })
 })
