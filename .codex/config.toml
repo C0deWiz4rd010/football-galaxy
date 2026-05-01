@@ -1,0 +1,12 @@
+# Codex configuration for Football Galaxy
+
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+# Codex reads AGENTS.md automatically from the repository root.
+# Keep project-specific instructions there.
+
+project_root_markers = [".git"]
+
+[features]
+# Keep empty for now. Add experimental features only when needed.
