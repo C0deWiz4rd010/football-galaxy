@@ -63,17 +63,20 @@ export function SummaryCards({ standings }: SummaryCardsProps) {
   return (
     <section
       aria-label="League summary"
-      className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+      className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
     >
-      {metrics.map((metric) => (
+      {metrics.map((metric, index) => (
         <article
           key={metric.label}
-          className="rounded-[24px] border border-[var(--color-border-subtle)] bg-[var(--color-surface-panel)] p-5 shadow-[var(--shadow-panel)]"
+          className={[
+            'dashboard-panel rounded-[28px] p-5 transition-transform duration-200 hover:-translate-y-1 sm:p-6',
+            index === 0 ? 'dashboard-glow' : '',
+          ].join(' ')}
         >
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[var(--color-text-muted)]">
             {metric.label}
           </p>
-          <h2 className="mt-3 text-xl font-semibold tracking-tight text-[var(--color-text-primary)]">
+          <h2 className="mt-4 font-[var(--font-display)] text-xl font-semibold tracking-[-0.03em] text-[var(--color-text-primary)] sm:text-2xl">
             {metric.value}
           </h2>
           <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
