@@ -69,14 +69,14 @@ export function SummaryCards({ standings }: SummaryCardsProps) {
         <article
           key={metric.label}
           className={[
-            'dashboard-panel rounded-[28px] p-5 transition-transform duration-200 hover:-translate-y-1 sm:p-6',
+            'dashboard-panel rounded-[28px] p-5 transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-1 hover:border-[var(--league-accent-strong)] hover:shadow-[0_20px_40px_var(--league-accent-glow)] sm:p-6',
             index === 0 ? 'dashboard-glow' : '',
           ].join(' ')}
         >
           <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[var(--color-text-muted)]">
             {metric.label}
           </p>
-          <h2 className="mt-4 font-[var(--font-display)] text-xl font-semibold tracking-[-0.03em] text-[var(--color-text-primary)] sm:text-2xl">
+          <h2 className="mt-4 font-[var(--font-display)] text-[1.15rem] font-semibold tracking-[-0.03em] text-[var(--color-text-primary)] sm:text-[1.35rem]">
             {metric.value}
           </h2>
           <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">

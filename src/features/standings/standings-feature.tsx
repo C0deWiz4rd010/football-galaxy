@@ -5,6 +5,7 @@ import { SummaryCards } from './summary-cards'
 import { StandingsLoading } from './standings-loading'
 import { StandingsState } from './standings-state'
 import { StandingsTable } from './standings-table'
+import { formatLastUpdated } from './time'
 
 type StandingsFeatureProps = {
   leagueId: LeagueId
@@ -16,7 +17,7 @@ export function StandingsFeature({
   provider,
 }: StandingsFeatureProps) {
   const league = getLeagueConfig(leagueId)
-  const { data, error, isLoading, isError, isFetching, refetch } =
+  const { data, error, isLoading, isError, isFetching, refetch, dataUpdatedAt } =
     useLeagueStandings(leagueId, {
       provider,
     })
@@ -74,10 +75,10 @@ export function StandingsFeature({
               {league.country}
             </p>
             <div className="space-y-1">
-              <h2 className="font-[var(--font-display)] text-4xl font-semibold tracking-[-0.05em] text-[var(--color-text-primary)] sm:text-5xl">
+              <h2 className="font-[var(--font-display)] text-[2.1rem] font-semibold tracking-[-0.05em] text-[var(--color-text-primary)] sm:text-[2.6rem]">
                 {data.leagueLabel}
               </h2>
-              <p className="text-sm leading-7 text-[var(--color-text-secondary)] sm:text-base">
+              <p className="text-[15px] leading-7 text-[var(--color-text-secondary)] sm:text-base">
                 Matchday {data.season.currentMatchday ?? 'TBD'} - Season{' '}
                 {data.season.startDate.slice(0, 4)} /{' '}
                 {data.season.endDate.slice(2, 4)}
@@ -85,18 +86,21 @@ export function StandingsFeature({
             </div>
           </div>
 
-          <div className="relative text-sm text-[var(--color-text-secondary)]">
+          <div className="relative flex flex-col items-start gap-2 text-sm text-[var(--color-text-secondary)] lg:items-end">
             <span className="dashboard-pill inline-flex items-center gap-2 px-3 py-2">
               <span
                 className={[
                   'h-2.5 w-2.5 rounded-full',
                   isFetching
                     ? 'bg-[var(--color-accent-warm)]'
-                    : 'bg-[var(--color-accent)]',
+                    : 'bg-[var(--league-accent)]',
                 ].join(' ')}
               />
               {isFetching ? 'Updating standings' : 'Standings up to date'}
             </span>
+            <p className="text-xs text-[var(--color-text-muted)]">
+              {formatLastUpdated(dataUpdatedAt)}
+            </p>
           </div>
         </div>
       </section>

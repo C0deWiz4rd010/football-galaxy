@@ -6,6 +6,7 @@ import {
   type LeagueId,
   type StandingsProvider,
 } from '../../services'
+import { getLeagueTheme } from './league-theme'
 import { LeagueSelector } from './league-selector'
 import { StandingsFeature } from './standings-feature'
 
@@ -25,6 +26,7 @@ function parseLeagueId(value: string | null): LeagueId {
 export function StandingsDashboard({ provider }: StandingsDashboardProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedLeagueId = parseLeagueId(searchParams.get(LEAGUE_QUERY_PARAM))
+  const theme = getLeagueTheme(selectedLeagueId)
 
   function handleLeagueSelect(leagueId: LeagueId) {
     const nextParams = new URLSearchParams(searchParams)
@@ -33,7 +35,7 @@ export function StandingsDashboard({ provider }: StandingsDashboardProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" style={theme.style}>
       <LeagueSelector
         leagues={LEAGUES}
         selectedLeagueId={selectedLeagueId}

@@ -36,9 +36,9 @@ export function StandingsTable({ standings }: StandingsTableProps) {
             <li
               key={row.team.id}
               className={[
-                'dashboard-surface rounded-[26px] p-4 transition-transform duration-200 hover:-translate-y-0.5',
+                'dashboard-surface rounded-[26px] p-4 transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(3,8,15,0.28)]',
                 row.position <= 4
-                  ? 'border-[rgba(122,228,168,0.28)]'
+                  ? 'border-[var(--league-accent-strong)] bg-[linear-gradient(135deg,var(--league-accent-soft),rgba(255,255,255,0.03))]'
                   : row.position >= 18
                     ? 'border-[rgba(255,107,107,0.24)]'
                     : '',
@@ -50,7 +50,7 @@ export function StandingsTable({ standings }: StandingsTableProps) {
                     className={[
                       'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-xs font-semibold',
                       row.position <= 4
-                        ? 'border-[rgba(122,228,168,0.28)] bg-[rgba(122,228,168,0.12)] text-[var(--color-accent)]'
+                        ? 'border-[var(--league-accent-strong)] bg-[var(--league-accent-soft)] text-[var(--league-accent)]'
                         : row.position >= 18
                           ? 'border-[rgba(255,107,107,0.25)] bg-[rgba(255,107,107,0.12)] text-[var(--color-danger)]'
                           : 'border-[var(--color-border-subtle)] bg-[rgba(255,255,255,0.06)] text-[var(--color-text-primary)]',
@@ -67,7 +67,7 @@ export function StandingsTable({ standings }: StandingsTableProps) {
                     </p>
                   </div>
                 </div>
-                <div className="rounded-full bg-[linear-gradient(135deg,var(--color-accent),var(--color-accent-strong))] px-3 py-1.5 text-sm font-semibold text-[#071119] shadow-[var(--shadow-accent)]">
+                <div className="rounded-full bg-[linear-gradient(135deg,var(--league-accent),var(--league-accent-strong))] px-3 py-1.5 text-sm font-semibold text-[#071119] shadow-[0_14px_28px_var(--league-accent-glow)]">
                   {row.points} pts
                 </div>
               </div>
@@ -126,6 +126,10 @@ export function StandingsTable({ standings }: StandingsTableProps) {
             ))}
           </tbody>
         </table>
+        <div className="border-t border-[var(--color-border-subtle)] px-5 py-3 text-[11px] uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+          <span className="league-accent-text font-semibold">Top 4</span> mark
+          European places, while the red zone indicates relegation pressure.
+        </div>
       </div>
     </section>
   )

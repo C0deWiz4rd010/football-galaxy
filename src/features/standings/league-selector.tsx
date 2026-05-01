@@ -39,18 +39,34 @@ export function LeagueSelector({
               aria-pressed={isSelected}
               aria-label={`${league.country} ${league.label}`}
               className={[
-                'dashboard-pill min-w-fit snap-start px-4 py-3 text-left',
+                'dashboard-pill min-w-fit snap-start px-4 py-3 text-left duration-200',
                 isSelected
-                  ? 'border-[var(--color-border-strong)] bg-[linear-gradient(135deg,rgba(122,228,168,0.24),rgba(61,189,116,0.18))] text-[var(--color-text-primary)] shadow-[var(--shadow-accent)]'
+                  ? 'border-[var(--league-accent-strong)] bg-[linear-gradient(135deg,var(--league-accent-soft),rgba(255,255,255,0.08))] text-[var(--color-text-primary)] shadow-[0_16px_34px_var(--league-accent-glow)]'
                   : 'text-[var(--color-text-primary)]',
               ].join(' ')}
             >
-              <span className="block text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">
+              <span
+                className={[
+                  'block text-[11px] font-semibold uppercase tracking-[0.24em]',
+                  isSelected
+                    ? 'league-accent-text'
+                    : 'text-[var(--color-text-muted)]',
+                ].join(' ')}
+              >
                 {league.country}
               </span>
               <span className="mt-1 block text-sm font-semibold sm:text-[15px]">
                 {league.label}
               </span>
+              <span
+                aria-hidden="true"
+                className={[
+                  'mt-2 block h-0.5 rounded-full transition-all duration-200',
+                  isSelected
+                    ? 'w-full bg-[var(--league-accent)] opacity-100'
+                    : 'w-0 bg-transparent opacity-0',
+                ].join(' ')}
+              />
             </button>
           )
         })}
