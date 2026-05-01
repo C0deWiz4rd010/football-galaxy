@@ -10,7 +10,7 @@ describe('App', () => {
       screen.getByRole('heading', { name: /standings dashboard/i }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { name: /fetching standings/i }),
+      screen.getByRole('heading', { name: /fetching premier league/i }),
     ).toBeInTheDocument()
   })
 })

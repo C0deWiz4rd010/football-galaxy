@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 
 import type { LeagueStandings, StandingsProvider } from '../../services'
@@ -15,9 +16,11 @@ function createWrapper(provider: StandingsProvider) {
   })
 
   return render(
-    <QueryClientProvider client={queryClient}>
-      <StandingsFeature leagueId="premier-league" provider={provider} />
-    </QueryClientProvider>,
+    <MemoryRouter>
+      <QueryClientProvider client={queryClient}>
+        <StandingsFeature leagueId="premier-league" provider={provider} />
+      </QueryClientProvider>
+    </MemoryRouter>,
   )
 }
 
@@ -61,8 +64,8 @@ describe('StandingsFeature', () => {
     expect(
       await screen.findByRole('heading', { name: /current standings/i }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Liverpool')).toBeInTheDocument()
-    expect(screen.getByText('29')).toBeInTheDocument()
+    expect(screen.getAllByText('Liverpool').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('29 pts').length).toBeGreaterThan(0)
   })
 
   it('renders an empty state when no standings exist', async () => {
@@ -86,7 +89,9 @@ describe('StandingsFeature', () => {
     })
 
     expect(
-      await screen.findByRole('heading', { name: /unable to load standings/i }),
+      await screen.findByRole('heading', {
+        name: /unable to load premier league/i,
+      }),
     ).toBeInTheDocument()
     expect(screen.getByText(/request failed/i)).toBeInTheDocument()
   })

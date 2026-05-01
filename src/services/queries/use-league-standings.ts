@@ -22,5 +22,7 @@ export function useLeagueStandings(
     queryKey: standingsQueryKeys.byLeague(leagueId),
     queryFn: () => provider.getStandings(leagueId),
     enabled: options.enabled ?? true,
+    staleTime: 1000 * 60 * 15,
+    gcTime: 1000 * 60 * 30,
   })
 }
