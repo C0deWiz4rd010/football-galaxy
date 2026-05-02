@@ -1,0 +1,14 @@
+{
+  "name": "Premier League 2021-22",
+  "season": "2021-22",
+  "leagueId": "premier-league",
+  "table": [
+    { "team": "Manchester Albion", "played": 38, "won": 29, "drawn": 6, "lost": 3, "goalsFor": 99, "goalsAgainst": 26, "points": 93 },
+    { "team": "Merseyside Reds", "played": 38, "won": 28, "drawn": 8, "lost": 2, "goalsFor": 94, "goalsAgainst": 26, "points": 92 },
+    { "team": "West London Blues", "played": 38, "won": 21, "drawn": 11, "lost": 6, "goalsFor": 76, "goalsAgainst": 33, "points": 74 }
+  ],
+  "scorers": [
+    { "player": "Noah Silva", "team": "Manchester Albion", "goals": 23 },
+    { "player": "Theo Martin", "team": "Merseyside Reds", "goals": 22 }
+  ]
+}

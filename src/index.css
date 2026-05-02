@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 44 35% 96%;
+    --foreground: 201 41% 12%;
+    --card: 45 44% 98%;
+    --card-foreground: 201 41% 12%;
+    --popover: 45 44% 98%;
+    --popover-foreground: 201 41% 12%;
+    --primary: 171 77% 24%;
+    --primary-foreground: 45 44% 98%;
+    --secondary: 42 34% 91%;
+    --secondary-foreground: 201 41% 12%;
+    --muted: 42 28% 90%;
+    --muted-foreground: 198 16% 34%;
+    --accent: 38 86% 87%;
+    --accent-foreground: 201 41% 12%;
+    --destructive: 4 73% 46%;
+    --destructive-foreground: 45 44% 98%;
+    --border: 35 28% 82%;
+    --input: 35 28% 82%;
+    --ring: 171 77% 24%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 193 44% 8%;
+    --foreground: 45 36% 96%;
+    --card: 194 34% 11%;
+    --card-foreground: 45 36% 96%;
+    --popover: 194 34% 11%;
+    --popover-foreground: 45 36% 96%;
+    --primary: 39 94% 63%;
+    --primary-foreground: 193 44% 8%;
+    --secondary: 190 24% 18%;
+    --secondary-foreground: 45 36% 96%;
+    --muted: 191 22% 16%;
+    --muted-foreground: 42 18% 70%;
+    --accent: 173 49% 18%;
+    --accent-foreground: 45 36% 96%;
+    --destructive: 0 68% 53%;
+    --destructive-foreground: 45 36% 96%;
+    --border: 187 17% 21%;
+    --input: 187 17% 21%;
+    --ring: 39 94% 63%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "tnum";
+    background-image:
+      radial-gradient(circle at top left, rgba(242, 184, 77, 0.14), transparent 28%),
+      radial-gradient(circle at top right, rgba(12, 120, 108, 0.18), transparent 34%),
+      linear-gradient(180deg, rgba(250, 246, 238, 0.98), rgba(242, 238, 228, 1));
+    background-attachment: fixed;
+  }
+
+  .dark body {
+    background-image:
+      radial-gradient(circle at top left, rgba(242, 184, 77, 0.14), transparent 24%),
+      radial-gradient(circle at top right, rgba(10, 121, 104, 0.18), transparent 32%),
+      linear-gradient(180deg, rgba(9, 24, 29, 1), rgba(10, 18, 24, 1));
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+  .stat-card {
+    @apply rounded-2xl border bg-card/80 p-5 shadow-lg backdrop-blur-sm transition-all duration-200 hover:shadow-xl;
+    border-color: hsl(var(--border) / 0.72);
+    box-shadow: 0 22px 48px rgba(12, 34, 39, 0.08);
+  }
+}
+
+@media print {
+  aside,
+  header,
+  nav,
+  [data-sidebar],
+  [data-mobile-nav],
+  button,
+  .fab,
+  .tooltip {
+    display: none !important;
+  }
+
+  main {
+    margin: 0;
+    padding: 0;
+  }
+
+  .stat-card {
+    border: 1px solid #ccc;
+    box-shadow: none;
+    break-inside: avoid;
+  }
+
+  table {
+    font-size: 11pt;
+  }
+
+  a[href]::after {
+    content: none;
+  }
+}

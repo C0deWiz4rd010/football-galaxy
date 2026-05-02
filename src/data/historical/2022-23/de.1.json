@@ -1,0 +1,14 @@
+{
+  "name": "Bundesliga 2022-23",
+  "season": "2022-23",
+  "leagueId": "bundesliga",
+  "table": [
+    { "team": "Munich Rekordmeister", "played": 34, "won": 21, "drawn": 8, "lost": 5, "goalsFor": 92, "goalsAgainst": 38, "points": 71 },
+    { "team": "Dortmund Schwarzgelb", "played": 34, "won": 22, "drawn": 5, "lost": 7, "goalsFor": 83, "goalsAgainst": 44, "points": 71 },
+    { "team": "Leipzig Red Bulls", "played": 34, "won": 20, "drawn": 6, "lost": 8, "goalsFor": 64, "goalsAgainst": 41, "points": 66 }
+  ],
+  "scorers": [
+    { "player": "Hugo Bauer", "team": "Munich Rekordmeister", "goals": 29 },
+    { "player": "Nico Leroy", "team": "Dortmund Schwarzgelb", "goals": 25 }
+  ]
+}

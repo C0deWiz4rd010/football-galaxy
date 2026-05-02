@@ -1,101 +1,73 @@
 # Football Galaxy
 
-Football Galaxy is a polished football web app focused on excellent UI/UX.
+Football Galaxy is a polished football statistics dashboard for the top five European leagues.
 
-The first milestone is a standings dashboard for the top 5 European leagues:
+## Prerequisites
 
-- Premier League
-- La Liga
-- Bundesliga
-- Serie A
-- Ligue 1
+- Node 20+
+- npm 10+
 
-This repository currently contains a working standings dashboard foundation with live league table integration:
-
-- React + Vite + TypeScript
-- Tailwind CSS
-- TanStack Query
-- Zod
-- Vitest + Testing Library
-- TheSportsDB free API integration
-
-## Current Scope
-
-The current app includes:
-
-- app shell
-- URL-driven league switching
-- live standings for the top 5 European leagues
-- responsive standings table and mobile cards
-- derived summary cards
-- loading, error, and empty states
-- design tokens and premium dashboard styling
-
-## Tech Stack
-
-- React 19
-- Vite
-- TypeScript
-- Tailwind CSS
-- TanStack Query
-- Zod
-- Vitest
-- Testing Library
-
-## Getting Started
-
-Install dependencies:
+## Install & Run
 
 ```bash
 npm install
-```
-
-Start the development server:
-
-```bash
 npm run dev
 ```
 
-Run the test suite:
+If npm reports peer dependency conflicts while moving between React versions, run:
 
 ```bash
-npm run test
+npm install --legacy-peer-deps --no-audit --no-fund
 ```
 
-Run the production build:
+## Live API
 
-```bash
-npm run build
-```
+Football Galaxy uses TheSportsDB v1 in live mode. It does not require signup for the default setup; the public free key is `123`.
 
-## Environment Variables
+Official docs: https://www.thesportsdb.com/documentation
 
-The dashboard uses TheSportsDB free API. By default it works with the public free key `123`, so no registration is required to run the current standings experience.
+The app works immediately without `.env`. If TheSportsDB is unavailable or rate limited, the app falls back to local mock data.
 
-Optional override:
+## Live vs Historical
 
-```bash
-VITE_THESPORTSDB_API_BASE_URL=https://www.thesportsdb.com/api/v1/json
-VITE_THESPORTSDB_API_KEY=123
-```
+- Live: fetches teams, badges, players, player images, and season events from TheSportsDB.
+- Historical: loads local openfootball-style JSON files from `src/data/historical/`.
+- Switching modes is instant and does not reload the page.
+
+## League IDs
+
+- `premier-league`
+- `bundesliga`
+- `la-liga`
+- `serie-a`
+- `ligue-1`
 
 ## Project Structure
 
 ```text
 src/
-  app/                 App shell, router, providers
-  features/            Feature modules
-  pages/               Route-level pages
-  services/            API providers, schemas, queries, mappers
-  shared/              Shared UI, config, types, styles, utilities
+  assets/
+  components/
+    layout/
+    league/
+    player/
+    shared/
+    team/
+    ui/
+  contexts/
+  data/
+    historical/
+    mock/
+  hooks/
+  lib/
+  pages/
+  services/
 ```
 
-## Product Direction
+## Add a League
 
-The finalized milestone direction is:
-
-- static-first MVP
-- `TheSportsDB` free API (`123` public key, no signup required)
-- standings + derived summary cards only
-
-Richer statistics, scorers, and form are intentionally deferred to a later milestone to keep the first release simple, polished, and easy to host.
+1. Add the league config in `src/lib/leagues.ts`.
+2. Add a mock data file in `src/data/mock/`.
+3. Register it in `src/data/mock/index.ts`.
+4. Add historical JSON files if historical mode should support it.
+5. Confirm routes, command search, sidebar, and mobile tab bar render the new league.
