@@ -27,7 +27,7 @@ export function FormTableCard({ standings }: { standings: Standing[] }) {
               <div className="min-w-0">
                 <span className="block truncate font-medium">{standing.team.name}</span>
                 <span className="text-xs text-muted-foreground">
-                  {standing.points} pts · GD {standing.goalDifference}
+                  {standing.points} pts - GD {standing.goalDifference}
                 </span>
               </div>
               <FormDots form={standing.form.slice(-6)} />
@@ -41,7 +41,7 @@ export function FormTableCard({ standings }: { standings: Standing[] }) {
                   className="overflow-hidden text-xs text-muted-foreground"
                 >
                   <div className="pt-3">
-                    {standing.form.map((item) => `${item.opponent} ${item.score}`).join(' · ')}
+                    {standing.form.map((item) => `${item.opponent} ${item.score}`).join(' - ')}
                   </div>
                 </motion.div>
               ) : null}

@@ -52,13 +52,28 @@ export function CommandPalette({
             </CommandEmpty>
 
             <CommandGroup heading="Quick navigation">
-              <CommandItem onSelect={() => { navigate('/players'); onOpenChange(false) }}>
+              <CommandItem
+                onSelect={() => {
+                  navigate('/players')
+                  onOpenChange(false)
+                }}
+              >
                 Players Explorer
               </CommandItem>
-              <CommandItem onSelect={() => { navigate('/teams'); onOpenChange(false) }}>
+              <CommandItem
+                onSelect={() => {
+                  navigate('/teams')
+                  onOpenChange(false)
+                }}
+              >
                 Teams Explorer
               </CommandItem>
-              <CommandItem onSelect={() => { navigate('/compare'); onOpenChange(false) }}>
+              <CommandItem
+                onSelect={() => {
+                  navigate('/compare')
+                  onOpenChange(false)
+                }}
+              >
                 Compare Players
               </CommandItem>
             </CommandGroup>
@@ -92,7 +107,6 @@ export function CommandPalette({
                     onOpenChange(false)
                   }}
                 >
-                  <img src={team.crest} alt="" className="mr-2 h-5 w-5 rounded" />
                   <span>{team.name}</span>
                   <span className="ml-2 text-xs text-muted-foreground">{league.abbreviation}</span>
                   {standing ? (
@@ -114,10 +128,9 @@ export function CommandPalette({
                     onOpenChange(false)
                   }}
                 >
-                  <img src={player.photo} alt="" className="mr-2 h-5 w-5 rounded-full" />
                   <span>{player.name}</span>
                   <span className="ml-2 text-xs text-muted-foreground">
-                    {player.position} · {team.shortName}
+                    {player.position} - {team.shortName}
                   </span>
                   <span className="ml-auto text-xs text-muted-foreground">
                     OVR {overall}

@@ -20,8 +20,8 @@ interface DataSourceContextValue extends DataSourceState {
 const DataSourceContext = createContext<DataSourceContextValue | undefined>(undefined)
 
 const initialState: DataSourceState = {
-  source: 'live',
-  season: '2024-25',
+  source: 'historical',
+  season: '2022-23',
   availableSeasons: ['2024-25', '2022-23', '2021-22'],
 }
 

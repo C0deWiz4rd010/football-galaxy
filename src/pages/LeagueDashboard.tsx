@@ -22,8 +22,8 @@ import { TeamStatsCard } from '@/components/league/TeamStatsCard'
 import { TopAssistsCard } from '@/components/league/TopAssistsCard'
 import { TopScorersCard } from '@/components/league/TopScorersCard'
 import { PageWrapper } from '@/components/layout/PageWrapper'
-import { EmptyState } from '@/components/shared/EmptyState'
 import { AssetImage } from '@/components/shared/AssetImage'
+import { EmptyState } from '@/components/shared/EmptyState'
 import { SkeletonCard } from '@/components/shared/SkeletonCard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -133,7 +133,7 @@ export default function LeagueDashboard() {
     )
   }
 
-  if (error) {
+  if (error && !data) {
     return (
       <div className="stat-card flex items-center gap-3">
         <AlertCircle className="h-5 w-5 text-destructive" />
@@ -152,19 +152,25 @@ export default function LeagueDashboard() {
     )
   }
 
-  const leader = data.standings[0]
-  const topAttack = [...data.standings].sort((left, right) => right.goalsFor - left.goalsFor)[0]
-  const topDefense = [...data.standings].sort(
-    (left, right) => left.goalsAgainst - right.goalsAgainst,
-  )[0]
-  const formLeader = [...data.standings].sort(
-    (left, right) => getFormPoints(right) - getFormPoints(left),
-  )[0]
-  const risingTeam = [...data.standings].sort(
-    (left, right) => right.goalDifference - left.goalDifference,
-  )[0]
-  const playmaker = data.topAssists[0]
-  const scorer = data.topScorers[0]
+  const standings = data.standings ?? []
+  const topScorers = data.topScorers ?? []
+  const topAssists = data.topAssists ?? []
+  const recentMatches = data.recentMatches ?? []
+  const leader = standings[0]
+  const topAttack = standings.length > 0
+    ? [...standings].sort((left, right) => right.goalsFor - left.goalsFor)[0]
+    : undefined
+  const topDefense = standings.length > 0
+    ? [...standings].sort((left, right) => left.goalsAgainst - right.goalsAgainst)[0]
+    : undefined
+  const formLeader = standings.length > 0
+    ? [...standings].sort((left, right) => getFormPoints(right) - getFormPoints(left))[0]
+    : undefined
+  const risingTeam = standings.length > 0
+    ? [...standings].sort((left, right) => right.goalDifference - left.goalDifference)[0]
+    : undefined
+  const playmaker = topAssists[0]
+  const scorer = topScorers[0]
   const spotlightPlayer = scorer?.player ?? playmaker?.player
   const spotlightCard = spotlightPlayer ? getPlayerCardProfile(spotlightPlayer) : null
 
@@ -289,13 +295,17 @@ export default function LeagueDashboard() {
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                   </>
-                ) : null}
+                ) : (
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    A featured player card will appear here once scoring or creative leaders are available.
+                  </p>
+                )}
               </div>
             </div>
           </div>
         </section>
 
-        <LeagueTable standings={data.standings} />
+        <LeagueTable standings={standings} />
 
         <section className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
           <div className="grid gap-4 lg:grid-cols-2">
@@ -338,20 +348,20 @@ export default function LeagueDashboard() {
               icon={<CalendarClock className="h-5 w-5" />}
               eyebrow="Explore More"
               title="Jump into clubs and players"
-              text="Use the new explorer views to browse every available team and player instead of relying only on the league dashboard."
+              text="Use the explorer views to browse every available team and player instead of relying only on the league dashboard."
             />
           </div>
 
           <div className="grid gap-4">
-            <MatchOfTheDay match={data.recentMatches[0]!} />
-            <FormTableCard standings={data.standings} />
+            <MatchOfTheDay match={recentMatches[0]} />
+            <FormTableCard standings={standings} />
           </div>
         </section>
 
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(320px,0.9fr)]">
-          <TopScorersCard title="Top Scorers" items={data.topScorers} />
-          <TopAssistsCard items={data.topAssists} />
-          <TeamStatsCard standings={data.standings} />
+          <TopScorersCard title="Top Scorers" items={topScorers} />
+          <TopAssistsCard items={topAssists} />
+          <TeamStatsCard standings={standings} />
         </div>
 
         <section className="grid gap-4 md:grid-cols-3">

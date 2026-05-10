@@ -1,7 +1,14 @@
-import { Suspense, lazy, useState } from 'react'
+import { Suspense, lazy, useMemo, useState } from 'react'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { createBrowserRouter, Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom'
+import {
+  Link,
+  NavLink,
+  Navigate,
+  Outlet,
+  createBrowserRouter,
+  useLocation,
+} from 'react-router-dom'
 
 import { Header } from '@/components/layout/Header'
 import { MatchdaySwiper } from '@/components/layout/MatchdaySwiper'
@@ -30,39 +37,84 @@ function LoadingGrid() {
   )
 }
 
+function getLayoutTitle(pathname: string) {
+  const segments = pathname.split('/').filter(Boolean)
+  const leagueId = segments[0]
+
+  if (segments[0] === 'players') {
+    return {
+      title: 'Players Explorer',
+      subtitle: 'Football Galaxy / Global Player Catalog',
+      showSwiper: false,
+      leagueId: undefined,
+    }
+  }
+
+  if (segments[0] === 'teams') {
+    return {
+      title: 'Teams Explorer',
+      subtitle: 'Football Galaxy / Global Club Catalog',
+      showSwiper: false,
+      leagueId: undefined,
+    }
+  }
+
+  if (segments[0] === 'compare') {
+    return {
+      title: 'Compare Players',
+      subtitle: 'Football Galaxy / Player Comparison',
+      showSwiper: false,
+      leagueId: undefined,
+    }
+  }
+
+  const league = getLeague(leagueId)
+
+  if (segments[1] === 'team') {
+    return {
+      title: 'Team Detail',
+      subtitle: `Football Galaxy / ${league.name}`,
+      showSwiper: false,
+      leagueId: league.id,
+    }
+  }
+
+  if (segments[1] === 'player') {
+    return {
+      title: 'Player Detail',
+      subtitle: `Football Galaxy / ${league.name}`,
+      showSwiper: false,
+      leagueId: league.id,
+    }
+  }
+
+  return {
+    title: league.name,
+    subtitle: `Football Galaxy / ${league.name}`,
+    showSwiper: isLeagueId(leagueId),
+    leagueId: league.id,
+  }
+}
+
 function AppLayout() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [matchday, setMatchday] = useState(0)
   const location = useLocation()
-  const [, leagueId, entity] = location.pathname.split('/')
-  const showSwiper = isLeagueId(leagueId)
-  const league = getLeague(leagueId)
-  const title =
-    entity === 'team'
-      ? 'Team Detail'
-      : entity === 'player'
-        ? 'Player Detail'
-        : location.pathname === '/players'
-          ? 'Players Explorer'
-          : location.pathname === '/teams'
-            ? 'Teams Explorer'
-          : location.pathname === '/compare'
-            ? 'Compare Players'
-            : league.name
+  const layout = useMemo(() => getLayoutTitle(location.pathname), [location.pathname])
 
   return (
     <>
       <Sidebar />
       <Header
-        title={title}
-        subtitle={`Football Galaxy / ${league.name}`}
+        title={layout.title}
+        subtitle={layout.subtitle}
         onSearch={() => setSearchOpen(true)}
         onMenu={() => setMobileMenuOpen((value) => !value)}
       />
-      {showSwiper ? (
+      {layout.showSwiper && layout.leagueId ? (
         <MatchdaySwiper
-          leagueId={league.id}
+          leagueId={layout.leagueId}
           matchday={matchday}
           onSelect={setMatchday}
         />

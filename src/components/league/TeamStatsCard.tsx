@@ -1,5 +1,6 @@
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
+import { EmptyState } from '@/components/shared/EmptyState'
 import type { Standing } from '@/services/types'
 
 function pickLeader(
@@ -14,6 +15,18 @@ function pickLeader(
 }
 
 export function TeamStatsCard({ standings }: { standings: Standing[] }) {
+  if (standings.length === 0) {
+    return (
+      <section className="stat-card">
+        <EmptyState
+          title="No team analytics yet"
+          description="League leader metrics will appear here once standings are available."
+          className="min-h-0 border-0 p-0"
+        />
+      </section>
+    )
+  }
+
   const topAttack = pickLeader(standings, (standing) => standing.goalsFor)
   const topDefense = pickLeader(standings, (standing) => standing.goalsAgainst, 'min')
   const topControl = pickLeader(standings, (standing) => standing.avgPossession)
@@ -55,16 +68,24 @@ export function TeamStatsCard({ standings }: { standings: Standing[] }) {
             axisLine={false}
           />
           <Tooltip formatter={(value, _name, item) => [`${value}`, item.payload.team]} />
-          <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 8, 8, 0]} animationDuration={800} />
+          <Bar
+            dataKey="value"
+            fill="hsl(var(--primary))"
+            radius={[0, 8, 8, 0]}
+            animationDuration={800}
+          />
         </BarChart>
       </ResponsiveContainer>
 
       <div className="mt-4 grid gap-2">
         {data.map((item) => (
-          <div key={item.name} className="surface-soft flex items-center justify-between rounded-xl px-3 py-2 text-sm">
+          <div
+            key={item.name}
+            className="surface-soft flex items-center justify-between rounded-xl px-3 py-2 text-sm"
+          >
             <span className="text-muted-foreground">{item.name}</span>
             <span className="font-medium">
-              {item.team} · {item.value}
+              {item.team} - {item.value}
             </span>
           </div>
         ))}

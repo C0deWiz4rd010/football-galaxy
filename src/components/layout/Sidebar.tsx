@@ -1,13 +1,19 @@
 import { Link, NavLink } from 'react-router-dom'
-import { BarChart3, Star } from 'lucide-react'
+import { BarChart3, LayoutGrid, Shield, Star, Users } from 'lucide-react'
+
 import { AssetImage } from '@/components/shared/AssetImage'
+import { mockData } from '@/data/mock'
 import { leagues } from '@/lib/leagues'
 import { useFavorites } from '@/hooks/useFavorites'
 import { useLeagueLogos } from '@/hooks/useLeagueLogos'
-import { mockData } from '@/data/mock'
 import { cn } from '@/lib/utils'
 import { createLeagueLogo } from '@/lib/visualAssets'
-import { LayoutGrid, Shield, Users } from 'lucide-react'
+
+function favoriteHref(item: { id: string; leagueId: string; teamId?: string }) {
+  return item.teamId
+    ? `/${item.leagueId}/player/${item.id}`
+    : `/${item.leagueId}/team/${item.id}`
+}
 
 export function Sidebar() {
   const favorites = useFavorites()
@@ -103,7 +109,11 @@ export function Sidebar() {
             .filter(Boolean)
             .slice(0, 5)
             .map((item) => (
-              <Link key={item!.id} to={'leagueId' in item! ? `/${item!.leagueId}/team/${item!.id}` : `/${item!.leagueId}/player/${item!.id}`} className="block truncate py-1 text-xs text-muted-foreground hover:text-foreground">
+              <Link
+                key={item!.id}
+                to={favoriteHref(item!)}
+                className="block truncate py-1 text-xs text-muted-foreground hover:text-foreground"
+              >
                 {item!.name}
               </Link>
             ))}

@@ -2,15 +2,29 @@ import { useState } from 'react'
 
 import { AnimatePresence, motion } from 'framer-motion'
 
+import { AssetImage } from '@/components/shared/AssetImage'
+import { EmptyState } from '@/components/shared/EmptyState'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { AssetImage } from '@/components/shared/AssetImage'
 import { formatDateTime } from '@/lib/utils'
 import { createTeamCrest } from '@/lib/visualAssets'
 import type { Match } from '@/services/types'
 
-export function MatchOfTheDay({ match }: { match: Match }) {
+export function MatchOfTheDay({ match }: { match?: Match }) {
   const [open, setOpen] = useState(false)
+
+  if (!match) {
+    return (
+      <section className="stat-card">
+        <EmptyState
+          title="No featured match yet"
+          description="Match context will appear here once fixtures or results are available."
+          className="min-h-0 border-0 p-0"
+        />
+      </section>
+    )
+  }
+
   const isTodayLive = match.status === 'LIVE'
 
   return (
@@ -46,7 +60,7 @@ export function MatchOfTheDay({ match }: { match: Match }) {
           <p className="mt-2 text-sm font-medium">{match.homeTeam.shortName}</p>
         </div>
         <div className="rounded-[1.4rem] border border-white/10 bg-white/5 px-4 py-3 font-mono text-4xl font-bold">
-          {match.homeScore}-{match.awayScore}
+          {match.homeScore ?? '-'}-{match.awayScore ?? '-'}
         </div>
         <div>
           <AssetImage
@@ -70,7 +84,7 @@ export function MatchOfTheDay({ match }: { match: Match }) {
           Kickoff and venue
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
-          {formatDateTime(match.utcDate)} · {match.venue}
+          {formatDateTime(match.utcDate)} - {match.venue ?? 'Venue pending'}
         </p>
       </div>
 
@@ -86,12 +100,17 @@ export function MatchOfTheDay({ match }: { match: Match }) {
             transition={{ duration: 0.24 }}
             className="mt-4 space-y-2 overflow-hidden"
           >
-            {match.events.map((event) => (
-              <li key={event.id} className="surface-soft rounded-xl px-3 py-2 text-sm">
-                <span className="font-mono">{event.minute}'</span> {event.type} ·{' '}
-                {event.playerName}
+            {match.events.length > 0 ? (
+              match.events.map((event) => (
+                <li key={event.id} className="surface-soft rounded-xl px-3 py-2 text-sm">
+                  <span className="font-mono">{event.minute}'</span> {event.type} - {event.playerName}
+                </li>
+              ))
+            ) : (
+              <li className="surface-soft rounded-xl px-3 py-2 text-sm text-muted-foreground">
+                No event timeline is available for this match yet.
               </li>
-            ))}
+            )}
           </motion.ol>
         ) : null}
       </AnimatePresence>

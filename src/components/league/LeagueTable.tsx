@@ -14,8 +14,8 @@ import { motion } from 'framer-motion'
 import { ArrowRight, ArrowUpDown, Star } from 'lucide-react'
 
 import { AssetImage } from '@/components/shared/AssetImage'
+import { EmptyState } from '@/components/shared/EmptyState'
 import { FormDots } from '@/components/shared/FormDots'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useFavorites } from '@/hooks/useFavorites'
 import { cn } from '@/lib/utils'
@@ -26,9 +26,11 @@ function rowAccent(position: number, total: number) {
   if (position <= 4) {
     return 'inset 3px 0 0 #3b82f6'
   }
+
   if (position >= total - 2) {
     return 'inset 3px 0 0 #ef4444'
   }
+
   return undefined
 }
 
@@ -42,10 +44,17 @@ const LeagueTableRow = memo(function LeagueTableRow({
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <motion.button
-      type="button"
+    <motion.div
       layout
       onClick={() => setExpanded((value) => !value)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          setExpanded((value) => !value)
+        }
+      }}
+      role="button"
+      tabIndex={0}
       className="interactive-card surface-soft w-full rounded-[1.3rem] p-4 text-left md:hidden"
       whileTap={{ scale: 0.99 }}
     >
@@ -96,7 +105,7 @@ const LeagueTableRow = memo(function LeagueTableRow({
           <span>GD {standing.goalDifference}</span>
         </motion.div>
       ) : null}
-    </motion.button>
+    </motion.div>
   )
 })
 
@@ -178,54 +187,65 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
           <h2 className="mt-1 text-lg font-semibold tracking-tight">Full Standings Table</h2>
         </div>
         <span className="text-xs text-muted-foreground">
-          Hover rows, sort columns, click any team for the detail view
+          Hover rows, sort columns, and open any team detail page
         </span>
       </div>
-      <div className="hidden overflow-hidden rounded-[1.4rem] border border-border/50 md:block">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow
-                key={headerGroup.id}
-                role="row"
-                className="sticky top-0 z-10 bg-background/80 backdrop-blur"
-              >
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    role="columnheader"
-                    aria-sort={
-                      header.column.getIsSorted() === 'asc'
-                        ? 'ascending'
-                        : header.column.getIsSorted() === 'desc'
-                          ? 'descending'
-                          : 'none'
-                    }
-                  >
-                    <button
-                      type="button"
-                      disabled={!header.column.getCanSort()}
-                      onClick={header.column.getToggleSortingHandler()}
-                      className="inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      {header.column.getCanSort() ? (
-                        <motion.span animate={{ rotate: header.column.getIsSorted() === 'desc' ? 180 : 0 }}>
-                          <ArrowUpDown className="h-3 w-3" />
-                        </motion.span>
-                      ) : null}
-                    </button>
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <DropdownMenu key={row.id}>
-                <DropdownMenuTrigger asChild>
-                  <tr
+      {standings.length === 0 ? (
+        <EmptyState
+          title="No standings available"
+          description="The league table will appear here once standings data is loaded."
+          className="min-h-0 border-0 p-0"
+        />
+      ) : null}
+      {standings.length > 0 ? (
+        <>
+          <div className="hidden overflow-hidden rounded-[1.4rem] border border-border/50 md:block">
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow
+                    key={headerGroup.id}
                     role="row"
+                    className="sticky top-0 z-10 bg-background/80 backdrop-blur"
+                  >
+                    {headerGroup.headers.map((header) => (
+                      <TableHead
+                        key={header.id}
+                        role="columnheader"
+                        aria-sort={
+                          header.column.getIsSorted() === 'asc'
+                            ? 'ascending'
+                            : header.column.getIsSorted() === 'desc'
+                              ? 'descending'
+                              : 'none'
+                        }
+                      >
+                        <button
+                          type="button"
+                          disabled={!header.column.getCanSort()}
+                          onClick={header.column.getToggleSortingHandler()}
+                          className="inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                          {header.column.getCanSort() ? (
+                            <motion.span
+                              animate={{ rotate: header.column.getIsSorted() === 'desc' ? 180 : 0 }}
+                            >
+                              <ArrowUpDown className="h-3 w-3" />
+                            </motion.span>
+                          ) : null}
+                        </button>
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    role="row"
+                    tabIndex={0}
                     onClick={() => openTeam(row.original)}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' || event.key === ' ') {
@@ -233,7 +253,6 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
                         openTeam(row.original)
                       }
                     }}
-                    tabIndex={0}
                     className={cn(
                       'cursor-pointer border-b border-border/50 transition-colors hover:bg-background/60 focus:bg-background/60 focus:outline-none',
                       favorites.isTeamFavorite(row.original.team.id) && 'bg-amber-500/5',
@@ -254,32 +273,18 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
                         )}
                       </TableCell>
                     ))}
-                  </tr>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem
-                    onSelect={() =>
-                      window.open(`/${row.original.leagueId}/team/${row.original.team.id}`, '_blank')
-                    }
-                  >
-                    Open team in new tab
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => favorites.toggleTeam(row.original.team.id)}>
-                    {favorites.isTeamFavorite(row.original.team.id)
-                      ? 'Remove from favorites'
-                      : 'Add to favorites'}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="grid gap-3 md:hidden">
+            {standings.map((standing) => (
+              <LeagueTableRow key={standing.id} standing={standing} onOpen={openTeam} />
             ))}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="grid gap-3 md:hidden">
-        {standings.map((standing) => (
-          <LeagueTableRow key={standing.id} standing={standing} onOpen={openTeam} />
-        ))}
-      </div>
+          </div>
+        </>
+      ) : null}
     </section>
   )
 }
