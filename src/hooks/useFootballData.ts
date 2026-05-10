@@ -6,14 +6,17 @@ import type { FootballQueryName, FootballQueryParams } from '@/services/types'
 
 type ServiceMap = typeof liveService
 
-export function useFootballData<T>(queryFn: FootballQueryName, params: FootballQueryParams = {}, deps: React.DependencyList = []) {
+export function useFootballData<T>(
+  queryFn: FootballQueryName,
+  params: FootballQueryParams = {},
+) {
   const { source, season } = useDataSource()
   const [data, setData] = useState<T | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [tick, setTick] = useState(0)
   const mounted = useRef(true)
-  const stableParams = useMemo(() => ({ ...params, season }), [params.leagueId, params.teamId, params.playerId, params.matchday, params.season, season])
+  const stableParams = useMemo(() => ({ ...params, season }), [params, season])
 
   const refetch = useCallback(() => setTick((value) => value + 1), [])
 
@@ -47,7 +50,7 @@ export function useFootballData<T>(queryFn: FootballQueryName, params: FootballQ
       }
     }
     void load()
-  }, [source, queryFn, stableParams, tick, ...deps])
+  }, [source, queryFn, stableParams, tick])
 
   return { data, isLoading, error, refetch }
 }

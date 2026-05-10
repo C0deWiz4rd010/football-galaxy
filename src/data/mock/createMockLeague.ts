@@ -162,8 +162,8 @@ export function createMockLeague({ leagueId, teamNames, seed }: CreateMockLeague
     const awayTeam = teams[index * 2 + 1]!
     const homeScore = (index + seed) % 4
     const awayScore = (index * 2 + seed) % 3
-    const homePlayer = homeTeam.squad?.[8]!
-    const awayPlayer = awayTeam.squad?.[9]!
+    const homePlayer = homeTeam.squad![8]!
+    const awayPlayer = awayTeam.squad![9]!
     return {
       id: `${leagueId}-md38-${index + 1}`,
       leagueId,

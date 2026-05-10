@@ -1,16 +1,17 @@
 import { Menu, Moon, Search, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { DataSourceToggle } from '@/components/shared/DataSourceToggle'
-import { getLeague } from '@/lib/leagues'
 
-export function Header({ onSearch, onMenu }: { onSearch: () => void; onMenu: () => void }) {
+interface HeaderProps {
+  title: string
+  subtitle: string
+  onSearch: () => void
+  onMenu: () => void
+}
+
+export function Header({ title, subtitle, onSearch, onMenu }: HeaderProps) {
   const { theme, setTheme } = useTheme()
-  const location = useLocation()
-  const [, leagueId, entity] = location.pathname.split('/')
-  const league = getLeague(leagueId)
-  const title = entity === 'team' ? 'Team Detail' : entity === 'player' ? 'Player Detail' : location.pathname === '/compare' ? 'Compare Players' : league.name
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border/40 bg-background/80 px-4 backdrop-blur-md md:ml-64 md:px-6">
@@ -18,7 +19,7 @@ export function Header({ onSearch, onMenu }: { onSearch: () => void; onMenu: () 
         <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu" onClick={onMenu}><Menu className="h-5 w-5" /></Button>
         <div className="min-w-0">
           <h1 className="truncate font-semibold tracking-tight">{title}</h1>
-          <p className="hidden text-xs text-muted-foreground md:block">Football Galaxy / {league.name}</p>
+          <p className="hidden text-xs text-muted-foreground md:block">{subtitle}</p>
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">

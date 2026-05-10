@@ -11,6 +11,23 @@ Football Galaxy should evolve from a mixed prototype into a cohesive, modern, in
 - polished loading, empty, and error states
 - premium desktop and mobile UX
 
+## Progress Snapshot
+
+Status after Phase 0 and Phase 1 foundation work:
+
+- canonical runtime moved onto `src/app/*`
+- routing and app providers consolidated behind one entry flow
+- old `src/App.tsx` reduced to a compatibility bridge
+- build configuration fixed so `npm run build` works again
+- prioritized lint/runtime issues fixed in shared image loading, compare flow, mock data safety, and data-loading hook behavior
+- `npm run lint`, `npm run build`, and `npm run test` currently pass
+
+Next recommended focus:
+
+- Phase 2: design-system unification
+- Phase 3: dashboard UX rebuild
+- Phase 4: shared motion system rollout
+
 This plan focuses on the current website, not on building a video product. The Remotion plugin is still useful here as a motion-design reference for timing, sequencing, and transition discipline.
 
 ## Current Audit Summary

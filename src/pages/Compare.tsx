@@ -34,7 +34,11 @@ export default function Compare() {
     const next = new URLSearchParams(params)
     next.set(key, player.id)
     setParams(next)
-    key === 'p1' ? setP1(player.id) : setP2(player.id)
+    if (key === 'p1') {
+      setP1(player.id)
+    } else {
+      setP2(player.id)
+    }
   }
   const rows = player1 && player2 ? [
     ['Goals', player1.stats.goals, player2.stats.goals],
