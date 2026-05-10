@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+
 import { useDataSource } from '@/contexts/DataSourceContext'
 import * as liveService from '@/services/footballData'
 import * as historicalService from '@/services/openFootball'
@@ -16,12 +17,23 @@ export function useFootballData<T>(
   const [error, setError] = useState<string | null>(null)
   const [tick, setTick] = useState(0)
   const mounted = useRef(true)
-  const stableParams = useMemo(() => ({ ...params, season }), [params, season])
+  const requestId = useRef(0)
+
+  const paramsKey = useMemo(
+    () => JSON.stringify({ ...params, season }),
+    [params.leagueId, params.matchday, params.playerId, params.season, params.teamId, season],
+  )
+
+  const stableParams = useMemo(
+    () => JSON.parse(paramsKey) as FootballQueryParams,
+    [paramsKey],
+  )
 
   const refetch = useCallback(() => setTick((value) => value + 1), [])
 
   useEffect(() => {
     mounted.current = true
+
     return () => {
       mounted.current = false
     }
@@ -29,28 +41,40 @@ export function useFootballData<T>(
 
   useEffect(() => {
     const service = (source === 'live' ? liveService : historicalService) as ServiceMap
+    const currentRequestId = ++requestId.current
+
     const load = async () => {
-      setIsLoading(true)
-      setError(null)
+      if (mounted.current) {
+        setIsLoading(true)
+        setError(null)
+      }
+
       try {
         const result = await service[queryFn](stableParams)
-        if (mounted.current) {
+
+        if (mounted.current && requestId.current === currentRequestId) {
           setData(result as T)
         }
       } catch (caught) {
         const message = caught instanceof Error ? caught.message : 'Could not load football data.'
-        if (mounted.current) {
+
+        if (mounted.current && requestId.current === currentRequestId) {
           setError(message)
-          window.dispatchEvent(new CustomEvent('football-toast', { detail: { title: 'Fetch failed', description: message } }))
+          window.dispatchEvent(
+            new CustomEvent('football-toast', {
+              detail: { title: 'Fetch failed', description: message },
+            }),
+          )
         }
       } finally {
-        if (mounted.current) {
+        if (mounted.current && requestId.current === currentRequestId) {
           setIsLoading(false)
         }
       }
     }
+
     void load()
-  }, [source, queryFn, stableParams, tick])
+  }, [paramsKey, queryFn, source, stableParams, tick])
 
   return { data, isLoading, error, refetch }
 }
