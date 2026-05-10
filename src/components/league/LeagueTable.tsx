@@ -185,7 +185,11 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} role="row" className="bg-background/40">
+              <TableRow
+                key={headerGroup.id}
+                role="row"
+                className="sticky top-0 z-10 bg-background/80 backdrop-blur"
+              >
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
@@ -223,8 +227,15 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
                   <tr
                     role="row"
                     onClick={() => openTeam(row.original)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        openTeam(row.original)
+                      }
+                    }}
+                    tabIndex={0}
                     className={cn(
-                      'cursor-pointer border-b border-border/50 transition-colors hover:bg-white/6 focus-within:bg-white/6',
+                      'cursor-pointer border-b border-border/50 transition-colors hover:bg-background/60 focus:bg-background/60 focus:outline-none',
                       favorites.isTeamFavorite(row.original.team.id) && 'bg-amber-500/5',
                     )}
                     style={{ boxShadow: rowAccent(row.original.position, standings.length) }}

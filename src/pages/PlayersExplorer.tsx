@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import { Search, Sparkles, Target } from 'lucide-react'
+import { ArrowUpDown, Search, Sparkles, Target } from 'lucide-react'
 
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { AssetImage } from '@/components/shared/AssetImage'
+import { EmptyState } from '@/components/shared/EmptyState'
 import { Badge } from '@/components/ui/badge'
 import { getPlayerExplorerEntries } from '@/lib/explorer-data'
 import { leagues } from '@/lib/leagues'
@@ -14,6 +15,7 @@ import type { LeagueId } from '@/services/types'
 export default function PlayersExplorer() {
   const [selectedLeagueId, setSelectedLeagueId] = useState<LeagueId | 'all'>('all')
   const [query, setQuery] = useState('')
+  const [sortBy, setSortBy] = useState<'overall' | 'goals' | 'assists'>('overall')
 
   const players = useMemo(
     () =>
@@ -32,8 +34,18 @@ export default function PlayersExplorer() {
             player.position.toLowerCase().includes(normalized)
           )
         })
-        .sort((left, right) => right.overall - left.overall),
-    [query, selectedLeagueId],
+        .sort((left, right) => {
+          if (sortBy === 'goals') {
+            return right.player.stats.goals - left.player.stats.goals
+          }
+
+          if (sortBy === 'assists') {
+            return right.player.stats.assists - left.player.stats.assists
+          }
+
+          return right.overall - left.overall
+        }),
+    [query, selectedLeagueId, sortBy],
   )
 
   return (
@@ -64,21 +76,17 @@ export default function PlayersExplorer() {
                 />
               </label>
               <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedLeagueId('all')}
-                  className={`app-pill px-3 py-2 text-sm ${selectedLeagueId === 'all' ? 'border-primary bg-primary/10 text-foreground' : 'text-muted-foreground'}`}
-                >
-                  All leagues
-                </button>
-                {leagues.map((league) => (
+                {[
+                  { key: 'all', label: 'All leagues' },
+                  ...leagues.map((league) => ({ key: league.id, label: league.abbreviation })),
+                ].map((item) => (
                   <button
-                    key={league.id}
+                    key={item.key}
                     type="button"
-                    onClick={() => setSelectedLeagueId(league.id)}
-                    className={`app-pill px-3 py-2 text-sm ${selectedLeagueId === league.id ? 'border-primary bg-primary/10 text-foreground' : 'text-muted-foreground'}`}
+                    onClick={() => setSelectedLeagueId(item.key as LeagueId | 'all')}
+                    className={`app-pill cursor-pointer px-3 py-2 text-sm ${selectedLeagueId === item.key ? 'border-primary bg-primary/10 text-foreground' : 'text-muted-foreground'}`}
                   >
-                    {league.abbreviation}
+                    {item.label}
                   </button>
                 ))}
               </div>
@@ -86,12 +94,40 @@ export default function PlayersExplorer() {
           </div>
         </section>
 
+        <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+          <div className="surface-soft rounded-[1.2rem] px-4 py-3 text-sm text-muted-foreground">
+            Showing <span className="font-semibold text-foreground">{players.length}</span> players
+            {selectedLeagueId !== 'all' ? ' in the selected league' : ' across all leagues'}.
+          </div>
+          <label className="surface-soft flex items-center gap-2 rounded-[1.2rem] px-3 py-3 text-sm text-muted-foreground">
+            <ArrowUpDown className="h-4 w-4" />
+            <span>Sort by</span>
+            <select
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value as typeof sortBy)}
+              className="bg-transparent font-medium text-foreground outline-none"
+            >
+              <option value="overall">OVR</option>
+              <option value="goals">Goals</option>
+              <option value="assists">Assists</option>
+            </select>
+          </label>
+        </section>
+
         <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {players.length === 0 ? (
+            <div className="sm:col-span-2 xl:col-span-3">
+              <EmptyState
+                title="No players found"
+                description="Try another search term or switch to a different league filter."
+              />
+            </div>
+          ) : null}
           {players.slice(0, 48).map(({ league, player, team, overall, archetype, standing }) => (
             <Link
               key={player.id}
               to={`/${player.leagueId}/player/${player.id}`}
-              className="stat-card interactive-card p-4"
+              className="stat-card interactive-card cursor-pointer p-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
@@ -108,7 +144,7 @@ export default function PlayersExplorer() {
                   <div className="min-w-0">
                     <p className="truncate text-lg font-semibold">{player.name}</p>
                     <p className="truncate text-sm text-muted-foreground">
-                      {team.name} · {league.name}
+                      {team.name} - {league.name}
                     </p>
                   </div>
                 </div>
