@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import { AnimatePresence, motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 
 import { AssetImage } from '@/components/shared/AssetImage'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -44,7 +45,7 @@ export function MatchOfTheDay({ match }: { match?: Match }) {
       </div>
 
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-center">
-        <div>
+        <Link to={`/${match.leagueId}/team/${match.homeTeam.id}`} className="group">
           <AssetImage
             src={match.homeTeam.crest}
             fallbackSrc={createTeamCrest(
@@ -54,15 +55,15 @@ export function MatchOfTheDay({ match }: { match?: Match }) {
               0,
             )}
             alt={match.homeTeam.name}
-            className="mx-auto h-16 w-16 rounded-2xl object-cover"
+            className="mx-auto h-16 w-16 rounded-2xl object-cover transition group-hover:scale-[1.02]"
             loading="lazy"
           />
           <p className="mt-2 text-sm font-medium">{match.homeTeam.shortName}</p>
-        </div>
+        </Link>
         <div className="rounded-[1.4rem] border border-white/10 bg-white/5 px-4 py-3 font-mono text-4xl font-bold">
           {match.homeScore ?? '-'}-{match.awayScore ?? '-'}
         </div>
-        <div>
+        <Link to={`/${match.leagueId}/team/${match.awayTeam.id}`} className="group">
           <AssetImage
             src={match.awayTeam.crest}
             fallbackSrc={createTeamCrest(
@@ -72,11 +73,11 @@ export function MatchOfTheDay({ match }: { match?: Match }) {
               1,
             )}
             alt={match.awayTeam.name}
-            className="mx-auto h-16 w-16 rounded-2xl object-cover"
+            className="mx-auto h-16 w-16 rounded-2xl object-cover transition group-hover:scale-[1.02]"
             loading="lazy"
           />
           <p className="mt-2 text-sm font-medium">{match.awayTeam.shortName}</p>
-        </div>
+        </Link>
       </div>
 
       <div className="mt-4 rounded-[1.2rem] border border-white/8 bg-white/4 px-4 py-3 text-center">

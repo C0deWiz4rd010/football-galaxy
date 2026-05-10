@@ -194,7 +194,7 @@ export default function LeagueDashboard() {
                     src={league.logo}
                     fallbackSrc={createLeagueLogo(league.abbreviation, league.color, league.name)}
                     alt={`${league.name} logo`}
-                    className="h-16 w-16 rounded-[1.3rem] object-cover ring-1 ring-white/10"
+                    className="h-16 w-16 rounded-[1.3rem] bg-white/90 object-contain p-2 ring-1 ring-white/10"
                     loading="lazy"
                   />
                   <div className="min-w-0">

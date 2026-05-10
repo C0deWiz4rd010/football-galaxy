@@ -394,7 +394,7 @@ export async function getLeagueSummary(params: FootballQueryParams = {}): Promis
   const league = leagues.find((item) => item.id === leagueId)!
   const data = await loadLeague(leagueId).catch(() => null)
   return {
-    league: data?.leagueLogo ? { ...league, logo: data.leagueLogo } : league,
+    league,
     season: {
       id: estimateCurrentSeasonLabel(),
       label: estimateCurrentSeasonLabel().replace('-', '/'),

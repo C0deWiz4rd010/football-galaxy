@@ -1,5 +1,9 @@
+import bundesligaLogo from '@/assets/leagues/bundesliga.png'
+import laLigaLogo from '@/assets/leagues/la-liga.png'
+import ligue1Logo from '@/assets/leagues/ligue-1.png'
+import premierLeagueLogo from '@/assets/leagues/premier-league.png'
+import serieALogo from '@/assets/leagues/serie-a.png'
 import type { League, LeagueId } from '@/services/types'
-import { createLeagueLogo } from './visualAssets'
 
 export const leagues: League[] = [
   {
@@ -12,7 +16,7 @@ export const leagues: League[] = [
     theSportsDbLeagueName: 'English Premier League',
     color: '#3d195b',
     accentClass: 'text-pl',
-    logo: createLeagueLogo('PL', '#3d195b', 'Premier League'),
+    logo: premierLeagueLogo,
   },
   {
     id: 'la-liga',
@@ -24,7 +28,7 @@ export const leagues: League[] = [
     theSportsDbLeagueName: 'Spanish La Liga',
     color: '#003f8f',
     accentClass: 'text-ll',
-    logo: createLeagueLogo('LL', '#003f8f', 'La Liga'),
+    logo: laLigaLogo,
   },
   {
     id: 'bundesliga',
@@ -36,7 +40,7 @@ export const leagues: League[] = [
     theSportsDbLeagueName: 'German Bundesliga',
     color: '#d3010c',
     accentClass: 'text-bl',
-    logo: createLeagueLogo('BL', '#d3010c', 'Bundesliga'),
+    logo: bundesligaLogo,
   },
   {
     id: 'serie-a',
@@ -48,7 +52,7 @@ export const leagues: League[] = [
     theSportsDbLeagueName: 'Italian Serie A',
     color: '#009246',
     accentClass: 'text-sa',
-    logo: createLeagueLogo('SA', '#009246', 'Serie A'),
+    logo: serieALogo,
   },
   {
     id: 'ligue-1',
@@ -60,7 +64,7 @@ export const leagues: League[] = [
     theSportsDbLeagueName: 'French Ligue 1',
     color: '#091c3e',
     accentClass: 'text-l1',
-    logo: createLeagueLogo('L1', '#091c3e', 'Ligue 1'),
+    logo: ligue1Logo,
   },
 ]
 

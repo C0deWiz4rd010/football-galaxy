@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import {
   Command,
   CommandEmpty,
@@ -10,6 +10,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command'
+import { useLocale } from '@/contexts/LocaleContext'
 import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
 import { searchEntities } from '@/lib/explorer-data'
 
@@ -23,6 +24,7 @@ export function CommandPalette({
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const results = useMemo(() => searchEntities(query), [query])
+  const { t } = useLocale()
 
   const toggle = useCallback(
     (event: KeyboardEvent) => {
@@ -39,12 +41,16 @@ export function CommandPalette({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="overflow-hidden border-border/70 bg-background/96 p-0 backdrop-blur-xl">
+        <div className="sr-only">
+          <DialogTitle>{t('commandTitle')}</DialogTitle>
+          <DialogDescription>{t('commandDescription')}</DialogDescription>
+        </div>
         <Command>
           <CommandInput
             value={query}
             onValueChange={setQuery}
             className="border-b bg-transparent px-4 py-4 outline-none"
-            placeholder="Search leagues, teams, players... Ctrl/Cmd+K"
+            placeholder={`${t('search')} leagues, teams, players... Ctrl/Cmd+K`}
           />
           <CommandList className="max-h-[28rem] overflow-y-auto p-2">
             <CommandEmpty className="p-4 text-sm text-muted-foreground">
@@ -58,7 +64,7 @@ export function CommandPalette({
                   onOpenChange(false)
                 }}
               >
-                Players Explorer
+                {t('playersExplorer')}
               </CommandItem>
               <CommandItem
                 onSelect={() => {
@@ -66,7 +72,7 @@ export function CommandPalette({
                   onOpenChange(false)
                 }}
               >
-                Teams Explorer
+                {t('teamsExplorer')}
               </CommandItem>
               <CommandItem
                 onSelect={() => {
@@ -74,7 +80,7 @@ export function CommandPalette({
                   onOpenChange(false)
                 }}
               >
-                Compare Players
+                {t('comparePlayers')}
               </CommandItem>
             </CommandGroup>
 

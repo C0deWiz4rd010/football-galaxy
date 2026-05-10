@@ -21,7 +21,7 @@ export function useFootballData<T>(
 
   const paramsKey = useMemo(
     () => JSON.stringify({ ...params, season }),
-    [params.leagueId, params.matchday, params.playerId, params.season, params.teamId, season],
+    [params, season],
   )
 
   const stableParams = useMemo(

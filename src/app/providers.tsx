@@ -5,6 +5,7 @@ import { ThemeProvider } from 'next-themes'
 import { AppModeProvider } from '../contexts/AppModeContext'
 import { DataSourceProvider } from '../contexts/DataSourceContext'
 import { FavoritesProvider } from '../contexts/FavoritesContext'
+import { LocaleProvider } from '../contexts/LocaleContext'
 
 export function AppProviders({ children }: PropsWithChildren) {
   return (
@@ -16,7 +17,9 @@ export function AppProviders({ children }: PropsWithChildren) {
     >
       <AppModeProvider>
         <DataSourceProvider>
-          <FavoritesProvider>{children}</FavoritesProvider>
+          <LocaleProvider>
+            <FavoritesProvider>{children}</FavoritesProvider>
+          </LocaleProvider>
         </DataSourceProvider>
       </AppModeProvider>
     </ThemeProvider>

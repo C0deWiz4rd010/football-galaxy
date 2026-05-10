@@ -23,7 +23,7 @@ export function MobileTabBar() {
           }
           style={({ isActive }) => ({ color: isActive ? league.color : undefined })}
         >
-          <AssetImage src={leagueLogos[league.id] ?? league.logo} fallbackSrc={createLeagueLogo(league.abbreviation, league.color, league.name)} alt="" className="h-5 w-5 rounded" loading="lazy" />
+          <AssetImage src={leagueLogos[league.id] ?? league.logo} fallbackSrc={createLeagueLogo(league.abbreviation, league.color, league.name)} alt={league.name} className="h-5 w-5 rounded bg-white/90 object-contain p-[1px]" loading="lazy" />
           <span className="mt-0.5">{league.abbreviation}</span>
         </NavLink>
       ))}

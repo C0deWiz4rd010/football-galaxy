@@ -4,17 +4,16 @@ import { Link, useParams } from 'react-router-dom'
 import { ArrowRight, Award, Clock3, Shield, Sparkles, Target } from 'lucide-react'
 
 import { CompareButton } from '@/components/player/CompareButton'
-import { PlayerEaCard } from '@/components/player/PlayerEaCard'
 import { PlayerHeader } from '@/components/player/PlayerHeader'
 import { PerformanceChart } from '@/components/player/PerformanceChart'
 import { PlayerRadarChart } from '@/components/player/RadarChart'
 import { StatBar } from '@/components/player/StatBar'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { BackButton } from '@/components/shared/BackButton'
 import { SkeletonCard } from '@/components/shared/SkeletonCard'
 import { ResultsTimeline } from '@/components/team/ResultsTimeline'
 import { Badge } from '@/components/ui/badge'
-import { useAppMode } from '@/hooks/useAppMode'
 import { useFootballData } from '@/hooks/useFootballData'
 import { getPlayerCardProfile } from '@/lib/player-ratings'
 import { formatMarketValue } from '@/lib/utils'
@@ -45,7 +44,6 @@ function DetailMetric({
 
 export default function PlayerDetail() {
   const { leagueId, playerId } = useParams()
-  const { mode } = useAppMode()
   const { data: player, isLoading } = useFootballData<Player>('getPlayer', {
     leagueId: leagueId as never,
     playerId,
@@ -91,6 +89,7 @@ export default function PlayerDetail() {
   return (
     <PageWrapper>
       <div className="space-y-5">
+        <BackButton />
         <PlayerHeader
           player={player}
           team={team ?? undefined}
@@ -105,9 +104,7 @@ export default function PlayerDetail() {
                   <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
                     Player profile
                   </p>
-                  <h2 className="mt-1 text-xl font-semibold tracking-tight">
-                    {mode === 'ea-fc' ? 'Live profile with card context' : 'Live profile overview'}
-                  </h2>
+                  <h2 className="mt-1 text-xl font-semibold tracking-tight">Live profile overview</h2>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline">{player.position}</Badge>
@@ -178,8 +175,6 @@ export default function PlayerDetail() {
           </div>
 
           <div className="space-y-4">
-            <PlayerEaCard player={player} team={team ?? undefined} />
-
             <section className="stat-card">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -197,7 +192,7 @@ export default function PlayerDetail() {
                   {player.name} projects as a <span className="font-medium text-foreground">{card.archetype}</span> with a strong {player.stats.attributes.passing >= player.stats.attributes.shooting ? 'build-up' : 'finishing'} profile.
                 </p>
                 <p>
-                  The current card tier is <span className="font-medium text-foreground">{card.tier}</span>, based on age, production, and role-specific output.
+                  The current internal scouting tier is <span className="font-medium text-foreground">{card.tier}</span>, based on age, production, and role-specific output.
                 </p>
                 {team ? (
                   <Link

@@ -11,11 +11,11 @@ import { ResultsTimeline } from '@/components/team/ResultsTimeline'
 import { SquadTable } from '@/components/team/SquadTable'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { AssetImage } from '@/components/shared/AssetImage'
+import { BackButton } from '@/components/shared/BackButton'
 import { SkeletonCard } from '@/components/shared/SkeletonCard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useAppMode } from '@/hooks/useAppMode'
 import { useFavorites } from '@/hooks/useFavorites'
 import { useFootballData } from '@/hooks/useFootballData'
 import { getPlayerCardProfile } from '@/lib/player-ratings'
@@ -43,7 +43,6 @@ function TeamMetric({
 
 export default function TeamDetail() {
   const { leagueId, teamId } = useParams()
-  const { mode } = useAppMode()
   const { data: team, isLoading } = useFootballData<Team>('getTeam', {
     leagueId: leagueId as never,
     teamId,
@@ -96,6 +95,7 @@ export default function TeamDetail() {
   return (
     <PageWrapper>
       <div className="space-y-5">
+        <BackButton />
         <section
           className="stat-card overflow-hidden p-5 text-white shadow-[0_24px_50px_rgba(11,29,34,0.28)] sm:p-6"
           style={{
@@ -120,9 +120,7 @@ export default function TeamDetail() {
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge className="border-white/20 bg-white/12 text-white">{team.shortName}</Badge>
-                    <Badge className="border-white/20 bg-black/15 text-white">
-                      {mode === 'ea-fc' ? 'EA FC Team Lens' : 'Galaxy Live Club View'}
-                    </Badge>
+                    <Badge className="border-white/20 bg-black/15 text-white">Galaxy Live Club View</Badge>
                   </div>
                   <h1 className="mt-3 text-3xl font-semibold tracking-tight">{team.name}</h1>
                   <p className="mt-1 text-white/80">
