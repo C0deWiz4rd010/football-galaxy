@@ -16,7 +16,9 @@ import { pageMotion } from '@/shared/motion/tokens'
 const ComparePage = lazy(() => import('@/pages/Compare'))
 const LeagueDashboardPage = lazy(() => import('@/pages/LeagueDashboard'))
 const PlayerDetailPage = lazy(() => import('@/pages/PlayerDetail'))
+const PlayersExplorerPage = lazy(() => import('@/pages/PlayersExplorer'))
 const TeamDetailPage = lazy(() => import('@/pages/TeamDetail'))
+const TeamsExplorerPage = lazy(() => import('@/pages/TeamsExplorer'))
 
 function LoadingGrid() {
   return (
@@ -41,9 +43,13 @@ function AppLayout() {
       ? 'Team Detail'
       : entity === 'player'
         ? 'Player Detail'
-        : location.pathname === '/compare'
-          ? 'Compare Players'
-          : league.name
+        : location.pathname === '/players'
+          ? 'Players Explorer'
+          : location.pathname === '/teams'
+            ? 'Teams Explorer'
+          : location.pathname === '/compare'
+            ? 'Compare Players'
+            : league.name
 
   return (
     <>
@@ -71,6 +77,20 @@ function AppLayout() {
             onClick={(event) => event.stopPropagation()}
           >
             <nav className="space-y-2">
+              <Link
+                to="/players"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block rounded-xl border px-4 py-3 text-sm font-medium"
+              >
+                Players Explorer
+              </Link>
+              <Link
+                to="/teams"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block rounded-xl border px-4 py-3 text-sm font-medium"
+              >
+                Teams Explorer
+              </Link>
               {leagues.map((item) => (
                 <NavLink
                   key={item.id}
@@ -126,6 +146,14 @@ export const router = createBrowserRouter([
       {
         path: 'compare',
         element: <ComparePage />,
+      },
+      {
+        path: 'players',
+        element: <PlayersExplorerPage />,
+      },
+      {
+        path: 'teams',
+        element: <TeamsExplorerPage />,
       },
       {
         path: ':leagueId',

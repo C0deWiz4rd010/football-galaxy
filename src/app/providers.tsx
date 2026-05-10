@@ -8,7 +8,12 @@ import { FavoritesProvider } from '../contexts/FavoritesContext'
 
 export function AppProviders({ children }: PropsWithChildren) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="dark"
+      enableSystem={false}
+      disableTransitionOnChange
+    >
       <AppModeProvider>
         <DataSourceProvider>
           <FavoritesProvider>{children}</FavoritesProvider>

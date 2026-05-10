@@ -12,7 +12,7 @@ interface HeaderProps {
 }
 
 export function Header({ title, subtitle, onSearch, onMenu }: HeaderProps) {
-  const { theme, setTheme } = useTheme()
+  const { resolvedTheme, setTheme } = useTheme()
 
   return (
     <header className="surface-panel sticky top-3 z-30 mx-3 flex h-16 items-center justify-between gap-3 rounded-[1.6rem] px-4 md:ml-[17.25rem] md:mr-6 md:px-6">
@@ -26,7 +26,12 @@ export function Header({ title, subtitle, onSearch, onMenu }: HeaderProps) {
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
         <AppModeToggle />
         <div className="hidden sm:block"><DataSourceToggle /></div>
-        <Button variant="ghost" size="icon" aria-label="Toggle dark mode" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Toggle dark mode"
+          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+        >
           <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
           <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
         </Button>

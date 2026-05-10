@@ -83,6 +83,11 @@
 
   html {
     scroll-behavior: smooth;
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
   }
 
   body {
@@ -157,14 +162,24 @@
     box-shadow: var(--shadow-card);
     backdrop-filter: blur(18px);
     transition:
+      box-shadow var(--motion-base) var(--ease-enter),
+      border-color var(--motion-fast) var(--ease-soft),
+      background-color var(--motion-fast) var(--ease-soft);
+  }
+
+  .stat-card:hover {
+    border-color: var(--border-strong);
+  }
+
+  .interactive-card {
+    transition:
       transform var(--motion-base) var(--ease-enter),
       box-shadow var(--motion-base) var(--ease-enter),
       border-color var(--motion-fast) var(--ease-soft);
   }
 
-  .stat-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--border-strong);
+  .interactive-card:hover {
+    transform: translateY(-1px);
   }
 
   [data-app-mode='ea-fc'] .stat-card,
