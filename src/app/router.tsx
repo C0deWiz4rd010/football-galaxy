@@ -21,6 +21,7 @@ import { getLeague, isLeagueId, leagues } from '@/lib/leagues'
 import { pageMotion } from '@/shared/motion/tokens'
 
 const ComparePage = lazy(() => import('@/pages/Compare'))
+const CoachDetailPage = lazy(() => import('@/pages/CoachDetail'))
 const LeagueDashboardPage = lazy(() => import('@/pages/LeagueDashboard'))
 const PlayerDetailPage = lazy(() => import('@/pages/PlayerDetail'))
 const PlayersExplorerPage = lazy(() => import('@/pages/PlayersExplorer'))
@@ -71,6 +72,15 @@ function getLayoutTitle(pathname: string) {
   const league = getLeague(leagueId)
 
   if (segments[1] === 'team') {
+    if (segments[3] === 'coach') {
+      return {
+        title: 'Coach Detail',
+        subtitle: `Football Galaxy / ${league.name}`,
+        showSwiper: false,
+        leagueId: league.id,
+      }
+    }
+
     return {
       title: 'Team Detail',
       subtitle: `Football Galaxy / ${league.name}`,
@@ -214,6 +224,10 @@ export const router = createBrowserRouter([
       {
         path: ':leagueId/team/:teamId',
         element: <TeamDetailPage />,
+      },
+      {
+        path: ':leagueId/team/:teamId/coach',
+        element: <CoachDetailPage />,
       },
       {
         path: ':leagueId/player/:playerId',

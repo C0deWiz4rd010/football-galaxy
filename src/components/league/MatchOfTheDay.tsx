@@ -104,7 +104,17 @@ export function MatchOfTheDay({ match }: { match?: Match }) {
             {match.events.length > 0 ? (
               match.events.map((event) => (
                 <li key={event.id} className="surface-soft rounded-xl px-3 py-2 text-sm">
-                  <span className="font-mono">{event.minute}'</span> {event.type} - {event.playerName}
+                  <span className="font-mono">{event.minute}'</span> {event.type} -{' '}
+                  {event.playerId ? (
+                    <Link
+                      to={`/${match.leagueId}/player/${event.playerId}`}
+                      className="font-medium hover:text-primary"
+                    >
+                      {event.playerName}
+                    </Link>
+                  ) : (
+                    event.playerName
+                  )}
                 </li>
               ))
             ) : (

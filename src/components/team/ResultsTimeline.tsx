@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 import { Badge } from '@/components/ui/badge'
 import { AssetImage } from '@/components/shared/AssetImage'
 import { formatDate } from '@/lib/utils'
@@ -22,8 +24,13 @@ export function ResultsTimeline({ matches, team }: { matches: Match[]; team?: Te
                 <Badge className={result === 'W' ? 'bg-green-900 text-green-50' : result === 'D' ? 'bg-yellow-900 text-yellow-50' : 'bg-red-900 text-red-50'}>{result}</Badge>
               </div>
               <div className="mt-3 flex items-center gap-3">
-                <AssetImage src={opponent.crest} fallbackSrc={createTeamCrest(opponent.shortName, opponent.primaryColor ?? '#0f766e', opponent.secondaryColor ?? '#f8fafc', match.matchday)} alt={opponent.name} className="h-8 w-8 rounded object-cover" loading="lazy" />
-                <span className="min-w-0 truncate">{opponent.name}</span>
+                <Link
+                  to={`/${opponent.leagueId}/team/${opponent.id}`}
+                  className="flex min-w-0 items-center gap-3 hover:text-primary"
+                >
+                  <AssetImage src={opponent.crest} fallbackSrc={createTeamCrest(opponent.shortName, opponent.primaryColor ?? '#0f766e', opponent.secondaryColor ?? '#f8fafc', match.matchday)} alt={opponent.name} className="h-8 w-8 rounded object-cover" loading="lazy" />
+                  <span className="min-w-0 truncate">{opponent.name}</span>
+                </Link>
                 <span className="ml-auto font-mono text-lg">{goalsFor}-{goalsAgainst}</span>
               </div>
             </div>

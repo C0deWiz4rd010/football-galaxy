@@ -4,6 +4,15 @@ import { mockData } from '@/data/mock'
 import type { Assist, FootballQueryParams, LeagueId, LeagueSummary, Match, Player, ResultCode, Scorer, Squad, Standing, Team } from './types'
 
 const apiBase = 'https://www.thesportsdb.com/api/v1/json/123'
+const espnApiBase = 'https://site.api.espn.com/apis/v2/sports/soccer'
+
+const espnLeagueSlugByLeagueId: Record<LeagueId, string> = {
+  'premier-league': 'eng.1',
+  bundesliga: 'ger.1',
+  'la-liga': 'esp.1',
+  'serie-a': 'ita.1',
+  'ligue-1': 'fra.1',
+}
 
 type ApiRecord = Record<string, unknown>
 
@@ -48,6 +57,34 @@ async function getJson(url: string): Promise<ApiRecord> {
   return (await response.json()) as ApiRecord
 }
 
+function normalizeTeamName(name: string | undefined) {
+  return (name ?? '')
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/\bafc\b/g, '')
+    .replace(/\bfc\b/g, '')
+    .replace(/[^a-z0-9]+/g, '')
+}
+
+function normalizeHexColor(color: string | undefined, fallback: string) {
+  if (!color) {
+    return fallback
+  }
+
+  return color.startsWith('#') ? color : `#${color}`
+}
+
+function syntheticManager(index: number) {
+  const firstNames = ['Marco', 'Julian', 'Mikel', 'Roberto', 'Thomas', 'Enzo', 'Arne', 'Oliver']
+  const lastNames = ['Silva', 'Meyer', 'Costa', 'Romero', 'Bauer', 'Martin', 'Rossi', 'Varela']
+  return `${firstNames[index % firstNames.length]} ${lastNames[(index * 3) % lastNames.length]}`
+}
+
+function syntheticStadium(teamName: string) {
+  const base = teamName.replace(/\b(AFC|FC)\b/g, '').trim()
+  return `${base} Stadium`
+}
+
 function nationalityFlag(nationality: string | undefined) {
   const normalized = nationality?.toLowerCase() ?? ''
   if (normalized.includes('german')) return createFlag('germany')
@@ -75,6 +112,7 @@ function mapApiTeam(record: ApiRecord, leagueId: LeagueId, fallback: Team, index
   return {
     ...fallback,
     id: value(record, 'idTeam') ?? fallback.id,
+    theSportsDbId: value(record, 'idTeam') ?? fallback.theSportsDbId,
     leagueId,
     name,
     shortName,
@@ -85,6 +123,180 @@ function mapApiTeam(record: ApiRecord, leagueId: LeagueId, fallback: Team, index
     primaryColor: league.color,
     secondaryColor: fallback.secondaryColor,
     squad: fallback.squad,
+  }
+}
+
+function createSyntheticPlayer(team: Team, index: number): Player {
+  const firstNames = ['Luca', 'Noah', 'Theo', 'Milan', 'Elias', 'Jonas', 'Mateo', 'Oscar', 'Hugo', 'Leo']
+  const lastNames = ['Silva', 'Martin', 'Keller', 'Moretti', 'Dubois', 'Costa', 'Hansen', 'Rossi', 'Garcia', 'Bauer']
+  const firstName = firstNames[index % firstNames.length]!
+  const lastName = lastNames[(index * 2) % lastNames.length]!
+  const name = `${firstName} ${lastName}`
+  const position = index === 0 ? 'GK' : index < 6 ? 'DF' : index < 12 ? 'MF' : 'FW'
+  const goalsBase = position === 'FW' ? 7 : position === 'MF' ? 3 : 0
+  const assistsBase = position === 'MF' ? 5 : position === 'FW' ? 3 : 1
+
+  return {
+    id: `${team.id}-player-${index + 1}`,
+    teamId: team.id,
+    leagueId: team.leagueId,
+    name,
+    number: index + 1,
+    position,
+    nationality: 'International',
+    flag: createFlag('england'),
+    age: 20 + (index % 12),
+    heightCm: 174 + (index % 18),
+    weightKg: 68 + (index % 16),
+    photo: createPlayerAvatar(`${firstName[0] ?? 'P'}${lastName[0] ?? ''}`, team.primaryColor ?? '#18181b'),
+    marketValueEurCents: (4_500_000 + index * 650_000) * 100,
+    contractUntil: `${2027 + (index % 4)}-06-30`,
+    stats: {
+      appearances: 12 + (index % 20),
+      goals: Math.max(0, goalsBase + (index % 6) - 1),
+      assists: Math.max(0, assistsBase + (index % 5) - 1),
+      yellowCards: index % 6,
+      redCards: index % 19 === 0 ? 1 : 0,
+      minutes: 720 + index * 85,
+      trend: [0, 1, 2, 1, 3].map((item, trendIndex) => item + ((index + trendIndex) % 3)),
+      attributes: {
+        pace: 58 + ((index * 7) % 36),
+        shooting: 50 + ((index * 5) % 40),
+        passing: 54 + ((index * 4) % 38),
+        dribbling: 55 + ((index * 3) % 39),
+        defending: 44 + ((index * 2) % 42),
+        physical: 56 + (index % 35),
+      },
+    },
+  }
+}
+
+function createSyntheticSquad(team: Team): Squad {
+  return {
+    teamId: team.id,
+    players: Array.from({ length: 22 }, (_, index) => createSyntheticPlayer(team, index)),
+  }
+}
+
+function statValue(stats: ApiRecord[], name: string) {
+  const stat = stats.find((item) => value(item, 'name') === name)
+  const raw = stat?.value
+  return typeof raw === 'number' ? raw : Number(raw ?? 0)
+}
+
+function appendForm(standing: Standing, goalsFor: number, goalsAgainst: number, opponent: string, date: string) {
+  const result: ResultCode = goalsFor > goalsAgainst ? 'W' : goalsFor === goalsAgainst ? 'D' : 'L'
+  standing.form = [
+    ...standing.form,
+    {
+      result,
+      opponent,
+      score: `${goalsFor}-${goalsAgainst}`,
+      date,
+    },
+  ].slice(-5)
+}
+
+function mapEspnTeam(
+  record: ApiRecord,
+  leagueId: LeagueId,
+  index: number,
+  fallback: Team | undefined,
+  sportsDbRecord: ApiRecord | undefined,
+): Team {
+  const league = leagues.find((item) => item.id === leagueId)!
+  const name = value(record, 'displayName') ?? value(record, 'name') ?? fallback?.name ?? `Club ${index + 1}`
+  const shortName = value(record, 'abbreviation')
+    ?? value(record, 'shortDisplayName')
+    ?? fallback?.shortName
+    ?? name.split(' ').map((part) => part[0]).join('').slice(0, 3).toUpperCase()
+
+  return {
+    id: value(record, 'id') ?? fallback?.id ?? `${leagueId}-team-${index + 1}`,
+    espnId: value(record, 'id'),
+    theSportsDbId: value(sportsDbRecord ?? {}, 'idTeam') ?? fallback?.theSportsDbId,
+    leagueId,
+    name,
+    shortName,
+    crest:
+      compactImage(
+        value((Array.isArray(record.logos) ? (record.logos as ApiRecord[])[0] : undefined) ?? {}, 'href'),
+        value(sportsDbRecord ?? {}, 'strBadge'),
+        fallback?.crest,
+      ) ?? createTeamCrest(shortName, league.color, '#f4f4f5', index),
+    manager: value(sportsDbRecord ?? {}, 'strManager') ?? fallback?.manager ?? syntheticManager(index),
+    stadium: value(sportsDbRecord ?? {}, 'strStadium') ?? fallback?.stadium ?? syntheticStadium(name),
+    capacity: numberValue(sportsDbRecord ?? {}, 'intStadiumCapacity') ?? fallback?.capacity,
+    primaryColor: normalizeHexColor(value(record, 'color'), league.color),
+    secondaryColor: normalizeHexColor(value(record, 'alternateColor'), fallback?.secondaryColor ?? '#0f172a'),
+    squad: fallback?.squad,
+  }
+}
+
+function mapEspnStanding(record: ApiRecord, team: Team, leagueId: LeagueId): Standing {
+  const stats = Array.isArray(record.stats) ? (record.stats as ApiRecord[]) : []
+  return {
+    id: `${team.id}-standing`,
+    leagueId,
+    position: statValue(stats, 'rank'),
+    team,
+    played: statValue(stats, 'gamesPlayed'),
+    won: statValue(stats, 'wins'),
+    drawn: statValue(stats, 'ties'),
+    lost: statValue(stats, 'losses'),
+    goalsFor: statValue(stats, 'pointsFor'),
+    goalsAgainst: statValue(stats, 'pointsAgainst'),
+    goalDifference: statValue(stats, 'pointDifferential'),
+    points: statValue(stats, 'points'),
+    avgPossession: 50,
+    form: [],
+  }
+}
+
+function mapEspnScoreboardMatch(record: ApiRecord, leagueId: LeagueId, teamsById: Map<string, Team>): Match | null {
+  const competition = Array.isArray(record.competitions) ? (record.competitions as ApiRecord[])[0] : undefined
+  const competitors = Array.isArray(competition?.competitors) ? (competition?.competitors as ApiRecord[]) : []
+  const homeRecord = competitors.find((item) => value(item, 'homeAway') === 'home')
+  const awayRecord = competitors.find((item) => value(item, 'homeAway') === 'away')
+  const homeId = value(homeRecord ?? {}, 'id')
+  const awayId = value(awayRecord ?? {}, 'id')
+  const homeTeam = homeId ? teamsById.get(homeId) : undefined
+  const awayTeam = awayId ? teamsById.get(awayId) : undefined
+
+  if (!homeTeam || !awayTeam) {
+    return null
+  }
+
+  const statusType = competition && typeof competition.status === 'object'
+    ? value((competition.status as ApiRecord).type as ApiRecord, 'name')
+    : value(record.status as ApiRecord, 'type')
+
+  const details = Array.isArray(competition?.details) ? (competition?.details as ApiRecord[]) : []
+
+  return {
+    id: value(record, 'id') ?? `${homeTeam.id}-${awayTeam.id}-${value(record, 'date')}`,
+    leagueId,
+    season: estimateCurrentSeasonLabel(),
+    matchday: numberValue(record, 'week') ?? currentMatchdayFromMatches([]),
+    utcDate: value(record, 'date') ?? new Date().toISOString(),
+    status:
+      statusType === 'STATUS_SCHEDULED'
+        ? 'SCHEDULED'
+        : statusType?.includes('STATUS_') && !statusType.includes('FINAL')
+          ? 'LIVE'
+          : 'FINISHED',
+    homeTeam,
+    awayTeam,
+    homeScore: numberValue(homeRecord ?? {}, 'score'),
+    awayScore: numberValue(awayRecord ?? {}, 'score'),
+    venue: value(record.venue as ApiRecord, 'displayName'),
+    events: details.map((detail, index) => ({
+      id: `${value(record, 'id') ?? 'match'}-event-${index}`,
+      minute: Number(String(value(detail, 'clock') ?? '0').replace(/[^0-9]/g, '')) || 0,
+      type: value(detail, 'scoringPlay') === 'True' || value(detail, 'scoringPlay') === 'true' ? 'goal' : value(detail, 'yellowCard') === 'True' || value(detail, 'yellowCard') === 'true' ? 'yellow' : value(detail, 'redCard') === 'True' || value(detail, 'redCard') === 'true' ? 'red' : 'substitution',
+      teamId: value(detail, 'team') ?? '',
+      playerName: 'Live event',
+    })),
   }
 }
 
@@ -107,37 +319,11 @@ function emptyStanding(team: Team, leagueId: LeagueId, index: number): Standing 
   }
 }
 
-function applyResult(standing: Standing, goalsFor: number, goalsAgainst: number, opponent: string, date: string) {
-  const result: ResultCode = goalsFor > goalsAgainst ? 'W' : goalsFor === goalsAgainst ? 'D' : 'L'
-  standing.played += 1
-  standing.goalsFor += goalsFor
-  standing.goalsAgainst += goalsAgainst
-  standing.goalDifference = standing.goalsFor - standing.goalsAgainst
-  if (goalsFor > goalsAgainst) {
-    standing.won += 1
-    standing.points += 3
-  } else if (goalsFor === goalsAgainst) {
-    standing.drawn += 1
-    standing.points += 1
-  } else {
-    standing.lost += 1
-  }
-  standing.form = [
-    ...standing.form,
-    {
-      result,
-      opponent,
-      score: `${goalsFor}-${goalsAgainst}`,
-      date,
-    },
-  ].slice(-5)
-}
-
 function mapMatch(record: ApiRecord, leagueId: LeagueId, teamsById: Map<string, Team>): Match | null {
-  const homeId = value(record, 'idHomeTeam')
-  const awayId = value(record, 'idAwayTeam')
-  const homeTeam = homeId ? teamsById.get(homeId) : undefined
-  const awayTeam = awayId ? teamsById.get(awayId) : undefined
+  const homeKey = normalizeTeamName(value(record, 'strHomeTeam'))
+  const awayKey = normalizeTeamName(value(record, 'strAwayTeam'))
+  const homeTeam = teamsById.get(homeKey)
+  const awayTeam = teamsById.get(awayKey)
   if (!homeTeam || !awayTeam) {
     return null
   }
@@ -198,46 +384,92 @@ async function loadLeague(leagueId: LeagueId): Promise<LiveLeagueData> {
   const promise = (async () => {
     const league = leagues.find((item) => item.id === leagueId)!
     const fallback = mockData[leagueId]
-    const [leaguePayload, teamPayload] = await Promise.all([
+    const espnLeagueSlug = espnLeagueSlugByLeagueId[leagueId]
+    const [leaguePayload, teamPayload, standingsPayload, espnTeamsPayload, scoreboardPayload] = await Promise.all([
       getJson(`${apiBase}/lookupleague.php?id=${league.theSportsDbLeagueId}`).catch((): ApiRecord => ({})),
-      getJson(`${apiBase}/search_all_teams.php?l=${encodeURIComponent(league.theSportsDbLeagueName)}`),
+      getJson(`${apiBase}/search_all_teams.php?l=${encodeURIComponent(league.theSportsDbLeagueName)}`).catch((): ApiRecord => ({})),
+      getJson(`${espnApiBase}/${espnLeagueSlug}/standings`),
+      getJson(`${espnApiBase}/${espnLeagueSlug}/teams`),
+      getJson(`${espnApiBase}/${espnLeagueSlug}/scoreboard`).catch((): ApiRecord => ({})),
     ])
     const leagueRecords = Array.isArray(leaguePayload.leagues) ? (leaguePayload.leagues as ApiRecord[]) : []
     const leagueLogo = compactImage(value(leagueRecords[0] ?? {}, 'strBadge'), value(leagueRecords[0] ?? {}, 'strLogo'), value(leagueRecords[0] ?? {}, 'strPoster'))
     const teamRecords = Array.isArray(teamPayload.teams) ? (teamPayload.teams as ApiRecord[]) : []
-    const teams = teamRecords.length
-      ? teamRecords.map((team, index) => mapApiTeam(team, leagueId, fallback.teams[index] ?? fallback.teams[0]!, index))
-      : fallback.teams
+    const sportsDbByName = new Map(teamRecords.map((team) => [normalizeTeamName(value(team, 'strTeam')), team]))
+    const espnTeamRecords = Array.isArray((espnTeamsPayload.sports as ApiRecord[] | undefined)?.[0]?.leagues)
+      ? (((espnTeamsPayload.sports as ApiRecord[])[0]?.leagues as ApiRecord[])[0]?.teams as ApiRecord[] | undefined) ?? []
+      : []
+    const espnTeams = espnTeamRecords
+      .map((entry) => (typeof entry.team === 'object' ? entry.team as ApiRecord : undefined))
+      .filter((team): team is ApiRecord => Boolean(team))
+    const teams = espnTeams.length
+      ? espnTeams.map((team, index) =>
+          mapEspnTeam(
+            team,
+            leagueId,
+            index,
+            fallback.teams[index],
+            sportsDbByName.get(normalizeTeamName(value(team, 'displayName') ?? value(team, 'name'))),
+          ),
+        )
+      : (teamRecords.length
+          ? teamRecords.map((team, index) => mapApiTeam(team, leagueId, fallback.teams[index] ?? fallback.teams[0]!, index))
+          : fallback.teams)
 
-    const teamsById = new Map(teams.map((team) => [team.id, team]))
-    const standingsById = new Map(teams.map((team, index) => [team.id, emptyStanding(team, leagueId, index)]))
+    const teamsByEspnId = new Map(teams.map((team) => [team.espnId ?? team.id, team]))
+    const teamsByName = new Map(teams.map((team) => [normalizeTeamName(team.name), team]))
+    const standingsEntries = Array.isArray((standingsPayload.children as ApiRecord[] | undefined)?.[0]?.standings)
+      ? []
+      : ((((standingsPayload.children as ApiRecord[] | undefined)?.[0] ?? {}) as ApiRecord).standings as ApiRecord | undefined)?.entries as ApiRecord[] | undefined ?? []
+
+    const standings = standingsEntries.length
+      ? standingsEntries
+          .map((entry, index) => {
+            const teamRecord = typeof entry.team === 'object' ? (entry.team as ApiRecord) : undefined
+            const mappedTeam = teamRecord
+              ? teamsByEspnId.get(value(teamRecord, 'id') ?? '')
+              : undefined
+            return mappedTeam ? mapEspnStanding(entry, mappedTeam, leagueId) : emptyStanding(teams[index]!, leagueId, index)
+          })
+          .sort((a, b) => a.position - b.position)
+      : fallback.standings.map((standing, index) => ({ ...standing, team: teams[index] ?? standing.team }))
+
     const season = estimateCurrentSeasonLabel()
-    const eventPayload = await getJson(`${apiBase}/eventsseason.php?id=${league.theSportsDbLeagueId}&s=${season}`)
+    const eventPayload = await getJson(`${apiBase}/eventsseason.php?id=${league.theSportsDbLeagueId}&s=${season}`).catch((): ApiRecord => ({}))
     const eventRecords = Array.isArray(eventPayload.events) ? (eventPayload.events as ApiRecord[]) : []
-    const matches = eventRecords.map((event) => mapMatch(event, leagueId, teamsById)).filter((match): match is Match => Boolean(match))
+    const seasonMatches = eventRecords.map((event) => mapMatch(event, leagueId, teamsByName)).filter((match): match is Match => Boolean(match))
+    const scoreboardEvents = Array.isArray(scoreboardPayload.events) ? (scoreboardPayload.events as ApiRecord[]) : []
+    const liveMatches = scoreboardEvents.map((event) => mapEspnScoreboardMatch(event, leagueId, teamsByEspnId)).filter((match): match is Match => Boolean(match))
 
-    for (const match of matches) {
+    const standingsById = new Map(standings.map((standing) => [standing.team.id, { ...standing }]))
+    for (const match of seasonMatches) {
       if (match.homeScore === undefined || match.awayScore === undefined) {
         continue
       }
       const home = standingsById.get(match.homeTeam.id)
       const away = standingsById.get(match.awayTeam.id)
       if (home && away) {
-        applyResult(home, match.homeScore, match.awayScore, match.awayTeam.shortName, match.utcDate)
-        applyResult(away, match.awayScore, match.homeScore, match.homeTeam.shortName, match.utcDate)
+        appendForm(home, match.homeScore, match.awayScore, match.awayTeam.shortName, match.utcDate)
+        appendForm(away, match.awayScore, match.homeScore, match.homeTeam.shortName, match.utcDate)
       }
     }
+    const standingsWithForm = Array.from(standingsById.values())
+      .sort((a, b) => a.position - b.position)
+      .map((standing, index) => ({ ...standing, avgPossession: fallback.standings[index]?.avgPossession ?? 50 }))
 
-    const standings = Array.from(standingsById.values())
-      .sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor)
-      .map((standing, index) => ({ ...standing, position: index + 1, avgPossession: fallback.standings[index]?.avgPossession ?? 50 }))
+    const recentSeasonMatches = seasonMatches.slice(-10).reverse()
+    const mergedMatches = liveMatches.length
+      ? [...liveMatches, ...recentSeasonMatches.filter((match) => !liveMatches.some((liveMatch) => liveMatch.id === match.id))]
+      : recentSeasonMatches
 
     return {
       leagueLogo,
       teams,
-      standings: standings.some((standing) => standing.played > 0) ? standings : fallback.standings.map((standing, index) => ({ ...standing, team: teams[index] ?? standing.team })),
-      matches: matches.length ? matches.slice(-10).reverse() : fallback.recentMatches.map((match) => ({ ...match, homeTeam: teams.find((team) => team.shortName === match.homeTeam.shortName) ?? match.homeTeam, awayTeam: teams.find((team) => team.shortName === match.awayTeam.shortName) ?? match.awayTeam })),
-      currentMatchday: currentMatchdayFromMatches(matches),
+      standings: standingsWithForm.some((standing) => standing.played > 0) ? standingsWithForm : fallback.standings.map((standing, index) => ({ ...standing, team: teams[index] ?? standing.team })),
+      matches: mergedMatches.length
+        ? mergedMatches
+        : fallback.recentMatches.map((match) => ({ ...match, homeTeam: teams.find((team) => normalizeTeamName(team.name) === normalizeTeamName(match.homeTeam.name)) ?? match.homeTeam, awayTeam: teams.find((team) => normalizeTeamName(team.name) === normalizeTeamName(match.awayTeam.name)) ?? match.awayTeam })),
+      currentMatchday: currentMatchdayFromMatches(liveMatches.length ? liveMatches : seasonMatches),
     }
   })()
 
@@ -325,12 +557,16 @@ export async function getSquad(params: FootballQueryParams = {}): Promise<Squad>
 
   const promise = (async () => {
     try {
-      const payload = await getJson(`${apiBase}/lookup_all_players.php?id=${team.id}`)
+      if (!team.theSportsDbId) {
+        return createSyntheticSquad(team)
+      }
+
+      const payload = await getJson(`${apiBase}/lookup_all_players.php?id=${team.theSportsDbId}`)
       const records = Array.isArray(payload.player) ? (payload.player as ApiRecord[]) : []
       const players = records.map((player, index) => mapApiPlayer(player, team, index)).slice(0, 28)
-      return { teamId: team.id, players: players.length ? players : team.squad ?? [] }
+      return { teamId: team.id, players: players.length ? players : team.squad ?? createSyntheticSquad(team).players }
     } catch {
-      return { teamId: team.id, players: team.squad ?? [] }
+      return { teamId: team.id, players: team.squad ?? createSyntheticSquad(team).players }
     }
   })()
 

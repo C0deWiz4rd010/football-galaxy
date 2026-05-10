@@ -124,7 +124,13 @@ export default function TeamDetail() {
                   </div>
                   <h1 className="mt-3 text-3xl font-semibold tracking-tight">{team.name}</h1>
                   <p className="mt-1 text-white/80">
-                    {team.manager} · {team.stadium} · {team.capacity?.toLocaleString()} seats
+                    <Link
+                      to={`/${team.leagueId}/team/${team.id}/coach`}
+                      className="font-medium text-white hover:text-white/80"
+                    >
+                      {team.manager ?? 'Coach pending'}
+                    </Link>{' '}
+                    · {team.stadium} · {team.capacity?.toLocaleString()} seats
                   </p>
                 </div>
                 <motion.div whileTap={{ scale: 1.14 }}>
@@ -182,7 +188,10 @@ export default function TeamDetail() {
               </div>
               {topRatedPlayer ? (
                 <div className="mt-5 space-y-4">
-                  <div className="flex items-center gap-4">
+                  <Link
+                    to={`/${topRatedPlayer.leagueId}/player/${topRatedPlayer.id}`}
+                    className="flex items-center gap-4 hover:text-white/80"
+                  >
                     <AssetImage
                       src={topRatedPlayer.photo}
                       fallbackSrc={createTeamCrest(team.shortName, team.primaryColor ?? '#0f766e', team.secondaryColor ?? '#f8fafc', 0)}
@@ -196,7 +205,7 @@ export default function TeamDetail() {
                         {topRatedPlayer.position} · OVR {getPlayerCardProfile(topRatedPlayer).overall}
                       </p>
                     </div>
-                  </div>
+                  </Link>
                   <div className="grid grid-cols-3 gap-2">
                     <div className="rounded-xl border border-white/10 bg-white/6 p-3">
                       <p className="text-[11px] uppercase tracking-[0.18em] text-white/60">Goals</p>
@@ -247,7 +256,12 @@ export default function TeamDetail() {
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="surface-soft rounded-[1.3rem] p-4">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Manager</p>
-                  <p className="mt-2 text-lg font-semibold">{team.manager}</p>
+                  <Link
+                    to={`/${team.leagueId}/team/${team.id}/coach`}
+                    className="mt-2 inline-block text-lg font-semibold hover:text-primary"
+                  >
+                    {team.manager ?? 'Coach pending'}
+                  </Link>
                 </div>
                 <div className="surface-soft rounded-[1.3rem] p-4">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Home ground</p>

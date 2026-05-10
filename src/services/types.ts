@@ -91,6 +91,8 @@ export interface Squad {
 
 export interface Team {
   id: string
+  espnId?: string
+  theSportsDbId?: string
   leagueId: LeagueId
   name: string
   shortName: string

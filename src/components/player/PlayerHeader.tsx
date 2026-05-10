@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 import { Badge } from '@/components/ui/badge'
 import { AssetImage } from '@/components/shared/AssetImage'
 import { createPlayerAvatar, createTeamCrest, initialsFromName } from '@/lib/visualAssets'
@@ -18,7 +20,15 @@ export function PlayerHeader({ player, team, action }: { player: Player; team?: 
           <img src={player.flag} alt={`${player.nationality} flag`} className="h-4 w-6 rounded-sm object-cover" loading="lazy" />
           <span>{player.nationality} | {player.age} years | {player.heightCm} cm | {player.weightKg} kg</span>
         </p>
-        {team ? <p className="mt-2 flex items-center gap-2 text-sm"><AssetImage src={team.crest} fallbackSrc={createTeamCrest(team.shortName, team.primaryColor ?? '#0f766e', team.secondaryColor ?? '#f8fafc', 0)} alt={team.name} className="h-8 w-8 rounded object-cover" loading="lazy" /> {team.name}</p> : null}
+        {team ? (
+          <Link
+            to={`/${team.leagueId}/team/${team.id}`}
+            className="mt-2 inline-flex items-center gap-2 text-sm hover:text-primary"
+          >
+            <AssetImage src={team.crest} fallbackSrc={createTeamCrest(team.shortName, team.primaryColor ?? '#0f766e', team.secondaryColor ?? '#f8fafc', 0)} alt={team.name} className="h-8 w-8 rounded object-cover" loading="lazy" />
+            <span>{team.name}</span>
+          </Link>
+        ) : null}
       </div>
       {action}
     </section>

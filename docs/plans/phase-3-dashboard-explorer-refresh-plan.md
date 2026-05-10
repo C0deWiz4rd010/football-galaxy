@@ -105,3 +105,28 @@ Bring the league landing view back under control by reducing visual noise and ma
 - secondary cards are visibly smaller and denser than before
 - team and player supporting modules remain clickable and keyboard reachable
 - lint, tests, and build pass after the refactor
+
+## Live Data Remediation
+
+### Problem
+
+The free TheSportsDB responses are not complete enough for the current-season top-5-leagues product goal.
+
+Observed on 2026-05-10 during direct API checks:
+
+- `lookuptable` for Premier League returned only 5 rows
+- `search_all_teams` for Premier League returned only 10 teams
+- `eventsseason` for Premier League returned only 15 events
+- ESPN public standings returned the full 20-team table for Premier League
+
+### Decision
+
+- use ESPN public standings as the primary standings source for full league tables
+- keep TheSportsDB as a secondary enrichment layer for badges, managers, stadiums, and optional player media where available
+- continue to maintain local synthetic fallback data so team and player detail views do not collapse when live enrichment is partial
+
+### Success Criteria For This Slice
+
+- Premier League table shows all 20 clubs
+- league navigation remains stable when opening clubs outside the partial TheSportsDB coverage
+- match center and storyline cards remain clickable and compact after the data-source switch
