@@ -12,12 +12,12 @@ export function Sidebar() {
   const teams = Object.values(mockData).flatMap((league) => league.teams)
   const players = teams.flatMap((team) => team.squad ?? [])
   return (
-    <aside data-sidebar className="fixed left-0 top-0 z-40 hidden h-screen w-64 border-r border-white/5 bg-gray-950/80 backdrop-blur-xl md:flex md:flex-col">
-      <Link to="/premier-league" className="flex h-16 items-center gap-3 border-b border-white/5 px-5">
-        <span className="grid h-9 w-9 place-items-center rounded-lg bg-white text-sm font-black text-zinc-950">FG</span>
+    <aside data-sidebar className="surface-panel fixed left-4 top-4 z-40 hidden h-[calc(100vh-2rem)] w-64 flex-col overflow-hidden rounded-[2rem] md:flex">
+      <Link to="/premier-league" className="app-grid-lines relative flex h-20 items-center gap-3 border-b border-white/5 px-5">
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white text-sm font-black text-zinc-950 shadow-[0_12px_24px_rgba(255,255,255,0.12)]">FG</span>
         <div>
-          <p className="font-semibold">Football Galaxy</p>
-          <p className="text-xs text-zinc-400">Top 5 dashboard</p>
+          <p className="font-semibold text-white">Football Galaxy</p>
+          <p className="text-xs text-zinc-400">Modern matchday intelligence</p>
         </div>
       </Link>
       <nav className="flex-1 py-4">
@@ -25,17 +25,34 @@ export function Sidebar() {
           <NavLink
             key={league.id}
             to={`/${league.id}`}
-            className={({ isActive }) => cn('group flex items-center gap-3 border-l-2 border-transparent px-5 py-3 text-sm text-zinc-300 transition duration-150 hover:bg-white/5 hover:text-white', isActive && 'bg-white/5 text-white')}
-            style={({ isActive }) => ({ borderLeftColor: isActive ? league.color : 'transparent' })}
+            className={({ isActive }) =>
+              cn(
+                'group mx-3 flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm text-zinc-300 transition duration-150 hover:border-white/10 hover:bg-white/6 hover:text-white',
+                isActive && 'bg-white/8 text-white shadow-[0_14px_32px_rgba(0,0,0,0.22)]',
+              )
+            }
+            style={({ isActive }) => ({
+              borderColor: isActive ? `${league.color}55` : undefined,
+              boxShadow: isActive
+                ? `0 0 0 1px ${league.color}22 inset`
+                : undefined,
+            })}
           >
-            <AssetImage src={league.logo} fallbackSrc={createLeagueLogo(league.abbreviation, league.color, league.name)} alt="" className="h-8 w-8 rounded-md object-cover grayscale transition group-hover:grayscale-0" loading="lazy" />
-            {league.name}
+            <AssetImage src={league.logo} fallbackSrc={createLeagueLogo(league.abbreviation, league.color, league.name)} alt="" className="h-9 w-9 rounded-xl object-cover grayscale transition group-hover:grayscale-0" loading="lazy" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate">{league.name}</p>
+              <p className="truncate text-[11px] text-zinc-500">{league.country}</p>
+            </div>
+            <span
+              className="h-2.5 w-2.5 rounded-full"
+              style={{ backgroundColor: league.color }}
+            />
           </NavLink>
         ))}
       </nav>
       <div className="space-y-3 border-t border-white/5 p-4 text-sm">
-        <Link to="/compare" className="flex items-center gap-2 rounded-md px-2 py-2 text-zinc-300 hover:bg-white/5 hover:text-white"><BarChart3 className="h-4 w-4" /> Compare Players</Link>
-        <div className="rounded-md bg-white/5 p-3">
+        <Link to="/compare" className="surface-soft flex items-center gap-2 rounded-2xl px-3 py-3 text-zinc-300 transition hover:bg-white/10 hover:text-white"><BarChart3 className="h-4 w-4" /> Compare Players</Link>
+        <div className="surface-soft rounded-2xl p-3">
           <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-zinc-400"><Star className="h-3.5 w-3.5" /> Favorites</p>
           {[...favorites.teams.map((id) => teams.find((team) => team.id === id)), ...favorites.players.map((id) => players.find((player) => player.id === id))]
             .filter(Boolean)

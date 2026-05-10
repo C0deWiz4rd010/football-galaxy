@@ -11,6 +11,7 @@ import { CommandPalette } from '@/components/shared/CommandPalette'
 import { SkeletonCard } from '@/components/shared/SkeletonCard'
 import { Toaster } from '@/components/ui/toast'
 import { getLeague, isLeagueId, leagues } from '@/lib/leagues'
+import { pageMotion } from '@/shared/motion/tokens'
 
 const ComparePage = lazy(() => import('@/pages/Compare'))
 const LeagueDashboardPage = lazy(() => import('@/pages/LeagueDashboard'))
@@ -96,10 +97,10 @@ function AppLayout() {
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={location.pathname}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+              initial={pageMotion.initial}
+              animate={pageMotion.animate}
+              exit={pageMotion.exit}
+              transition={pageMotion.transition}
             >
               <Outlet />
             </motion.div>
