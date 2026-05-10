@@ -5,13 +5,11 @@ import { Link, useParams } from 'react-router-dom'
 import {
   AlertCircle,
   ArrowRight,
-  CalendarClock,
   Flame,
   Shield,
   Sparkles,
   Star,
   Target,
-  Trophy,
   Zap,
 } from 'lucide-react'
 
@@ -28,10 +26,8 @@ import { SkeletonCard } from '@/components/shared/SkeletonCard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useDataSource } from '@/contexts/DataSourceContext'
-import { useAppMode } from '@/hooks/useAppMode'
 import { useFootballData } from '@/hooks/useFootballData'
 import { getLeague, isLeagueId } from '@/lib/leagues'
-import { getPlayerCardProfile } from '@/lib/player-ratings'
 import { formatDateTime } from '@/lib/utils'
 import { createLeagueLogo } from '@/lib/visualAssets'
 import type { LeagueSummary, Standing } from '@/services/types'
@@ -60,10 +56,12 @@ function SummaryStat({
   helper: string
 }) {
   return (
-    <div className="surface-soft rounded-[1.15rem] p-4">
-      <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
-      <p className="mt-2 text-xl font-semibold tracking-tight">{value}</p>
-      <p className="mt-1 text-sm text-muted-foreground">{helper}</p>
+    <div className="surface-soft rounded-[1rem] px-3 py-2.5">
+      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
+      <div className="mt-1 flex items-end justify-between gap-3">
+        <p className="text-lg font-semibold tracking-tight">{value}</p>
+        <p className="truncate text-xs text-muted-foreground">{helper}</p>
+      </div>
     </div>
   )
 }
@@ -86,13 +84,13 @@ function StorylineCard({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{eyebrow}</p>
-          <h3 className="mt-2 text-lg font-semibold tracking-tight">{title}</h3>
+          <h3 className="mt-1.5 text-base font-semibold tracking-tight">{title}</h3>
         </div>
         <div className="rounded-2xl bg-background/30 p-2 text-muted-foreground">{icon}</div>
       </div>
-      <p className="mt-3 text-sm text-muted-foreground">{text}</p>
+      <p className="mt-2 text-sm text-muted-foreground">{text}</p>
       {href ? (
-        <span className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-foreground">
+        <span className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-foreground">
           Open details
           <ArrowRight className="h-4 w-4" />
         </span>
@@ -115,7 +113,6 @@ export default function LeagueDashboard() {
   const { leagueId: routeLeagueId } = useParams()
   const leagueId = isLeagueId(routeLeagueId) ? routeLeagueId : 'premier-league'
   const { source } = useDataSource()
-  const { mode } = useAppMode()
   const { data, isLoading, error, refetch } = useFootballData<LeagueSummary>(
     'getLeagueSummary',
     { leagueId },
@@ -172,41 +169,38 @@ export default function LeagueDashboard() {
   const playmaker = topAssists[0]
   const scorer = topScorers[0]
   const spotlightPlayer = scorer?.player ?? playmaker?.player
-  const spotlightCard = spotlightPlayer ? getPlayerCardProfile(spotlightPlayer) : null
+  const spotlightTeamLabel = scorer?.player.id === spotlightPlayer?.id
+    ? scorer?.team.shortName
+    : playmaker?.team.shortName
 
   return (
     <PageWrapper>
-      <div className="space-y-5">
+      <div className="space-y-4">
         <section
-          className="stat-card app-grid-lines overflow-hidden p-5 sm:p-6"
+          className="stat-card app-grid-lines overflow-hidden p-4 sm:p-5"
           style={{
-            backgroundImage:
-              mode === 'ea-fc'
-                ? `radial-gradient(circle at top right, ${league.color}22, transparent 26%), linear-gradient(135deg, rgba(244,180,56,0.12), transparent 50%)`
-                : `radial-gradient(circle at top right, ${league.color}18, transparent 26%)`,
+            backgroundImage: `radial-gradient(circle at top right, ${league.color}18, transparent 26%)`,
           }}
         >
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(340px,0.95fr)]">
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="flex min-w-0 items-center gap-4">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(300px,0.9fr)]">
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
                   <AssetImage
                     src={league.logo}
                     fallbackSrc={createLeagueLogo(league.abbreviation, league.color, league.name)}
                     alt={`${league.name} logo`}
-                    className="h-16 w-16 rounded-[1.3rem] bg-white/90 object-contain p-2 ring-1 ring-white/10"
+                    className="h-14 w-14 rounded-[1.2rem] bg-white/90 object-contain p-2 ring-1 ring-white/10"
                     loading="lazy"
                   />
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="outline">{league.country}</Badge>
-                      <Badge className="bg-white/10 text-foreground">
-                        {mode === 'ea-fc' ? 'EA FC Mode' : 'Galaxy Live'}
-                      </Badge>
+                      <Badge className="bg-white/10 text-foreground">Galaxy Live</Badge>
                     </div>
-                    <h1 className="mt-2 text-3xl font-semibold tracking-tight">{league.name}</h1>
-                    <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">
-                      Full table first, then the most important storylines, player races, and match context around it.
+                    <h1 className="mt-1.5 text-2xl font-semibold tracking-tight">{league.name}</h1>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Table first, fast context second.
                     </p>
                   </div>
                 </div>
@@ -224,7 +218,7 @@ export default function LeagueDashboard() {
                 </div>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                 <SummaryStat
                   label="Leader"
                   value={leader ? leader.team.shortName : '-'}
@@ -246,50 +240,74 @@ export default function LeagueDashboard() {
                   helper={formLeader ? formLeader.team.shortName : 'Waiting for trend data'}
                 />
               </div>
+
+              <div className="grid gap-2 sm:grid-cols-3">
+                <Link to="/teams" className="interactive-card surface-soft rounded-[1rem] px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
+                  <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Explore</span>
+                  <div className="mt-1 flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium">Teams Explorer</span>
+                    <Sparkles className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                </Link>
+                <Link to="/players" className="interactive-card surface-soft rounded-[1rem] px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
+                  <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Explore</span>
+                  <div className="mt-1 flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium">Players Explorer</span>
+                    <Zap className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                </Link>
+                <Link to="/compare" className="interactive-card surface-soft rounded-[1rem] px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
+                  <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Compare</span>
+                  <div className="mt-1 flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium">Player Matchups</span>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                </Link>
+              </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-              <div className="surface-soft rounded-[1.35rem] p-4">
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+              <div className="surface-soft rounded-[1rem] px-3 py-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                       Title pulse
                     </p>
-                    <h2 className="mt-2 text-lg font-semibold tracking-tight">
-                      {leader?.team.name ?? league.name} dictate the race
+                    <h2 className="mt-1.5 text-base font-semibold tracking-tight">
+                      {leader?.team.name ?? league.name} set the pace
                     </h2>
                   </div>
-                  <Trophy className="h-5 w-5 text-muted-foreground" />
+                  <Flame className="h-5 w-5 text-muted-foreground" />
                 </div>
-                <p className="mt-3 text-sm text-muted-foreground">
+                <p className="mt-2 text-sm text-muted-foreground">
                   {leader
                     ? `${leader.team.name} lead the table after ${leader.played} matches with a goal difference of ${leader.goalDifference}.`
                     : 'The title race will appear here as soon as standings are available.'}
                 </p>
               </div>
 
-              <div className="surface-soft rounded-[1.35rem] p-4">
+              <div className="surface-soft rounded-[1rem] px-3 py-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                       Spotlight player
                     </p>
-                    <h2 className="mt-2 text-lg font-semibold tracking-tight">
+                    <h2 className="mt-1.5 text-base font-semibold tracking-tight">
                       {spotlightPlayer ? spotlightPlayer.name : 'No featured player yet'}
                     </h2>
                   </div>
                   <Star className="h-5 w-5 text-muted-foreground" />
                 </div>
-                {spotlightPlayer && spotlightCard ? (
+                {spotlightPlayer ? (
                   <>
-                    <div className="mt-3 flex flex-wrap gap-2">
+                    <div className="mt-2 flex flex-wrap gap-2">
                       <Badge variant="outline">{spotlightPlayer.position}</Badge>
-                      <Badge>{spotlightCard.archetype}</Badge>
-                      <Badge variant="outline">OVR {spotlightCard.overall}</Badge>
+                      {spotlightTeamLabel ? <Badge variant="outline">{spotlightTeamLabel}</Badge> : null}
+                      <Badge>{scorer?.player.id === spotlightPlayer.id ? `${scorer.goals} goals` : `${playmaker?.assists ?? 0} assists`}</Badge>
                     </div>
                     <Link
                       to={`/${spotlightPlayer.leagueId}/player/${spotlightPlayer.id}`}
-                      className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary"
+                      className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary"
                     >
                       Open player profile
                       <ArrowRight className="h-4 w-4" />
@@ -307,8 +325,8 @@ export default function LeagueDashboard() {
 
         <LeagueTable standings={standings} />
 
-        <section className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-          <div className="grid gap-4 lg:grid-cols-2">
+        <section className="grid gap-3 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
+          <div className="grid gap-3 lg:grid-cols-2">
             <StorylineCard
               icon={<Flame className="h-5 w-5" />}
               eyebrow="Rising Team"
@@ -345,48 +363,24 @@ export default function LeagueDashboard() {
               href={topDefense ? `/${topDefense.leagueId}/team/${topDefense.team.id}` : undefined}
             />
             <StorylineCard
-              icon={<CalendarClock className="h-5 w-5" />}
+              icon={<Sparkles className="h-5 w-5" />}
               eyebrow="Explore More"
               title="Jump into clubs and players"
               text="Use the explorer views to browse every available team and player instead of relying only on the league dashboard."
             />
           </div>
 
-          <div className="grid gap-4">
+          <div className="grid gap-3">
             <MatchOfTheDay match={recentMatches[0]} />
             <FormTableCard standings={standings} />
           </div>
         </section>
 
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(320px,0.9fr)]">
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(280px,0.8fr)]">
           <TopScorersCard title="Top Scorers" items={topScorers} />
           <TopAssistsCard items={topAssists} />
           <TeamStatsCard standings={standings} />
         </div>
-
-        <section className="grid gap-4 md:grid-cols-3">
-          <Link to="/teams" className="stat-card interactive-card p-4">
-            <Sparkles className="h-5 w-5 text-muted-foreground" />
-            <h2 className="mt-3 text-lg font-semibold">Teams Explorer</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Browse clubs across all five leagues, keep table position visible, and open team pages faster.
-            </p>
-          </Link>
-          <Link to="/players" className="stat-card interactive-card p-4">
-            <Zap className="h-5 w-5 text-muted-foreground" />
-            <h2 className="mt-3 text-lg font-semibold">Players Explorer</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Search the available player pool, scan role and OVR, then jump into detailed scouting views.
-            </p>
-          </Link>
-          <Link to="/compare" className="stat-card interactive-card p-4">
-            <ArrowRight className="h-5 w-5 text-muted-foreground" />
-            <h2 className="mt-3 text-lg font-semibold">Compare Center</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Move from league stories into head-to-head player comparisons with live and EA FC perspectives.
-            </p>
-          </Link>
-        </section>
       </div>
     </PageWrapper>
   )

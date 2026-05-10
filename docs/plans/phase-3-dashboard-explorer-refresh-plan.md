@@ -84,3 +84,24 @@ The league dashboard should behave like a premium football control room:
 - users can open team and player detail views from multiple entry points
 - search returns meaningful grouped hits
 - dashboard storylines make the page feel alive without overpowering the standings
+
+## Current Dashboard Compaction Slice
+
+### Objective
+
+Bring the league landing view back under control by reducing visual noise and making the table the immediate focal point.
+
+### Planned Adjustments
+
+- compress the league header into a dense status strip with only essential context
+- move the full standings table directly below the header with no oversized hero competing for attention
+- replace wide showcase cards with compact modules for leaders, form, and team trends
+- remove oversized chart treatments where a dense metric list communicates faster
+- convert secondary modules into clearer interactive surfaces that open team or player detail views
+
+### Validation
+
+- standings table is visible above the fold on common desktop sizes
+- secondary cards are visibly smaller and denser than before
+- team and player supporting modules remain clickable and keyboard reachable
+- lint, tests, and build pass after the refactor
