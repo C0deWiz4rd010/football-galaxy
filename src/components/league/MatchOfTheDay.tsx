@@ -1,30 +1,97 @@
 import { useState } from 'react'
+
 import { AnimatePresence, motion } from 'framer-motion'
+
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { AssetImage } from '@/components/shared/AssetImage'
 import { formatDateTime } from '@/lib/utils'
+import { createTeamCrest } from '@/lib/visualAssets'
 import type { Match } from '@/services/types'
 
 export function MatchOfTheDay({ match }: { match: Match }) {
   const [open, setOpen] = useState(false)
   const isTodayLive = match.status === 'LIVE'
+
   return (
     <section className="stat-card">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold tracking-tight">Match of the Day</h2>
-        {isTodayLive ? <Badge className="animate-pulse border-red-500/30 bg-red-500/15 text-red-500">LIVE</Badge> : null}
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+            Match Center
+          </p>
+          <h2 className="mt-1 text-lg font-semibold tracking-tight">Match of the Day</h2>
+        </div>
+        {isTodayLive ? (
+          <Badge className="border-red-500/30 bg-red-500/15 text-red-500">LIVE</Badge>
+        ) : (
+          <Badge variant="outline">{match.status}</Badge>
+        )}
       </div>
+
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-center">
-        <div><img src={match.homeTeam.crest} alt="" className="mx-auto h-16 w-16 rounded-lg" loading="lazy" /><p className="mt-2 text-sm font-medium">{match.homeTeam.shortName}</p></div>
-        <div className="font-mono text-4xl font-bold">{match.homeScore}-{match.awayScore}</div>
-        <div><img src={match.awayTeam.crest} alt="" className="mx-auto h-16 w-16 rounded-lg" loading="lazy" /><p className="mt-2 text-sm font-medium">{match.awayTeam.shortName}</p></div>
+        <div>
+          <AssetImage
+            src={match.homeTeam.crest}
+            fallbackSrc={createTeamCrest(
+              match.homeTeam.shortName,
+              match.homeTeam.primaryColor ?? '#0f766e',
+              match.homeTeam.secondaryColor ?? '#f8fafc',
+              0,
+            )}
+            alt={match.homeTeam.name}
+            className="mx-auto h-16 w-16 rounded-2xl object-cover"
+            loading="lazy"
+          />
+          <p className="mt-2 text-sm font-medium">{match.homeTeam.shortName}</p>
+        </div>
+        <div className="rounded-[1.4rem] border border-white/10 bg-white/5 px-4 py-3 font-mono text-4xl font-bold">
+          {match.homeScore}-{match.awayScore}
+        </div>
+        <div>
+          <AssetImage
+            src={match.awayTeam.crest}
+            fallbackSrc={createTeamCrest(
+              match.awayTeam.shortName,
+              match.awayTeam.primaryColor ?? '#0f766e',
+              match.awayTeam.secondaryColor ?? '#f8fafc',
+              1,
+            )}
+            alt={match.awayTeam.name}
+            className="mx-auto h-16 w-16 rounded-2xl object-cover"
+            loading="lazy"
+          />
+          <p className="mt-2 text-sm font-medium">{match.awayTeam.shortName}</p>
+        </div>
       </div>
-      <p className="mt-3 text-center text-xs text-muted-foreground">{formatDateTime(match.utcDate)} · {match.venue}</p>
-      <Button variant="outline" className="mt-4 w-full" onClick={() => setOpen((value) => !value)}>View Events</Button>
-      <AnimatePresence>
+
+      <div className="mt-4 rounded-[1.2rem] border border-white/8 bg-white/4 px-4 py-3 text-center">
+        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+          Kickoff and venue
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {formatDateTime(match.utcDate)} · {match.venue}
+        </p>
+      </div>
+
+      <Button variant="outline" className="mt-4 w-full" onClick={() => setOpen((value) => !value)}>
+        {open ? 'Hide Events' : 'View Events'}
+      </Button>
+      <AnimatePresence initial={false}>
         {open ? (
-          <motion.ol initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3 }} className="mt-4 space-y-2 overflow-hidden">
-            {match.events.map((event) => <li key={event.id} className="rounded-md bg-muted p-2 text-sm"><span className="font-mono">{event.minute}'</span> {event.type} · {event.playerName}</li>)}
+          <motion.ol
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.24 }}
+            className="mt-4 space-y-2 overflow-hidden"
+          >
+            {match.events.map((event) => (
+              <li key={event.id} className="surface-soft rounded-xl px-3 py-2 text-sm">
+                <span className="font-mono">{event.minute}'</span> {event.type} ·{' '}
+                {event.playerName}
+              </li>
+            ))}
           </motion.ol>
         ) : null}
       </AnimatePresence>
