@@ -2,8 +2,10 @@ import { Menu, Moon, Search, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
 import { AppModeToggle } from '@/components/shared/AppModeToggle'
+import { DataSourceToggle } from '@/components/shared/DataSourceToggle'
 import { LanguageToggle } from '@/components/shared/LanguageToggle'
 import { Button } from '@/components/ui/button'
+import { useDataSource } from '@/contexts/DataSourceContext'
 import { useLocale } from '@/contexts/LocaleContext'
 
 interface HeaderProps {
@@ -15,10 +17,11 @@ interface HeaderProps {
 
 export function Header({ title, subtitle, onSearch, onMenu }: HeaderProps) {
   const { resolvedTheme, setTheme } = useTheme()
+  const { runtimeDetail } = useDataSource()
   const { t } = useLocale()
 
   return (
-    <header className="surface-panel sticky top-3 z-30 mx-3 flex h-16 items-center justify-between gap-3 rounded-[1.6rem] px-4 md:ml-[17.25rem] md:mr-6 md:px-6">
+    <header className="surface-panel sticky top-3 z-30 mx-3 flex min-h-16 items-center justify-between gap-3 rounded-[1.6rem] px-4 py-3 md:ml-[17.25rem] md:mr-6 md:px-6">
       <div className="min-w-0 flex items-center gap-3">
         <Button
           variant="ghost"
@@ -32,9 +35,13 @@ export function Header({ title, subtitle, onSearch, onMenu }: HeaderProps) {
         <div className="min-w-0">
           <h1 className="truncate font-semibold tracking-tight">{title}</h1>
           <p className="hidden text-xs text-muted-foreground md:block">{subtitle}</p>
+          <p className="hidden max-w-[34rem] text-[11px] text-muted-foreground xl:block">
+            {runtimeDetail}
+          </p>
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+        <DataSourceToggle />
         <AppModeToggle />
         <LanguageToggle />
         <Button

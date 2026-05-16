@@ -112,7 +112,7 @@ function StorylineCard({
 export default function LeagueDashboard() {
   const { leagueId: routeLeagueId } = useParams()
   const leagueId = isLeagueId(routeLeagueId) ? routeLeagueId : 'premier-league'
-  const { source } = useDataSource()
+  const { runtimeLabel, source } = useDataSource()
   const { data, isLoading, error, refetch } = useFootballData<LeagueSummary>(
     'getLeagueSummary',
     { leagueId },
@@ -196,7 +196,7 @@ export default function LeagueDashboard() {
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="outline">{league.country}</Badge>
-                      <Badge className="bg-white/10 text-foreground">Galaxy Live</Badge>
+                      <Badge className="bg-white/10 text-foreground">{runtimeLabel}</Badge>
                     </div>
                     <h1 className="mt-1.5 text-2xl font-semibold tracking-tight">{league.name}</h1>
                     <p className="mt-1 text-sm text-muted-foreground">
