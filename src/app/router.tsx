@@ -28,6 +28,10 @@ const PlayersExplorerPage = lazy(() => import('@/pages/PlayersExplorer'))
 const TeamDetailPage = lazy(() => import('@/pages/TeamDetail'))
 const TeamsExplorerPage = lazy(() => import('@/pages/TeamsExplorer'))
 
+const GalaxyMapPageLazy = lazy(() =>
+  import('@/features/galaxy-map/GalaxyMapPage').then((m) => ({ default: m.GalaxyMapPage })),
+)
+
 function LoadingGrid() {
   return (
     <div className="grid gap-4 lg:grid-cols-3">
@@ -41,6 +45,15 @@ function LoadingGrid() {
 function getLayoutTitle(pathname: string) {
   const segments = pathname.split('/').filter(Boolean)
   const leagueId = segments[0]
+
+  if (segments[0] === 'galaxy') {
+    return {
+      title: 'Galaxy Map',
+      subtitle: 'Football Galaxy / Explore & Progress',
+      showSwiper: false,
+      leagueId: undefined,
+    }
+  }
 
   if (segments[0] === 'players') {
     return {
@@ -216,6 +229,10 @@ export const router = createBrowserRouter([
       {
         path: 'teams',
         element: <TeamsExplorerPage />,
+      },
+      {
+        path: 'galaxy',
+        element: <GalaxyMapPageLazy />,
       },
       {
         path: ':leagueId',

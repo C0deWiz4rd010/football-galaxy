@@ -27,6 +27,7 @@ export interface MockLeagueData {
 interface CreateMockLeagueOptions {
   leagueId: LeagueId
   teamNames: string[]
+  teamColors?: string[]
   seed: number
 }
 
@@ -81,9 +82,10 @@ function createPlayer(leagueId: LeagueId, teamId: string, teamColor: string, tea
   }
 }
 
-export function createMockLeague({ leagueId, teamNames, seed }: CreateMockLeagueOptions): MockLeagueData {
+export function createMockLeague({ leagueId, teamNames, teamColors, seed }: CreateMockLeagueOptions): MockLeagueData {
   const league = leagues.find((item) => item.id === leagueId)!
   const teams = teamNames.map((name, index) => {
+    const primaryColor = teamColors?.[index] ?? league.color
     const shortName = name
       .split(' ')
       .map((part) => part[0])
@@ -97,14 +99,14 @@ export function createMockLeague({ leagueId, teamNames, seed }: CreateMockLeague
       leagueId,
       name,
       shortName,
-      crest: createTeamCrest(shortName, league.color, secondaryColor, index),
+      crest: createTeamCrest(shortName, primaryColor, secondaryColor, index),
       manager: `${pick(firstNames, index + seed)} ${pick(lastNames, index + seed + 5)}`,
       stadium: `${name.split(' ')[0]} Arena`,
       capacity: 32000 + ((index + seed) % 11) * 4200,
-      primaryColor: league.color,
+      primaryColor,
       secondaryColor,
     }
-    team.squad = Array.from({ length: 18 }, (_, playerIndex) => createPlayer(leagueId, teamId, league.color, index, playerIndex))
+    team.squad = Array.from({ length: 18 }, (_, playerIndex) => createPlayer(leagueId, teamId, primaryColor, index, playerIndex))
     return team
   })
 

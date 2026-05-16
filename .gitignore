@@ -15,3 +15,10 @@ dist/
 coverage/
 .vite/
 *.tsbuildinfo
+
+# Local build logs
+build.log
+build_log.txt
+
+# Editor-specific
+.vscode/
