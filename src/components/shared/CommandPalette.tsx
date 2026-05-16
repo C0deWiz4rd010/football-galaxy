@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/command'
 import { useLocale } from '@/contexts/LocaleContext'
 import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
-import { searchEntities } from '@/lib/explorer-data'
+import { searchIndex } from '@/services/footballData'
 
 export function CommandPalette({
   open,
@@ -23,7 +23,7 @@ export function CommandPalette({
 }) {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
-  const results = useMemo(() => searchEntities(query), [query])
+  const results = useMemo(() => searchIndex.search(query), [query])
   const { t } = useLocale()
 
   const toggle = useCallback(

@@ -7,9 +7,9 @@ import { PageWrapper } from '@/components/layout/PageWrapper'
 import { AssetImage } from '@/components/shared/AssetImage'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { Badge } from '@/components/ui/badge'
-import { getTeamExplorerEntries } from '@/lib/explorer-data'
 import { leagues } from '@/lib/leagues'
 import { createTeamCrest } from '@/lib/visualAssets'
+import { searchIndex } from '@/services/footballData'
 import type { LeagueId } from '@/services/types'
 
 export default function TeamsExplorer() {
@@ -19,7 +19,7 @@ export default function TeamsExplorer() {
 
   const teams = useMemo(
     () =>
-      getTeamExplorerEntries(selectedLeagueId === 'all' ? undefined : selectedLeagueId)
+      searchIndex.teams(selectedLeagueId === 'all' ? undefined : selectedLeagueId)
         .filter(({ team, league }) => {
           const normalized = query.trim().toLowerCase()
 

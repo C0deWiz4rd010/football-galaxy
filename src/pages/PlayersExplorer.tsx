@@ -7,9 +7,9 @@ import { PageWrapper } from '@/components/layout/PageWrapper'
 import { AssetImage } from '@/components/shared/AssetImage'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { Badge } from '@/components/ui/badge'
-import { getPlayerExplorerEntries } from '@/lib/explorer-data'
 import { leagues } from '@/lib/leagues'
 import { createPlayerAvatar, initialsFromName } from '@/lib/visualAssets'
+import { searchIndex } from '@/services/footballData'
 import type { LeagueId } from '@/services/types'
 
 export default function PlayersExplorer() {
@@ -19,7 +19,7 @@ export default function PlayersExplorer() {
 
   const players = useMemo(
     () =>
-      getPlayerExplorerEntries(selectedLeagueId === 'all' ? undefined : selectedLeagueId)
+      searchIndex.players(selectedLeagueId === 'all' ? undefined : selectedLeagueId)
         .filter(({ player, team, archetype }) => {
           const normalized = query.trim().toLowerCase()
 

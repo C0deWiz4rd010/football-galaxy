@@ -1,8 +1,16 @@
+import {
+  getLeagueCatalog,
+  getPlayerExplorerEntries,
+  getTeamExplorerEntries,
+  searchEntities,
+} from '@/lib/explorer-data'
+
 import * as fallbackService from './openFootball'
 import * as liveService from './theSportsDb'
 import type {
   Assist,
   FootballQueryParams,
+  LeagueId,
   LeagueSummary,
   Match,
   Player,
@@ -82,6 +90,8 @@ export function getLeagueSummary(
 }
 
 export const searchIndex = {
-  teams: () => [],
-  players: () => [],
+  leagues: () => getLeagueCatalog().map(({ league }) => league),
+  teams: (leagueId?: LeagueId) => getTeamExplorerEntries(leagueId),
+  players: (leagueId?: LeagueId) => getPlayerExplorerEntries(leagueId),
+  search: (query: string) => searchEntities(query),
 }
