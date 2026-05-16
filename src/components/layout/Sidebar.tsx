@@ -1,5 +1,5 @@
 import { Link, NavLink } from 'react-router-dom'
-import { BarChart3, Globe2, Shield, Star, Users } from 'lucide-react'
+import { BarChart3, Globe2, Shield, Star, Users, X } from 'lucide-react'
 
 import { AssetImage } from '@/components/shared/AssetImage'
 import { BrandLogo } from '@/shared/ui/brand-logo'
@@ -127,19 +127,69 @@ export function Sidebar() {
           <div className="surface-soft rounded-2xl p-3">
             <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               <Star className="h-3.5 w-3.5" /> {t('favorites')}
+              {favorites.teams.length + favorites.players.length > 0 ? (
+                <span className="ml-auto rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                  {favorites.teams.length + favorites.players.length}
+                </span>
+              ) : null}
             </p>
-            {[...favorites.teams.map((id) => teams.find((team) => team.id === id)), ...favorites.players.map((id) => players.find((player) => player.id === id))]
-              .filter(Boolean)
-              .slice(0, 5)
-              .map((item) => (
-                <Link
-                  key={item!.id}
-                  to={favoriteHref(item!)}
-                  className="block truncate py-1 text-xs text-muted-foreground hover:text-foreground"
-                >
-                  {item!.name}
-                </Link>
-              ))}
+            {favorites.teams.length + favorites.players.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border/60 px-3 py-3 text-[11px] text-muted-foreground">
+                <p className="font-medium text-foreground/80">{t('favoritesEmpty')}</p>
+                <p className="mt-1">{t('favoritesEmptyHint')}</p>
+              </div>
+            ) : (
+              <ul className="space-y-1">
+                {favorites.teams
+                  .map((id) => teams.find((team) => team.id === id))
+                  .filter((item): item is NonNullable<typeof item> => Boolean(item))
+                  .slice(0, 5)
+                  .map((item) => (
+                    <li key={`team-${item.id}`} className="group flex items-center gap-2">
+                      <Link
+                        to={favoriteHref(item)}
+                        className="flex min-w-0 flex-1 items-center gap-2 truncate rounded-md px-1 py-0.5 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        <Shield className="h-3 w-3 shrink-0 opacity-70" />
+                        <span className="truncate">{item.name}</span>
+                      </Link>
+                      <button
+                        type="button"
+                        aria-label={t('removeFavorite')}
+                        title={t('removeFavorite')}
+                        onClick={() => favorites.toggleTeam(item.id)}
+                        className="opacity-0 transition group-hover:opacity-100 hover:text-rose-400"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </li>
+                  ))}
+                {favorites.players
+                  .map((id) => players.find((player) => player.id === id))
+                  .filter((item): item is NonNullable<typeof item> => Boolean(item))
+                  .slice(0, 5)
+                  .map((item) => (
+                    <li key={`player-${item.id}`} className="group flex items-center gap-2">
+                      <Link
+                        to={favoriteHref(item)}
+                        className="flex min-w-0 flex-1 items-center gap-2 truncate rounded-md px-1 py-0.5 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        <Users className="h-3 w-3 shrink-0 opacity-70" />
+                        <span className="truncate">{item.name}</span>
+                      </Link>
+                      <button
+                        type="button"
+                        aria-label={t('removeFavorite')}
+                        title={t('removeFavorite')}
+                        onClick={() => favorites.togglePlayer(item.id)}
+                        className="opacity-0 transition group-hover:opacity-100 hover:text-rose-400"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </li>
+                  ))}
+              </ul>
+            )}
           </div>
         </div>
       </div>

@@ -2,19 +2,28 @@ import { leagues } from '@/lib/leagues'
 import { createPlayerAvatar, createFlag } from '@/lib/visualAssets'
 import type { Assist, LeagueId, Match, Player, Scorer, Standing, Team } from '@/services/types'
 
-const firstNames = ['Luca', 'Noah', 'Theo', 'Milan', 'Elias', 'Jonas', 'Mateo', 'Oscar', 'Hugo', 'Leo', 'Nico', 'Rafael', 'Iker', 'Enzo', 'Felix', 'Adam', 'Ivan', 'Marco']
-const lastNames = ['Silva', 'Martin', 'Keller', 'Moretti', 'Dubois', 'Costa', 'Hansen', 'Rossi', 'Garcia', 'Bauer', 'Leroy', 'Santos', 'Varela', 'Meyer', 'Fischer', 'Ndiaye', 'Bianchi', 'Romero']
-const nationalities = [
-  ['England', createFlag('england')],
-  ['Germany', createFlag('germany')],
-  ['Spain', createFlag('spain')],
-  ['Italy', createFlag('italy')],
-  ['France', createFlag('france')],
-  ['Portugal', createFlag('portugal')],
-  ['Netherlands', createFlag('netherlands')],
-  ['Brazil', createFlag('brazil')],
-] as const
-const positions = ['GK', 'DF', 'DF', 'DF', 'MF', 'MF', 'MF', 'FW', 'FW'] as const
+const fallbackFirstNames = ['Luca', 'Noah', 'Theo', 'Milan', 'Elias', 'Jonas', 'Mateo', 'Oscar', 'Hugo', 'Leo']
+const fallbackLastNames = ['Silva', 'Martin', 'Keller', 'Moretti', 'Dubois', 'Costa', 'Hansen', 'Rossi', 'Garcia', 'Bauer']
+
+function pick<T>(items: readonly T[], index: number): T {
+  return items[index % items.length]!
+}
+
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/)
+  const first = parts[0]?.[0] ?? '?'
+  const last = parts.length > 1 ? parts[parts.length - 1]![0] : ''
+  return `${first}${last}`.toUpperCase()
+}
+
+function slug(name: string) {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
 
 export interface MockLeagueData {
   standings: Standing[]
@@ -22,6 +31,15 @@ export interface MockLeagueData {
   topAssists: Assist[]
   recentMatches: Match[]
   teams: Team[]
+}
+
+export interface RealPlayerInput {
+  id: number | string
+  name: string
+  position?: string | null
+  dateOfBirth?: string | null
+  nationality?: string | null
+  shirtNumber?: number | null
 }
 
 export interface RealTeamInput {
@@ -37,7 +55,11 @@ export interface RealTeamInput {
   lost: number
   goalsFor: number
   goalsAgainst: number
-  form: Array<'W' | 'D' | 'L'>
+  form: Array<'W' | 'D' | 'L' | string>
+  venue?: string | null
+  founded?: number | null
+  coach?: { name?: string | null; nationality?: string | null; dateOfBirth?: string | null } | null
+  squad?: RealPlayerInput[]
 }
 
 interface CreateMockLeagueOptions {
@@ -46,48 +68,92 @@ interface CreateMockLeagueOptions {
   seed: number
 }
 
-function pick<T>(items: readonly T[], index: number): T {
-  return items[index % items.length]!
+function mapPosition(raw?: string | null): 'GK' | 'DF' | 'MF' | 'FW' {
+  if (!raw) return 'MF'
+  const p = raw.toLowerCase()
+  if (p.includes('goalkeeper') || p === 'gk') return 'GK'
+  if (p.includes('back') || p.includes('defence') || p.includes('defender') || p === 'df') return 'DF'
+  if (p.includes('forward') || p.includes('winger') || p.includes('striker') || p.includes('offence') || p === 'fw') return 'FW'
+  return 'MF'
 }
 
-function initials(firstName: string, lastName: string) {
-  return `${firstName[0] ?? ''}${lastName[0] ?? ''}`
+function computeAge(dateOfBirth?: string | null, seasonEnd = new Date('2026-05-30')) {
+  if (!dateOfBirth) return 24
+  const dob = new Date(dateOfBirth)
+  if (Number.isNaN(dob.getTime())) return 24
+  let age = seasonEnd.getFullYear() - dob.getFullYear()
+  const m = seasonEnd.getMonth() - dob.getMonth()
+  if (m < 0 || (m === 0 && seasonEnd.getDate() < dob.getDate())) age -= 1
+  return age
 }
 
-function slug(name: string) {
-  return name
+function nationalitySlug(nationality?: string | null): string | null {
+  if (!nationality) return null
+  return nationality
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/[^a-z]+/g, '-')
     .replace(/^-|-$/g, '')
 }
 
-function createPlayer(leagueId: LeagueId, teamId: string, teamColor: string, teamIndex: number, playerIndex: number): Player {
-  const firstName = pick(firstNames, teamIndex + playerIndex)
-  const lastName = pick(lastNames, teamIndex * 3 + playerIndex)
-  const [nationality, flag] = pick(nationalities, teamIndex + playerIndex)
-  const position = playerIndex === 0 ? 'GK' : pick(positions, playerIndex)
-  const goalsBase = position === 'FW' ? 8 : position === 'MF' ? 4 : 1
-  const assistsBase = position === 'MF' ? 7 : position === 'FW' ? 4 : 2
+type FlagCode = 'england' | 'germany' | 'spain' | 'italy' | 'france' | 'portugal' | 'netherlands' | 'brazil'
+const FLAG_ALIASES: Record<string, FlagCode> = {
+  england: 'england',
+  'united-kingdom': 'england',
+  scotland: 'england',
+  wales: 'england',
+  'northern-ireland': 'england',
+  ireland: 'england',
+  germany: 'germany',
+  austria: 'germany',
+  switzerland: 'germany',
+  spain: 'spain',
+  italy: 'italy',
+  france: 'france',
+  portugal: 'portugal',
+  netherlands: 'netherlands',
+  belgium: 'netherlands',
+  brazil: 'brazil',
+}
+function toFlagCode(slug: string | null, fallback: FlagCode): FlagCode {
+  if (!slug) return fallback
+  return FLAG_ALIASES[slug] ?? fallback
+}
+
+function createPlayerFromReal(
+  leagueId: LeagueId,
+  teamId: string,
+  teamColor: string,
+  teamIndex: number,
+  playerIndex: number,
+  real: RealPlayerInput,
+): Player {
+  const position = mapPosition(real.position)
+  const age = computeAge(real.dateOfBirth)
+  const goalsBase = position === 'FW' ? 8 : position === 'MF' ? 4 : position === 'DF' ? 2 : 0
+  const assistsBase = position === 'MF' ? 7 : position === 'FW' ? 4 : position === 'DF' ? 2 : 1
+  const flagSlug = nationalitySlug(real.nationality)
+  const flagCode = toFlagCode(flagSlug, 'england')
+  const number = real.shirtNumber ?? playerIndex + 1
 
   return {
-    id: `${teamId}-p${playerIndex + 1}`,
+    id: `${teamId}-p${real.id ?? playerIndex + 1}`,
     teamId,
     leagueId,
-    name: `${firstName} ${lastName}`,
-    number: playerIndex + 1,
+    name: real.name,
+    number,
     position,
-    nationality,
-    flag,
-    age: 19 + ((teamIndex + playerIndex) % 15),
+    nationality: real.nationality ?? 'Unknown',
+    flag: createFlag(flagCode),
+    age,
     heightCm: 174 + ((teamIndex * 2 + playerIndex) % 24),
     weightKg: 68 + ((teamIndex + playerIndex * 2) % 20),
-    photo: createPlayerAvatar(initials(firstName, lastName), teamColor),
-    marketValueEurCents: (5_000_000 + (teamIndex * 2_100_000 + playerIndex * 775_000)) * 100,
-    contractUntil: `${2027 + ((teamIndex + playerIndex) % 4)}-06-30`,
+    photo: createPlayerAvatar(initials(real.name), teamColor),
+    marketValueEurCents: (3_000_000 + (teamIndex * 2_100_000 + playerIndex * 775_000)) * 100,
+    contractUntil: `${2026 + ((teamIndex + playerIndex) % 4)}-06-30`,
     stats: {
-      appearances: 18 + ((teamIndex + playerIndex) % 15),
+      appearances: position === 'GK' && playerIndex > 0 ? 4 + (playerIndex % 6) : 18 + ((teamIndex + playerIndex) % 15),
       goals: Math.max(0, goalsBase + ((teamIndex + playerIndex) % 9) - 3),
       assists: Math.max(0, assistsBase + ((teamIndex * 2 + playerIndex) % 8) - 2),
       yellowCards: (teamIndex + playerIndex) % 7,
@@ -106,6 +172,24 @@ function createPlayer(leagueId: LeagueId, teamId: string, teamColor: string, tea
   }
 }
 
+function createPlayerFallback(
+  leagueId: LeagueId,
+  teamId: string,
+  teamColor: string,
+  teamIndex: number,
+  playerIndex: number,
+): Player {
+  const firstName = pick(fallbackFirstNames, teamIndex + playerIndex)
+  const lastName = pick(fallbackLastNames, teamIndex * 3 + playerIndex)
+  return createPlayerFromReal(leagueId, teamId, teamColor, teamIndex, playerIndex, {
+    id: playerIndex + 1,
+    name: `${firstName} ${lastName}`,
+    position: playerIndex === 0 ? 'Goalkeeper' : 'Midfield',
+    nationality: 'Unknown',
+    shirtNumber: playerIndex + 1,
+  })
+}
+
 export function createMockLeague({ leagueId, realTeams, seed }: CreateMockLeagueOptions): MockLeagueData {
   const league = leagues.find((item) => item.id === leagueId)!
 
@@ -119,22 +203,29 @@ export function createMockLeague({ leagueId, realTeams, seed }: CreateMockLeague
       name: rt.name,
       shortName: rt.shortName,
       crest: rt.crest,
-      manager: `${pick(firstNames, index + seed)} ${pick(lastNames, index + seed + 5)}`,
-      stadium: `${rt.shortName} Stadium`,
+      manager: rt.coach?.name ?? `${pick(fallbackFirstNames, index + seed)} ${pick(fallbackLastNames, index + seed + 5)}`,
+      stadium: rt.venue ?? `${rt.shortName} Stadium`,
       capacity: 32000 + ((index + seed) % 11) * 4200,
       primaryColor,
       secondaryColor,
     }
-    team.squad = Array.from({ length: 18 }, (_, playerIndex) =>
-      createPlayer(leagueId, teamId, primaryColor, index, playerIndex),
-    )
+    if (rt.squad && rt.squad.length > 0) {
+      team.squad = rt.squad.map((real, playerIndex) =>
+        createPlayerFromReal(leagueId, teamId, primaryColor, index, playerIndex, real),
+      )
+    } else {
+      team.squad = Array.from({ length: 18 }, (_, playerIndex) =>
+        createPlayerFallback(leagueId, teamId, primaryColor, index, playerIndex),
+      )
+    }
     return team
   })
 
   const standings: Standing[] = realTeams
     .map((rt, index) => {
       const team = teams[index]!
-      const forms = (rt.form && rt.form.length > 0 ? rt.form : (['W', 'D', 'L', 'W', 'D'] as const)) as Array<'W' | 'D' | 'L'>
+      const rawForms = rt.form && rt.form.length > 0 ? rt.form : ['W', 'D', 'L', 'W', 'D']
+      const forms = rawForms.map((f) => (f === 'W' || f === 'D' || f === 'L' ? f : 'D')) as Array<'W' | 'D' | 'L'>
       return {
         id: `${team.id}-standing`,
         leagueId,
@@ -194,8 +285,8 @@ export function createMockLeague({ leagueId, realTeams, seed }: CreateMockLeague
     const awayTeam = teams[index * 2 + 1]!
     const homeScore = (index + seed) % 4
     const awayScore = (index * 2 + seed) % 3
-    const homePlayer = homeTeam.squad![8]!
-    const awayPlayer = awayTeam.squad![9]!
+    const homePlayer = homeTeam.squad![Math.min(8, homeTeam.squad!.length - 1)]!
+    const awayPlayer = awayTeam.squad![Math.min(9, awayTeam.squad!.length - 1)]!
     return {
       id: `${leagueId}-md38-${index + 1}`,
       leagueId,

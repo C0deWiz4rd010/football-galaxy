@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { ArrowRight, Award, Clock3, Shield, Sparkles, Target } from 'lucide-react'
+import { ArrowRight, Award, Clock3, Heart, Shield, Sparkles, Target } from 'lucide-react'
 
 import { CompareButton } from '@/components/player/CompareButton'
 import { PlayerHeader } from '@/components/player/PlayerHeader'
@@ -18,6 +18,7 @@ import { ResultsTimeline } from '@/components/team/ResultsTimeline'
 import { Badge } from '@/components/ui/badge'
 import { useLocale } from '@/contexts/LocaleContext'
 import { useFootballData } from '@/hooks/useFootballData'
+import { useFavorites } from '@/hooks/useFavorites'
 import { getFormScore } from '@/lib/player-ratings'
 import { formatMarketValue } from '@/lib/utils'
 import type { LeagueSummary, Match, Player, Team } from '@/services/types'
@@ -42,6 +43,28 @@ function DetailMetric({
       <p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p>
       <p className="mt-1 text-sm text-muted-foreground">{helper}</p>
     </div>
+  )
+}
+
+function FavoriteHeartButton({ playerId }: { playerId: string }) {
+  const { t } = useLocale()
+  const favorites = useFavorites()
+  const isFavorite = favorites.isPlayerFavorite(playerId)
+  return (
+    <button
+      type="button"
+      onClick={() => favorites.togglePlayer(playerId)}
+      aria-pressed={isFavorite}
+      aria-label={isFavorite ? t('unfollowPlayer') : t('followPlayer')}
+      title={isFavorite ? t('unfollowPlayer') : t('followPlayer')}
+      className={`group inline-flex h-10 w-10 items-center justify-center rounded-full border transition ${
+        isFavorite
+          ? 'border-rose-400/40 bg-rose-500/10 text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.35)]'
+          : 'border-border/60 bg-background/40 text-muted-foreground hover:text-rose-400 hover:border-rose-400/40'
+      }`}
+    >
+      <Heart className={`h-5 w-5 transition-transform group-active:scale-90 ${isFavorite ? 'fill-current' : ''}`} />
+    </button>
   )
 }
 
@@ -107,7 +130,12 @@ export default function PlayerDetail() {
           <PlayerHeader
             player={player}
             team={team ?? undefined}
-            action={<CompareButton playerId={player.id} />}
+            action={
+              <div className="flex items-center gap-2">
+                <FavoriteHeartButton playerId={player.id} />
+                <CompareButton playerId={player.id} />
+              </div>
+            }
           />
         </StaggerGrid.Item>
 

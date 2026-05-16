@@ -9,6 +9,13 @@ import { dirname, resolve } from 'node:path'
 const here = dirname(fileURLToPath(import.meta.url))
 const root = resolve(here, '..')
 const snapshot = JSON.parse(readFileSync(resolve(root, 'standings-snapshot.json'), 'utf8'))
+let squadsByCode = {}
+try {
+  squadsByCode = JSON.parse(readFileSync(resolve(root, 'squads-snapshot.json'), 'utf8'))
+  console.log('Loaded squads-snapshot.json (real player data will be embedded)')
+} catch {
+  console.log('No squads-snapshot.json found — squads will be synthetic. Run `node scripts/snapshot-squads.mjs` to generate.')
+}
 
 const codeToLeague = {
   PL: { id: 'premier-league', seed: 7 },
@@ -155,39 +162,74 @@ function tsString(s) {
 function emit(code) {
   const { id, seed } = codeToLeague[code]
   const block = snapshot[code]
-  const teams = block.table.map((t) => ({
-    name: t.name,
-    shortName: t.shortName || t.tla,
-    tla: (t.tla || t.shortName || t.name).trim().toUpperCase().slice(0, 3),
-    crest: t.crest,
-    color: pickColor(t.name),
-    points: t.points,
-    played: t.played,
-    won: t.won,
-    drawn: t.drawn,
-    lost: t.lost,
-    goalsFor: t.gf,
-    goalsAgainst: t.ga,
-    form: generateForm(t, t.position),
-  }))
+  const squadBlock = squadsByCode[code]
+  const squadByName = new Map()
+  if (squadBlock?.teams) {
+    for (const team of squadBlock.teams) squadByName.set(team.name, team)
+  }
+  const teams = block.table.map((t) => {
+    const live = squadByName.get(t.name)
+    return {
+      name: t.name,
+      shortName: t.shortName || t.tla,
+      tla: (t.tla || t.shortName || t.name).trim().toUpperCase().slice(0, 3),
+      crest: t.crest,
+      color: pickColor(t.name),
+      points: t.points,
+      played: t.played,
+      won: t.won,
+      drawn: t.drawn,
+      lost: t.lost,
+      goalsFor: t.gf,
+      goalsAgainst: t.ga,
+      form: generateForm(t, t.position),
+      venue: live?.venue ?? null,
+      founded: live?.founded ?? null,
+      coach: live?.coach ?? null,
+      squad: live?.squad ?? null,
+    }
+  })
 
+  const teamLines = teams.map((t) => {
+    const base = `{ name: ${tsString(t.name)}, shortName: ${tsString(t.shortName)}, tla: ${tsString(
+      t.tla,
+    )}, crest: ${tsString(t.crest)}, color: ${tsString(t.color)}, points: ${t.points}, played: ${
+      t.played
+    }, won: ${t.won}, drawn: ${t.drawn}, lost: ${t.lost}, goalsFor: ${t.goalsFor}, goalsAgainst: ${
+      t.goalsAgainst
+    }, form: [${t.form.map((f) => `'${f}'`).join(', ')}]`
+    const venue = t.venue ? `, venue: ${tsString(t.venue)}` : ''
+    const founded = t.founded ? `, founded: ${t.founded}` : ''
+    const coach = t.coach && t.coach.name
+      ? `, coach: { name: ${tsString(t.coach.name)}, nationality: ${
+          t.coach.nationality ? tsString(t.coach.nationality) : 'null'
+        }, dateOfBirth: ${t.coach.dateOfBirth ? tsString(t.coach.dateOfBirth) : 'null'} }`
+      : ''
+    let squad = ''
+    if (t.squad && t.squad.length > 0) {
+      const players = t.squad
+        .map(
+          (p) =>
+            `    { id: ${p.id}, name: ${tsString(p.name)}, position: ${
+              p.position ? tsString(p.position) : 'null'
+            }, dateOfBirth: ${p.dateOfBirth ? tsString(p.dateOfBirth) : 'null'}, nationality: ${
+              p.nationality ? tsString(p.nationality) : 'null'
+            }, shirtNumber: ${p.shirtNumber ?? 'null'} },`,
+        )
+        .join('\n')
+      squad = `, squad: [\n${players}\n  ]`
+    }
+    return `  ${base}${venue}${founded}${coach}${squad} },`
+  })
   const lines = [
     "import { createMockLeague } from './createMockLeague'",
     '',
-    '// Auto-generated from standings-snapshot.json (real 2025-26 data via football-data.org).',
-    '// Run `node scripts/build-mock-data.mjs` to regenerate after refreshing the snapshot.',
+    '// Auto-generated from standings-snapshot.json + squads-snapshot.json.',
+    '// Real 2025-26 standings + real squad rosters via football-data.org.',
+    '// Run `npm run build:mock` to regenerate (after refreshing snapshots).',
     `const realTeams = [`,
-    ...teams.map(
-      (t) =>
-        `  { name: ${tsString(t.name)}, shortName: ${tsString(t.shortName)}, tla: ${tsString(
-          t.tla,
-        )}, crest: ${tsString(t.crest)}, color: ${tsString(t.color)}, points: ${t.points}, played: ${
-          t.played
-        }, won: ${t.won}, drawn: ${t.drawn}, lost: ${t.lost}, goalsFor: ${t.goalsFor}, goalsAgainst: ${
-          t.goalsAgainst
-        }, form: [${t.form.map((f) => `'${f}'`).join(', ')}] as const },`,
-    ),
-    `] as const`,
+    ...teamLines,
+    `]`,
     '',
     `export const { standings, topScorers, topAssists, recentMatches, teams } = createMockLeague({`,
     `  leagueId: '${id}',`,

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 
 import { Link, useParams } from 'react-router-dom'
+import { motion } from 'framer-motion'
 
 import {
   AlertCircle,
@@ -284,12 +285,32 @@ export default function LeagueDashboard() {
                       {(leader?.team.name ?? league.name)} {t('setThePace')}
                     </h2>
                   </div>
-                  <Flame className="h-5 w-5 text-muted-foreground" />
+                  <motion.span
+                    aria-hidden
+                    className="inline-flex items-center justify-center text-amber-500 drop-shadow-[0_0_8px_rgba(251,146,60,0.55)]"
+                    animate={{
+                      scale: [1, 1.18, 0.92, 1.12, 1],
+                      filter: [
+                        'drop-shadow(0 0 0px rgba(251,146,60,0.3))',
+                        'drop-shadow(0 0 10px rgba(251,146,60,0.75))',
+                        'drop-shadow(0 0 4px rgba(251,146,60,0.45))',
+                        'drop-shadow(0 0 12px rgba(251,146,60,0.8))',
+                        'drop-shadow(0 0 0px rgba(251,146,60,0.3))',
+                      ],
+                    }}
+                    transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    <Flame className="h-5 w-5" />
+                  </motion.span>
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {leader
-                    ? `${leader.team.name} lead the table after ${leader.played} matches with a goal difference of ${leader.goalDifference}.`
-                    : 'The title race will appear here as soon as standings are available.'}
+                    ? t('leaderSummary', {
+                        name: leader.team.name,
+                        played: leader.played,
+                        gd: leader.goalDifference,
+                      })
+                    : t('titleRacePending')}
                 </p>
               </div>
 
@@ -300,7 +321,7 @@ export default function LeagueDashboard() {
                       {t('spotlightPlayer')}
                     </p>
                     <h2 className="mt-1.5 text-base font-semibold tracking-tight">
-                      {spotlightPlayer ? spotlightPlayer.name : 'No featured player yet'}
+                      {spotlightPlayer ? spotlightPlayer.name : t('noFeaturedPlayer')}
                     </h2>
                   </div>
                   <Star className="h-5 w-5 text-muted-foreground" />
@@ -310,7 +331,7 @@ export default function LeagueDashboard() {
                     <div className="mt-2 flex flex-wrap gap-2">
                       <Badge variant="outline">{spotlightPlayer.position}</Badge>
                       {spotlightTeamLabel ? <Badge variant="outline">{spotlightTeamLabel}</Badge> : null}
-                      <Badge>{scorer?.player.id === spotlightPlayer.id ? `${scorer.goals} goals` : `${playmaker?.assists ?? 0} assists`}</Badge>
+                      <Badge>{scorer?.player.id === spotlightPlayer.id ? t('goalsCount', { count: scorer.goals }) : t('assistsCount', { count: playmaker?.assists ?? 0 })}</Badge>
                     </div>
                     <Link
                       to={`/${spotlightPlayer.leagueId}/player/${spotlightPlayer.id}`}
@@ -322,7 +343,7 @@ export default function LeagueDashboard() {
                   </>
                 ) : (
                   <p className="mt-3 text-sm text-muted-foreground">
-                    A featured player card will appear here once scoring or creative leaders are available.
+                    {t('featuredPlayerHint')}
                   </p>
                 )}
               </div>
@@ -340,11 +361,11 @@ export default function LeagueDashboard() {
               cta={t('openDetails')}
               icon={<Flame className="h-5 w-5" />}
               eyebrow={t('risingTeam')}
-              title={risingTeam ? risingTeam.team.name : 'No breakout yet'}
+              title={risingTeam ? risingTeam.team.name : t('noBreakoutYet')}
               text={
                 risingTeam
-                  ? `${risingTeam.team.shortName} own the strongest goal difference trend in the league right now and look built for a sustained push.`
-                  : 'A breakout club story will appear here as the data fills in.'
+                  ? t('risingTeamSummary', { name: risingTeam.team.shortName })
+                  : t('breakoutStoryPending')
               }
               href={risingTeam ? `/${risingTeam.leagueId}/team/${risingTeam.team.id}` : undefined}
             />

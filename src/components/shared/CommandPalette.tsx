@@ -50,14 +50,14 @@ export function CommandPalette({
             value={query}
             onValueChange={setQuery}
             className="border-b bg-transparent px-4 py-4 outline-none"
-            placeholder={`${t('search')} leagues, teams, players... Ctrl/Cmd+K`}
+            placeholder={t('commandSearchPlaceholder')}
           />
           <CommandList className="max-h-[28rem] overflow-y-auto p-2">
             <CommandEmpty className="p-4 text-sm text-muted-foreground">
-              No matching leagues, teams, or players found.
+              {t('commandEmpty')}
             </CommandEmpty>
 
-            <CommandGroup heading="Quick navigation">
+            <CommandGroup heading={t('quickNavigation')}>
               <CommandItem
                 onSelect={() => {
                   navigate('/players')
@@ -84,7 +84,7 @@ export function CommandPalette({
               </CommandItem>
             </CommandGroup>
 
-            <CommandGroup heading={`Leagues (${results.leagues.slice(0, 5).length})`}>
+            <CommandGroup heading={t('leaguesGroup', { count: results.leagues.slice(0, 5).length })}>
               {results.leagues.slice(0, 5).map((league) => (
                 <CommandItem
                   key={league.id}
@@ -103,7 +103,7 @@ export function CommandPalette({
               ))}
             </CommandGroup>
 
-            <CommandGroup heading={`Teams (${results.teams.slice(0, 8).length})`}>
+            <CommandGroup heading={t('teamsGroup', { count: results.teams.slice(0, 8).length })}>
               {results.teams.slice(0, 8).map(({ league, standing, team }) => (
                 <CommandItem
                   key={team.id}
@@ -124,7 +124,7 @@ export function CommandPalette({
               ))}
             </CommandGroup>
 
-            <CommandGroup heading={`Players (${results.players.slice(0, 8).length})`}>
+            <CommandGroup heading={t('playersGroup', { count: results.players.slice(0, 8).length })}>
               {results.players.slice(0, 8).map(({ formLabel, formScore, player, team }) => (
                 <CommandItem
                   key={player.id}
@@ -139,7 +139,7 @@ export function CommandPalette({
                     {player.position} - {team.shortName}
                   </span>
                   <span className="ml-auto text-xs text-muted-foreground">
-                    Form {formScore}
+                    {t('formAbbrev')} {formScore}
                   </span>
                 </CommandItem>
               ))}
