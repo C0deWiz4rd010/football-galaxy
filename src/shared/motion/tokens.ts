@@ -14,9 +14,9 @@ export const motionEasing = {
 } as const
 
 export const pageMotion = {
-  initial: { opacity: 0, y: 10 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: 10 },
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
   transition: {
     duration: motionDurations.base,
     ease: motionEasing.enter,
@@ -24,9 +24,9 @@ export const pageMotion = {
 } as const
 
 export const fadeUpMotion = {
-  initial: { opacity: 0, y: 8 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: 8 },
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
   transition: {
     duration: motionDurations.base,
     ease: motionEasing.enter,

@@ -6,6 +6,7 @@ import { AppModeProvider } from '../contexts/AppModeContext'
 import { DataSourceProvider } from '../contexts/DataSourceContext'
 import { FavoritesProvider } from '../contexts/FavoritesContext'
 import { LocaleProvider } from '../contexts/LocaleContext'
+import { GalaxyProvider } from '../features/galaxy-map/context'
 
 export function AppProviders({ children }: PropsWithChildren) {
   return (
@@ -18,7 +19,9 @@ export function AppProviders({ children }: PropsWithChildren) {
       <AppModeProvider>
         <DataSourceProvider>
           <LocaleProvider>
-            <FavoritesProvider>{children}</FavoritesProvider>
+            <FavoritesProvider>
+              <GalaxyProvider>{children}</GalaxyProvider>
+            </FavoritesProvider>
           </LocaleProvider>
         </DataSourceProvider>
       </AppModeProvider>

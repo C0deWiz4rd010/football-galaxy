@@ -1,7 +1,8 @@
 import { Link, NavLink } from 'react-router-dom'
-import { BarChart3, Shield, Star, Users } from 'lucide-react'
+import { BarChart3, Globe2, Shield, Star, Users } from 'lucide-react'
 
 import { AssetImage } from '@/components/shared/AssetImage'
+import { BrandLogo } from '@/shared/ui/brand-logo'
 import { mockData } from '@/data/mock'
 import { useFavorites } from '@/hooks/useFavorites'
 import { useLeagueLogos } from '@/hooks/useLeagueLogos'
@@ -28,13 +29,7 @@ export function Sidebar() {
       className="surface-panel fixed left-4 top-4 z-40 hidden h-[calc(100vh-2rem)] w-64 overflow-hidden rounded-[2rem] md:flex md:flex-col"
     >
       <Link to="/premier-league" className="app-grid-lines relative flex h-20 items-center gap-3 border-b border-white/5 px-5">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white text-sm font-black text-zinc-950 shadow-[0_12px_24px_rgba(255,255,255,0.12)]">
-          FG
-        </span>
-        <div>
-          <p className="font-semibold text-foreground">Football Galaxy</p>
-          <p className="text-xs text-muted-foreground">Live football dashboard</p>
-        </div>
+        <BrandLogo subtitle="Live football dashboard" />
       </Link>
 
       <div className="flex min-h-0 flex-1 flex-col">
@@ -62,7 +57,7 @@ export function Sidebar() {
             to="/teams"
             className={({ isActive }) =>
               cn(
-                'group mx-3 mb-3 flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm transition duration-150 hover:border-border/70 hover:bg-background/50',
+                'group mx-3 mb-1 flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm transition duration-150 hover:border-border/70 hover:bg-background/50',
                 isActive
                   ? 'bg-primary/10 text-foreground shadow-[0_14px_32px_rgba(0,0,0,0.12)]'
                   : 'text-muted-foreground hover:text-foreground',
@@ -71,6 +66,20 @@ export function Sidebar() {
           >
             <Shield className="h-4 w-4" />
             {t('teamsExplorer')}
+          </NavLink>
+          <NavLink
+            to="/galaxy"
+            className={({ isActive }) =>
+              cn(
+                'group mx-3 mb-3 flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm transition duration-150 hover:border-border/70 hover:bg-background/50',
+                isActive
+                  ? 'bg-amber-400/10 text-amber-300 shadow-[0_14px_32px_rgba(0,0,0,0.12)]'
+                  : 'text-muted-foreground hover:text-foreground',
+              )
+            }
+          >
+            <Globe2 className="h-4 w-4" />
+            Galaxy Map
           </NavLink>
 
           <div className="mb-3 px-3">
