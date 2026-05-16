@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "proxy:dev": "node ./proxy/football-data-proxy.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },

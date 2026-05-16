@@ -26,13 +26,26 @@ Football Galaxy uses TheSportsDB v1 in live mode. It does not require signup for
 
 Official docs: https://www.thesportsdb.com/documentation
 
-The app works immediately without `.env`. If TheSportsDB is unavailable or rate limited, the app falls back to local mock data.
+The app works immediately without `.env`. In the browser, the app defaults to local fallback data because public live endpoints such as ESPN standings and scoreboards are not reliably browser-accessible due to CORS.
+
+To enable real live mode in the browser, run the local proxy and set `VITE_LIVE_DATA_PROXY_URL`:
+
+```bash
+npm run proxy:dev
+```
+
+```env
+VITE_LIVE_DATA_PROXY_URL=http://localhost:8787/api/live
+```
+
+The live service layer remains in the codebase and now routes requests through that proxy when it is configured.
 
 ## Live vs Historical
 
-- Live: fetches teams, badges, players, player images, and season events from TheSportsDB.
-- Historical: loads local openfootball-style JSON files from `src/data/historical/`.
-- Switching modes is instant and does not reload the page.
+- Live service: fetches teams, badges, players, player images, and season events from TheSportsDB plus ESPN-derived standings data when a proxy or server-side access path is available.
+- Local fallback: loads curated mock and historical data from `src/data/mock/` and `src/data/historical/`.
+- Current default: browser-safe local fallback for stable rendering and predictable development.
+- Important: the fallback leagues contain partially fictionalized club identities, so generated crests remain correct there until real club datasets replace them.
 
 ## League IDs
 

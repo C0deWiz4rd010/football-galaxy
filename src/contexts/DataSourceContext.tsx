@@ -7,6 +7,8 @@ import {
   useState,
 } from 'react'
 
+import { getLiveProxyConfig } from '@/services/config/liveProxy'
+
 type DataSource = 'live' | 'fallback'
 type ProxyStatus = 'configured' | 'unavailable'
 
@@ -28,16 +30,6 @@ const DEFAULT_SEASON = '2025-26'
 
 const DataSourceContext = createContext<DataSourceContextValue | undefined>(undefined)
 
-function readProxyBaseUrl() {
-  const configured = import.meta.env.VITE_LIVE_DATA_PROXY_URL?.trim()
-
-  if (!configured) {
-    return undefined
-  }
-
-  return configured.replace(/\/$/, '')
-}
-
 function readInitialSource(isLiveAvailable: boolean): DataSource {
   if (typeof window === 'undefined') {
     return 'fallback'
@@ -48,8 +40,7 @@ function readInitialSource(isLiveAvailable: boolean): DataSource {
 }
 
 export function DataSourceProvider({ children }: { children: ReactNode }) {
-  const proxyBaseUrl = readProxyBaseUrl()
-  const isLiveAvailable = Boolean(proxyBaseUrl)
+  const { baseUrl: proxyBaseUrl, isEnabled: isLiveAvailable } = getLiveProxyConfig()
   const [source, setSourceState] = useState<DataSource>(() =>
     readInitialSource(isLiveAvailable),
   )

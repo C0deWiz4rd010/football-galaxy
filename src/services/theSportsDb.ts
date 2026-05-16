@@ -1,6 +1,8 @@
+import { mockData } from '@/data/mock'
 import { leagues } from '@/lib/leagues'
 import { createFlag, createPlayerAvatar, createTeamCrest } from '@/lib/visualAssets'
-import { mockData } from '@/data/mock'
+import { buildLiveRequestUrl } from '@/services/config/liveProxy'
+
 import type { Assist, FootballQueryParams, LeagueId, LeagueSummary, Match, Player, ResultCode, Scorer, Squad, Standing, Team } from './types'
 
 const apiBase = 'https://www.thesportsdb.com/api/v1/json/123'
@@ -50,9 +52,9 @@ function compactImage(...images: Array<string | undefined>) {
 }
 
 async function getJson(url: string): Promise<ApiRecord> {
-  const response = await fetch(url)
+  const response = await fetch(buildLiveRequestUrl(url))
   if (!response.ok) {
-    throw new Error(`TheSportsDB request failed (${response.status}).`)
+    throw new Error(`Football data request failed (${response.status}).`)
   }
   return (await response.json()) as ApiRecord
 }
