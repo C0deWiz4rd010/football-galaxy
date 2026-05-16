@@ -7,6 +7,7 @@ import {
   useState,
 } from 'react'
 
+import { setSourcePreference } from '@/services/footballData'
 import { getLiveProxyConfig } from '@/services/config/liveProxy'
 
 type DataSource = 'live' | 'fallback'
@@ -41,16 +42,15 @@ function readInitialSource(isLiveAvailable: boolean): DataSource {
 
 export function DataSourceProvider({ children }: { children: ReactNode }) {
   const { baseUrl: proxyBaseUrl, isEnabled: isLiveAvailable } = getLiveProxyConfig()
-  const [source, setSourceState] = useState<DataSource>(() =>
+  const [storedSource, setSourceState] = useState<DataSource>(() =>
     readInitialSource(isLiveAvailable),
   )
   const [season, setSeason] = useState(DEFAULT_SEASON)
 
-  useEffect(() => {
-    if (!isLiveAvailable && source === 'live') {
-      setSourceState('fallback')
-    }
-  }, [isLiveAvailable, source])
+  // Derive the effective source from state + capability instead of writing back to
+  // state inside an effect. This avoids cascading renders (react-hooks/set-state-in-effect)
+  // and keeps the value strictly a function of inputs.
+  const source: DataSource = isLiveAvailable ? storedSource : 'fallback'
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -58,6 +58,9 @@ export function DataSourceProvider({ children }: { children: ReactNode }) {
     }
 
     window.localStorage.setItem(STORAGE_KEY, source)
+    // Propagate the user's choice into the data layer so the cascade in
+    // footballData.ts skips network loaders when the user picked Local mode.
+    setSourcePreference(source)
   }, [source])
 
   const value = useMemo<DataSourceContextValue>(() => {

@@ -2,7 +2,6 @@ import type { PropsWithChildren } from 'react'
 
 import { ThemeProvider } from 'next-themes'
 
-import { AppModeProvider } from '../contexts/AppModeContext'
 import { DataSourceProvider } from '../contexts/DataSourceContext'
 import { FavoritesProvider } from '../contexts/FavoritesContext'
 import { LocaleProvider } from '../contexts/LocaleContext'
@@ -16,15 +15,13 @@ export function AppProviders({ children }: PropsWithChildren) {
       enableSystem={false}
       disableTransitionOnChange
     >
-      <AppModeProvider>
-        <DataSourceProvider>
-          <LocaleProvider>
-            <FavoritesProvider>
-              <GalaxyProvider>{children}</GalaxyProvider>
-            </FavoritesProvider>
-          </LocaleProvider>
-        </DataSourceProvider>
-      </AppModeProvider>
+      <DataSourceProvider>
+        <LocaleProvider>
+          <FavoritesProvider>
+            <GalaxyProvider>{children}</GalaxyProvider>
+          </FavoritesProvider>
+        </LocaleProvider>
+      </DataSourceProvider>
     </ThemeProvider>
   )
 }

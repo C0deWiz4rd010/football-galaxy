@@ -2,17 +2,37 @@ import { describe, expect, it } from 'vitest'
 
 import * as premierLeagueData from '@/data/mock/premier-league'
 
-import { getPlayerCardProfile } from './player-ratings'
+import { getFormScore } from './player-ratings'
 
-describe('getPlayerCardProfile', () => {
-  it('returns a bounded overall and descriptive metadata', () => {
+describe('getFormScore', () => {
+  it('returns a bounded score with a valid label and traits', () => {
     const player = premierLeagueData.teams[0]!.squad![8]!
 
-    const profile = getPlayerCardProfile(player)
+    const form = getFormScore(player)
 
-    expect(profile.overall).toBeGreaterThanOrEqual(58)
-    expect(profile.overall).toBeLessThanOrEqual(96)
-    expect(profile.archetype.length).toBeGreaterThan(0)
-    expect(['Base', 'In Form', 'Playmaker', 'Defensive Wall', 'Future Star']).toContain(profile.tier)
+    expect(form.score).toBeGreaterThanOrEqual(0)
+    expect(form.score).toBeLessThanOrEqual(99)
+    expect(['Top Form', 'In Form', 'Steady', 'Cold']).toContain(form.label)
+    expect(Array.isArray(form.traits)).toBe(true)
+  })
+
+  it('ranks a productive striker above a low-output player', () => {
+    const squad = premierLeagueData.teams[0]!.squad!
+    const productive = squad.reduce((best, player) =>
+      player.stats.goals + player.stats.assists >
+      best.stats.goals + best.stats.assists
+        ? player
+        : best,
+    )
+    const quiet = squad.reduce((min, player) =>
+      player.stats.goals + player.stats.assists <
+      min.stats.goals + min.stats.assists
+        ? player
+        : min,
+    )
+
+    expect(getFormScore(productive).score).toBeGreaterThanOrEqual(
+      getFormScore(quiet).score,
+    )
   })
 })

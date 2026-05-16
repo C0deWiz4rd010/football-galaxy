@@ -8,6 +8,7 @@ afterEach(() => {
 
 describe('liveProxy config', () => {
   it('returns direct urls when no proxy is configured', () => {
+    vi.stubEnv('VITE_LIVE_DATA_PROXY_URL', '')
     const target = 'https://site.api.espn.com/apis/v2/sports/soccer/eng.1/scoreboard'
 
     expect(getLiveProxyConfig()).toEqual({

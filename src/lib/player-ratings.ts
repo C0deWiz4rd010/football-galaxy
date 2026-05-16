@@ -1,120 +1,78 @@
-import type { Player, PlayerStats } from '@/services/types'
+import type { Player } from '@/services/types'
 
-export interface PlayerCardProfile {
-  overall: number
-  attributes: PlayerStats['attributes']
-  archetype: string
-  tier: 'Base' | 'In Form' | 'Playmaker' | 'Defensive Wall' | 'Future Star'
+export type FormLabel = 'Top Form' | 'In Form' | 'Steady' | 'Cold'
+
+export interface FormScore {
+  /** 0–99 score derived from real season stats with recent-form weighting. */
+  score: number
+  label: FormLabel
+  /** Short descriptors derived from the player's stat profile. */
+  traits: string[]
 }
-
-const positionWeights = {
-  GK: {
-    pace: 0.05,
-    shooting: 0.02,
-    passing: 0.16,
-    dribbling: 0.07,
-    defending: 0.35,
-    physical: 0.35,
-  },
-  DF: {
-    pace: 0.15,
-    shooting: 0.05,
-    passing: 0.15,
-    dribbling: 0.1,
-    defending: 0.3,
-    physical: 0.25,
-  },
-  MF: {
-    pace: 0.14,
-    shooting: 0.12,
-    passing: 0.26,
-    dribbling: 0.2,
-    defending: 0.12,
-    physical: 0.16,
-  },
-  FW: {
-    pace: 0.2,
-    shooting: 0.3,
-    passing: 0.12,
-    dribbling: 0.22,
-    defending: 0.04,
-    physical: 0.12,
-  },
-} as const
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
 }
 
-function getArchetype(player: Player) {
-  const attrs = player.stats.attributes
-
-  if (player.position === 'FW') {
-    return attrs.shooting >= attrs.dribbling ? 'Box Striker' : 'Wide Threat'
+function averageTrend(trend: number[] | undefined) {
+  if (!trend || trend.length === 0) {
+    return null
   }
-
-  if (player.position === 'MF') {
-    return attrs.passing >= attrs.dribbling ? 'Tempo Conductor' : 'Carrier'
-  }
-
-  if (player.position === 'DF') {
-    return attrs.physical >= attrs.defending ? 'Enforcer' : 'Reader'
-  }
-
-  return 'Last Line'
+  const sum = trend.reduce((total, value) => total + value, 0)
+  return sum / trend.length
 }
 
-function getTier(player: Player) {
-  const contributions = player.stats.goals + player.stats.assists
+function deriveTraits(player: Player): string[] {
+  const traits: string[] = []
+  const { goals, assists, appearances, minutes, yellowCards, redCards } = player.stats
+  const apps = Math.max(1, appearances)
 
-  if (player.age <= 21 && contributions >= 8) {
-    return 'Future Star'
-  }
+  if (goals / apps >= 0.6) traits.push('Clinical Finisher')
+  else if (goals >= 8) traits.push('Goal Threat')
 
-  if (player.stats.assists >= player.stats.goals + 4) {
-    return 'Playmaker'
-  }
+  if (assists / apps >= 0.4) traits.push('Chance Creator')
+  else if (assists >= 6) traits.push('Provider')
 
-  if (player.position === 'DF' && player.stats.goals <= 4 && player.stats.yellowCards <= 4) {
-    return 'Defensive Wall'
-  }
+  if (minutes / apps >= 80) traits.push('Workhorse')
+  if (player.age <= 21 && goals + assists >= 6) traits.push('Rising Star')
+  if (player.position === 'DF' && yellowCards + redCards * 2 <= 3) traits.push('Composed Defender')
+  if (player.position === 'GK' && appearances >= 10) traits.push('Reliable Keeper')
 
-  if (player.stats.goals + player.stats.assists >= 14) {
-    return 'In Form'
-  }
-
-  return 'Base'
+  return traits.slice(0, 3)
 }
 
-export function getPlayerCardProfile(player: Player): PlayerCardProfile {
-  const attrs = player.stats.attributes
-  const weights = positionWeights[player.position]
-  const weightedBase =
-    attrs.pace * weights.pace +
-    attrs.shooting * weights.shooting +
-    attrs.passing * weights.passing +
-    attrs.dribbling * weights.dribbling +
-    attrs.defending * weights.defending +
-    attrs.physical * weights.physical
+function labelFor(score: number): FormLabel {
+  if (score >= 80) return 'Top Form'
+  if (score >= 65) return 'In Form'
+  if (score >= 45) return 'Steady'
+  return 'Cold'
+}
 
-  const contributionBonus = clamp(
-    player.stats.goals * 0.55 +
-      player.stats.assists * 0.45 +
-      player.stats.appearances * 0.15,
-    0,
-    12,
-  )
-  const minutesBonus = clamp(player.stats.minutes / 450, 0, 6)
-  const disciplinePenalty = player.stats.redCards * 1.2 + player.stats.yellowCards * 0.18
+/**
+ * Compute a "Form Score" (0–99) from real season statistics.
+ * Weights recent matches (trend) heavier than season totals for freshness.
+ */
+export function getFormScore(player: Player): FormScore {
+  const { goals, assists, appearances, minutes, yellowCards, redCards, trend } = player.stats
+  const apps = Math.max(1, appearances)
 
-  const overall = Math.round(
-    clamp(weightedBase * 0.88 + contributionBonus + minutesBonus - disciplinePenalty, 58, 96),
-  )
+  const recentForm =
+    averageTrend(trend) ??
+    clamp(((goals + assists * 0.7) / apps) * 90 + minutes / apps, 0, 100)
+
+  const per90 = (goals + assists * 0.75) / Math.max(1, minutes / 90)
+  const seasonImpact = clamp(per90 * 70 + Math.min(apps, 20) * 1.2, 0, 100)
+
+  const availability = clamp((minutes / (38 * 90)) * 100, 0, 100)
+
+  const discipline = clamp(yellowCards * 1.8 + redCards * 6, 0, 25)
+
+  const raw = recentForm * 0.5 + seasonImpact * 0.32 + availability * 0.18 - discipline
+  const score = Math.round(clamp(raw, 0, 99))
 
   return {
-    overall,
-    attributes: attrs,
-    archetype: getArchetype(player),
-    tier: getTier(player),
+    score,
+    label: labelFor(score),
+    traits: deriveTraits(player),
   }
 }

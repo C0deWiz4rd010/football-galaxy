@@ -3,6 +3,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { FavoritesProvider } from '@/contexts/FavoritesContext'
+import { LocaleProvider } from '@/contexts/LocaleContext'
 import { leagues } from '@/lib/leagues'
 import { mockData } from '@/data/mock'
 import type { LeagueSummary } from '@/services/types'
@@ -19,10 +20,6 @@ vi.mock('@/hooks/useFootballData', () => ({
 
 vi.mock('@/contexts/DataSourceContext', () => ({
   useDataSource: () => ({ source: 'historical', season: '2022-23' }),
-}))
-
-vi.mock('@/hooks/useAppMode', () => ({
-  useAppMode: () => ({ mode: 'live' }),
 }))
 
 const { useFootballData } = await import('@/hooks/useFootballData')
@@ -55,16 +52,18 @@ describe('LeagueDashboard', () => {
 
   it('renders the main standings surface', () => {
     render(
-      <FavoritesProvider>
-        <MemoryRouter initialEntries={['/premier-league']}>
-          <Routes>
-            <Route path="/:leagueId" element={<LeagueDashboard />} />
-          </Routes>
-        </MemoryRouter>
-      </FavoritesProvider>,
+      <LocaleProvider>
+        <FavoritesProvider>
+          <MemoryRouter initialEntries={['/premier-league']}>
+            <Routes>
+              <Route path="/:leagueId" element={<LeagueDashboard />} />
+            </Routes>
+          </MemoryRouter>
+        </FavoritesProvider>
+      </LocaleProvider>,
     )
 
-    expect(screen.getByRole('heading', { name: /full standings table/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /full standings table|komplette tabelle/i })).toBeInTheDocument()
     expect(screen.getByText(/premier league/i)).toBeInTheDocument()
   })
 })

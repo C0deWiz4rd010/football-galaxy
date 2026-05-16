@@ -18,6 +18,7 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import { FormDots } from '@/components/shared/FormDots'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useFavorites } from '@/hooks/useFavorites'
+import { getCrestSources } from '@/lib/assetSources'
 import { cn } from '@/lib/utils'
 import { createTeamCrest } from '@/lib/visualAssets'
 import type { Standing } from '@/services/types'
@@ -65,12 +66,15 @@ const LeagueTableRow = memo(function LeagueTableRow({
           </span>
           <AssetImage
             src={standing.team.crest}
-            fallbackSrc={createTeamCrest(
-              standing.team.shortName,
-              standing.team.primaryColor ?? '#0f766e',
-              standing.team.secondaryColor ?? '#f8fafc',
-              standing.position,
-            )}
+            fallbackSrc={[
+              ...getCrestSources(standing.team),
+              createTeamCrest(
+                standing.team.shortName,
+                standing.team.primaryColor ?? '#0f766e',
+                standing.team.secondaryColor ?? '#f8fafc',
+                standing.position,
+              ),
+            ]}
             alt={standing.team.name}
             className="h-8 w-8 rounded object-cover"
             loading="lazy"
@@ -127,12 +131,15 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
           <div className="flex min-w-0 items-center gap-2">
             <AssetImage
               src={row.original.team.crest}
-              fallbackSrc={createTeamCrest(
-                row.original.team.shortName,
-                row.original.team.primaryColor ?? '#0f766e',
-                row.original.team.secondaryColor ?? '#f8fafc',
-                row.original.position,
-              )}
+              fallbackSrc={[
+                ...getCrestSources(row.original.team),
+                createTeamCrest(
+                  row.original.team.shortName,
+                  row.original.team.primaryColor ?? '#0f766e',
+                  row.original.team.secondaryColor ?? '#f8fafc',
+                  row.original.position,
+                ),
+              ]}
               alt={row.original.team.name}
               className="h-6 w-6 rounded object-cover"
               loading="lazy"

@@ -17,6 +17,7 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { CommandPalette } from '@/components/shared/CommandPalette'
 import { SkeletonCard } from '@/components/shared/SkeletonCard'
 import { Toaster } from '@/components/ui/toast'
+import { useLocale } from '@/contexts/LocaleContext'
 import { getLeague, isLeagueId, leagues } from '@/lib/leagues'
 import { pageMotion } from '@/shared/motion/tokens'
 
@@ -42,14 +43,14 @@ function LoadingGrid() {
   )
 }
 
-function getLayoutTitle(pathname: string) {
+function getLayoutTitle(pathname: string, t: (key: string) => string) {
   const segments = pathname.split('/').filter(Boolean)
   const leagueId = segments[0]
 
   if (segments[0] === 'galaxy') {
     return {
-      title: 'Galaxy Map',
-      subtitle: 'Football Galaxy / Explore & Progress',
+      title: t('galaxyMap'),
+      subtitle: t('subtitleExplore'),
       showSwiper: false,
       leagueId: undefined,
     }
@@ -57,8 +58,8 @@ function getLayoutTitle(pathname: string) {
 
   if (segments[0] === 'players') {
     return {
-      title: 'Players Explorer',
-      subtitle: 'Football Galaxy / Global Player Catalog',
+      title: t('playersExplorer'),
+      subtitle: t('subtitlePlayers'),
       showSwiper: false,
       leagueId: undefined,
     }
@@ -66,8 +67,8 @@ function getLayoutTitle(pathname: string) {
 
   if (segments[0] === 'teams') {
     return {
-      title: 'Teams Explorer',
-      subtitle: 'Football Galaxy / Global Club Catalog',
+      title: t('teamsExplorer'),
+      subtitle: t('subtitleTeams'),
       showSwiper: false,
       leagueId: undefined,
     }
@@ -75,8 +76,8 @@ function getLayoutTitle(pathname: string) {
 
   if (segments[0] === 'compare') {
     return {
-      title: 'Compare Players',
-      subtitle: 'Football Galaxy / Player Comparison',
+      title: t('comparePlayers'),
+      subtitle: t('subtitleCompare'),
       showSwiper: false,
       leagueId: undefined,
     }
@@ -87,7 +88,7 @@ function getLayoutTitle(pathname: string) {
   if (segments[1] === 'team') {
     if (segments[3] === 'coach') {
       return {
-        title: 'Coach Detail',
+        title: t('coachDetailTitle'),
         subtitle: `Football Galaxy / ${league.name}`,
         showSwiper: false,
         leagueId: league.id,
@@ -95,7 +96,7 @@ function getLayoutTitle(pathname: string) {
     }
 
     return {
-      title: 'Team Detail',
+      title: t('teamDetailTitle'),
       subtitle: `Football Galaxy / ${league.name}`,
       showSwiper: false,
       leagueId: league.id,
@@ -104,7 +105,7 @@ function getLayoutTitle(pathname: string) {
 
   if (segments[1] === 'player') {
     return {
-      title: 'Player Detail',
+      title: t('playerDetailTitle'),
       subtitle: `Football Galaxy / ${league.name}`,
       showSwiper: false,
       leagueId: league.id,
@@ -124,7 +125,8 @@ function AppLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [matchday, setMatchday] = useState(0)
   const location = useLocation()
-  const layout = useMemo(() => getLayoutTitle(location.pathname), [location.pathname])
+  const { t } = useLocale()
+  const layout = useMemo(() => getLayoutTitle(location.pathname, t), [location.pathname, t])
 
   return (
     <>
@@ -157,14 +159,14 @@ function AppLayout() {
                 onClick={() => setMobileMenuOpen(false)}
                 className="block rounded-xl border px-4 py-3 text-sm font-medium"
               >
-                Players Explorer
+                {t('playersExplorer')}
               </Link>
               <Link
                 to="/teams"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block rounded-xl border px-4 py-3 text-sm font-medium"
               >
-                Teams Explorer
+                {t('teamsExplorer')}
               </Link>
               {leagues.map((item) => (
                 <NavLink
@@ -181,7 +183,7 @@ function AppLayout() {
                 onClick={() => setMobileMenuOpen(false)}
                 className="block rounded-xl border px-4 py-3 text-sm font-medium"
               >
-                Compare Players
+                {t('comparePlayers')}
               </Link>
             </nav>
           </div>

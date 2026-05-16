@@ -1,12 +1,14 @@
 import { MoreHorizontal } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { AssetImage } from '@/components/shared/AssetImage'
+import { useLocale } from '@/contexts/LocaleContext'
 import { useLeagueLogos } from '@/hooks/useLeagueLogos'
 import { leagues } from '@/lib/leagues'
 import { cn } from '@/lib/utils'
 import { createLeagueLogo } from '@/lib/visualAssets'
 
 export function MobileTabBar() {
+  const { t } = useLocale()
   const leagueLogos = useLeagueLogos()
 
   return (
@@ -29,7 +31,7 @@ export function MobileTabBar() {
       ))}
       <NavLink to="/compare" className="flex flex-col items-center justify-center rounded-[1.1rem] text-[10px] text-muted-foreground transition duration-150 hover:bg-background/55">
         <MoreHorizontal className="h-4 w-4" />
-        <span>More</span>
+        <span>{t('more')}</span>
       </NavLink>
     </nav>
   )

@@ -1,15 +1,15 @@
 import { motion } from 'framer-motion'
 import type { ReactNode } from 'react'
 
-import { fadeUpMotion } from '@/shared/motion/tokens'
+import { pageVariants } from '@/shared/motion/variants'
 
 export function PageWrapper({ children }: { children: ReactNode }) {
   return (
     <motion.div
-      initial={fadeUpMotion.initial}
-      animate={fadeUpMotion.animate}
-      exit={fadeUpMotion.exit}
-      transition={fadeUpMotion.transition}
+      variants={pageVariants}
+      initial="hidden"
+      animate="show"
+      exit="exit"
     >
       {children}
     </motion.div>

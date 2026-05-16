@@ -1,24 +1,23 @@
 import { RadioTower } from 'lucide-react'
 
 import { useDataSource } from '@/contexts/DataSourceContext'
+import { useLocale } from '@/contexts/LocaleContext'
 
 export function DataSourceToggle() {
   const {
     source,
-    runtimeLabel,
     proxyStatus,
     isLiveAvailable,
     setSource,
   } = useDataSource()
+  const { t } = useLocale()
+
+  const runtimeLabel = source === 'live' ? t('liveProxy') : t('localFallback')
 
   return (
     <div
       className="app-pill hidden items-center gap-2 p-1 text-xs text-muted-foreground xl:flex"
-      title={
-        proxyStatus === 'configured'
-          ? 'A live proxy is configured. You can switch between local fallback and proxy-backed live data.'
-          : 'No live proxy configured. Browser runtime stays on local fallback data.'
-      }
+      title={proxyStatus === 'configured' ? t('liveTooltip') : t('localTooltip')}
     >
       <span className="flex items-center gap-2 px-2 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
         <RadioTower className="h-3.5 w-3.5" />
@@ -34,8 +33,9 @@ export function DataSourceToggle() {
             : 'text-muted-foreground hover:text-foreground',
         ].join(' ')}
         aria-pressed={source === 'fallback'}
+        title={t('localTooltip')}
       >
-        Local
+        {t('localMode')}
       </button>
       <button
         type="button"
@@ -48,8 +48,9 @@ export function DataSourceToggle() {
             : 'text-muted-foreground hover:text-foreground',
         ].join(' ')}
         aria-pressed={source === 'live'}
+        title={t('liveTooltip')}
       >
-        Live Proxy
+        {t('liveProxy')}
       </button>
     </div>
   )

@@ -13,12 +13,16 @@ import { PageWrapper } from '@/components/layout/PageWrapper'
 import { AssetImage } from '@/components/shared/AssetImage'
 import { BackButton } from '@/components/shared/BackButton'
 import { SkeletonCard } from '@/components/shared/SkeletonCard'
+import { StaggerGrid } from '@/components/shared/StaggerGrid'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useLocale } from '@/contexts/LocaleContext'
 import { useFavorites } from '@/hooks/useFavorites'
 import { useFootballData } from '@/hooks/useFootballData'
-import { getPlayerCardProfile } from '@/lib/player-ratings'
+import { FormBadge } from '@/components/shared/FormBadge'
+import { getCrestSources, getPlayerPhotoSources } from '@/lib/assetSources'
+import { getFormScore } from '@/lib/player-ratings'
 import { formatMarketValue } from '@/lib/utils'
 import { createTeamCrest } from '@/lib/visualAssets'
 import type { LeagueSummary, Match, Squad, Team } from '@/services/types'
@@ -42,6 +46,7 @@ function TeamMetric({
 }
 
 export default function TeamDetail() {
+  const { t } = useLocale()
   const { leagueId, teamId } = useParams()
   const { data: team, isLoading } = useFootballData<Team>('getTeam', {
     leagueId: leagueId as never,
@@ -69,7 +74,14 @@ export default function TeamDetail() {
   )
 
   if (isLoading || !team) {
-    return <SkeletonCard />
+    return (
+      <PageWrapper>
+        <div className="space-y-4">
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      </PageWrapper>
+    )
   }
 
   const players = squad?.players ?? team.squad ?? []
@@ -86,7 +98,7 @@ export default function TeamDetail() {
     .slice()
     .sort(
       (left, right) =>
-        getPlayerCardProfile(right).overall - getPlayerCardProfile(left).overall,
+        getFormScore(right).score - getFormScore(left).score,
     )[0]
   const chartData = ['0-15', '16-30', '31-45+', '46-60', '61-75', '76-90+'].map(
     (slot, index) => ({ slot, goals: 3 + index * 2, conceded: 1 + (index % 3) + index }),
@@ -94,10 +106,12 @@ export default function TeamDetail() {
 
   return (
     <PageWrapper>
-      <div className="space-y-5">
-        <BackButton />
-        <section
-          className="stat-card overflow-hidden p-5 text-white shadow-[0_24px_50px_rgba(11,29,34,0.28)] sm:p-6"
+      <StaggerGrid className="space-y-5">
+        <StaggerGrid.Item>
+          <BackButton />
+        </StaggerGrid.Item>
+        <StaggerGrid.Item as="section"
+          className="stat-card overflow-hidden rounded-fg-xl p-5 text-white shadow-fg-4 sm:p-6"
           style={{
             background: `linear-gradient(135deg, ${team.primaryColor ?? '#0f766e'}, ${team.secondaryColor ?? '#0f172a'})`,
           }}
@@ -107,12 +121,15 @@ export default function TeamDetail() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 <AssetImage
                   src={team.crest}
-                  fallbackSrc={createTeamCrest(
-                    team.shortName,
-                    team.primaryColor ?? '#0f766e',
-                    team.secondaryColor ?? '#f8fafc',
-                    0,
-                  )}
+                  fallbackSrc={[
+                    ...getCrestSources(team),
+                    createTeamCrest(
+                      team.shortName,
+                      team.primaryColor ?? '#0f766e',
+                      team.secondaryColor ?? '#f8fafc',
+                      0,
+                    ),
+                  ]}
                   alt={team.name}
                   className="h-24 w-24 rounded-[1.8rem] object-cover ring-1 ring-white/20"
                   loading="lazy"
@@ -120,7 +137,7 @@ export default function TeamDetail() {
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge className="border-white/20 bg-white/12 text-white">{team.shortName}</Badge>
-                    <Badge className="border-white/20 bg-black/15 text-white">Galaxy Live Club View</Badge>
+                    <Badge className="border-white/20 bg-black/15 text-white">{t('clubView')}</Badge>
                   </div>
                   <h1 className="mt-3 text-3xl font-semibold tracking-tight">{team.name}</h1>
                   <p className="mt-1 text-white/80">
@@ -128,9 +145,9 @@ export default function TeamDetail() {
                       to={`/${team.leagueId}/team/${team.id}/coach`}
                       className="font-medium text-white hover:text-white/80"
                     >
-                      {team.manager ?? 'Coach pending'}
+                      {team.manager ?? t('coachPending')}
                     </Link>{' '}
-                    · {team.stadium} · {team.capacity?.toLocaleString()} seats
+                    · {team.stadium} · {team.capacity?.toLocaleString()} {t('seats')}
                   </p>
                 </div>
                 <motion.div whileTap={{ scale: 1.14 }}>
@@ -145,31 +162,31 @@ export default function TeamDetail() {
                           : 'h-4 w-4'
                       }
                     />
-                    Follow
+                    {t('follow')}
                   </Button>
                 </motion.div>
               </div>
 
               <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 <TeamMetric
-                  label="League position"
+                  label={t('leaguePosition')}
                   value={standing ? `#${standing.position}` : '-'}
-                  helper={standing ? `${standing.points} points` : 'No table context'}
+                  helper={standing ? t('pointsLabel', { count: standing.points }) : t('noTableContext')}
                 />
                 <TeamMetric
-                  label="Squad size"
+                  label={t('squadSize')}
                   value={String(players.length)}
-                  helper={`Average age ${averageAge}`}
+                  helper={t('averageAgeLabel', { age: averageAge })}
                 />
                 <TeamMetric
-                  label="Squad value"
+                  label={t('squadValue')}
                   value={formatMarketValue(squadValue)}
-                  helper="Mock/live blended estimate"
+                  helper={t('blendedEstimate')}
                 />
                 <TeamMetric
-                  label="Goal difference"
+                  label={t('goalDifference')}
                   value={standing ? `${standing.goalDifference}` : '-'}
-                  helper={standing ? `${standing.goalsFor} scored / ${standing.goalsAgainst} conceded` : 'Waiting for data'}
+                  helper={standing ? t('goalsForAgainst', { forCount: standing.goalsFor, against: standing.goalsAgainst }) : t('waitingForData')}
                 />
               </div>
             </div>
@@ -178,10 +195,10 @@ export default function TeamDetail() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-white/60">
-                    Team spotlight
+                    {t('teamSpotlight')}
                   </p>
                   <h2 className="mt-1 text-xl font-semibold">
-                    {topRatedPlayer ? topRatedPlayer.name : 'No standout yet'}
+                    {topRatedPlayer ? topRatedPlayer.name : t('noStandoutYet')}
                   </h2>
                 </div>
                 <Sparkles className="h-5 w-5 text-white/60" />
@@ -194,53 +211,58 @@ export default function TeamDetail() {
                   >
                     <AssetImage
                       src={topRatedPlayer.photo}
-                      fallbackSrc={createTeamCrest(team.shortName, team.primaryColor ?? '#0f766e', team.secondaryColor ?? '#f8fafc', 0)}
+                      fallbackSrc={[
+                        ...getPlayerPhotoSources(topRatedPlayer),
+                        createTeamCrest(team.shortName, team.primaryColor ?? '#0f766e', team.secondaryColor ?? '#f8fafc', 0),
+                      ]}
                       alt={topRatedPlayer.name}
                       className="h-16 w-16 rounded-[1.4rem] object-cover ring-1 ring-white/15"
                       loading="lazy"
                     />
                     <div>
                       <p className="text-lg font-semibold">{topRatedPlayer.name}</p>
-                      <p className="text-sm text-white/75">
-                        {topRatedPlayer.position} · OVR {getPlayerCardProfile(topRatedPlayer).overall}
+                      <p className="text-sm text-white/75 flex items-center gap-2">
+                        {topRatedPlayer.position}
+                        <FormBadge player={topRatedPlayer} variant="full" className="bg-white/15 border-white/20 text-white" />
                       </p>
                     </div>
                   </Link>
                   <div className="grid grid-cols-3 gap-2">
                     <div className="rounded-xl border border-white/10 bg-white/6 p-3">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-white/60">Goals</p>
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-white/60">{t('goals')}</p>
                       <p className="mt-1 text-xl font-semibold">{topRatedPlayer.stats.goals}</p>
                     </div>
                     <div className="rounded-xl border border-white/10 bg-white/6 p-3">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-white/60">Assists</p>
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-white/60">{t('assists')}</p>
                       <p className="mt-1 text-xl font-semibold">{topRatedPlayer.stats.assists}</p>
                     </div>
                     <div className="rounded-xl border border-white/10 bg-white/6 p-3">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-white/60">Archetype</p>
-                      <p className="mt-1 text-sm font-semibold">{getPlayerCardProfile(topRatedPlayer).archetype}</p>
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-white/60">{t('formShort')}</p>
+                      <p className="mt-1 text-sm font-semibold">{getFormScore(topRatedPlayer).label}</p>
                     </div>
                   </div>
                   <Link
                     to={`/${topRatedPlayer.leagueId}/player/${topRatedPlayer.id}`}
                     className="inline-flex items-center gap-2 text-sm font-medium text-white hover:text-white/80"
                   >
-                    Open player profile
+                    {t('openPlayerProfile')}
                     <Zap className="h-4 w-4" />
                   </Link>
                 </div>
               ) : null}
             </section>
           </div>
-        </section>
+        </StaggerGrid.Item>
 
+        <StaggerGrid.Item>
         <Tabs defaultValue="overview">
           <div className="overflow-x-auto pb-1">
             <TabsList className="min-w-max">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="squad">Squad</TabsTrigger>
-              <TabsTrigger value="results">Results</TabsTrigger>
-              <TabsTrigger value="statistics">Statistics</TabsTrigger>
-              <TabsTrigger value="form">Form</TabsTrigger>
+              <TabsTrigger value="overview">{t('tabOverview')}</TabsTrigger>
+              <TabsTrigger value="squad">{t('tabSquad')}</TabsTrigger>
+              <TabsTrigger value="results">{t('tabResults')}</TabsTrigger>
+              <TabsTrigger value="statistics">{t('tabStatistics')}</TabsTrigger>
+              <TabsTrigger value="form">{t('tabForm')}</TabsTrigger>
             </TabsList>
           </div>
 
@@ -248,35 +270,35 @@ export default function TeamDetail() {
             <section className="stat-card">
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Club identity</p>
-                  <h2 className="mt-1 text-lg font-semibold tracking-tight">At a glance</h2>
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('clubIdentity')}</p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('atAGlance')}</h2>
                 </div>
                 <Users className="h-5 w-5 text-muted-foreground" />
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="surface-soft rounded-[1.3rem] p-4">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Manager</p>
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t('manager')}</p>
                   <Link
                     to={`/${team.leagueId}/team/${team.id}/coach`}
                     className="mt-2 inline-block text-lg font-semibold hover:text-primary"
                   >
-                    {team.manager ?? 'Coach pending'}
+                    {team.manager ?? t('coachPending')}
                   </Link>
                 </div>
                 <div className="surface-soft rounded-[1.3rem] p-4">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Home ground</p>
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t('homeGround')}</p>
                   <p className="mt-2 text-lg font-semibold">{team.stadium}</p>
                 </div>
                 <div className="surface-soft rounded-[1.3rem] p-4">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Momentum</p>
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t('momentum')}</p>
                   <p className="mt-2 text-lg font-semibold">
-                    {standing ? `${standing.form.filter((item) => item.result === 'W').length} wins in last five` : 'No trend yet'}
+                    {standing ? t('winsInLastFive', { count: standing.form.filter((item) => item.result === 'W').length }) : t('noTrendYet')}
                   </p>
                 </div>
                 <div className="surface-soft rounded-[1.3rem] p-4">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Best current edge</p>
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t('bestCurrentEdge')}</p>
                   <p className="mt-2 text-lg font-semibold">
-                    {standing && standing.goalsFor >= standing.goalsAgainst ? 'Attacking output' : 'Defensive recovery'}
+                    {standing && standing.goalsFor >= standing.goalsAgainst ? t('attackingOutput') : t('defensiveRecovery')}
                   </p>
                 </div>
               </div>
@@ -285,8 +307,8 @@ export default function TeamDetail() {
             <section className="stat-card">
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Shot map proxy</p>
-                  <h2 className="mt-1 text-lg font-semibold tracking-tight">Scoring windows</h2>
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('shotMapProxy')}</p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('scoringWindows')}</h2>
                 </div>
                 <Shield className="h-5 w-5 text-muted-foreground" />
               </div>
@@ -313,15 +335,15 @@ export default function TeamDetail() {
           <TabsContent value="statistics" className="grid gap-4">
             <div className="stat-card">
               <div className="mb-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Shape profile</p>
-                <h2 className="mt-1 text-lg font-semibold tracking-tight">Team Radar</h2>
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('shapeProfile')}</p>
+                <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('teamRadar')}</h2>
               </div>
               <TeamRadarChart />
             </div>
             <div className="stat-card">
               <div className="mb-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Goal timeline</p>
-                <h2 className="mt-1 text-lg font-semibold tracking-tight">Game-state pressure</h2>
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('goalTimeline')}</p>
+                <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('gameStatePressure')}</h2>
               </div>
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={chartData}>
@@ -337,13 +359,14 @@ export default function TeamDetail() {
 
           <TabsContent value="form" className="stat-card">
             <div className="mb-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Trend line</p>
-              <h2 className="mt-1 text-lg font-semibold tracking-tight">Recent Form</h2>
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('trendLine')}</p>
+              <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('recentForm')}</h2>
             </div>
             <FormLineChart />
           </TabsContent>
         </Tabs>
-      </div>
+        </StaggerGrid.Item>
+      </StaggerGrid>
     </PageWrapper>
   )
 }

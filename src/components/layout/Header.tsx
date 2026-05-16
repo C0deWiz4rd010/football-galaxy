@@ -1,8 +1,8 @@
 import { Menu, Moon, Search, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
-import { AppModeToggle } from '@/components/shared/AppModeToggle'
 import { DataSourceToggle } from '@/components/shared/DataSourceToggle'
+import { HandbookDialog } from '@/components/shared/HandbookDialog'
 import { LanguageToggle } from '@/components/shared/LanguageToggle'
 import { Button } from '@/components/ui/button'
 import { useDataSource } from '@/contexts/DataSourceContext'
@@ -42,8 +42,8 @@ export function Header({ title, subtitle, onSearch, onMenu }: HeaderProps) {
       </div>
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
         <DataSourceToggle />
-        <AppModeToggle />
         <LanguageToggle />
+        <HandbookDialog />
         <Button
           variant="ghost"
           size="icon"

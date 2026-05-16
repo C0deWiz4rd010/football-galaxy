@@ -125,10 +125,10 @@ export function CommandPalette({
             </CommandGroup>
 
             <CommandGroup heading={`Players (${results.players.slice(0, 8).length})`}>
-              {results.players.slice(0, 8).map(({ archetype, overall, player, team }) => (
+              {results.players.slice(0, 8).map(({ formLabel, formScore, player, team }) => (
                 <CommandItem
                   key={player.id}
-                  value={`${player.name} ${team.name} ${archetype}`}
+                  value={`${player.name} ${team.name} ${formLabel}`}
                   onSelect={() => {
                     navigate(`/${player.leagueId}/player/${player.id}`)
                     onOpenChange(false)
@@ -139,7 +139,7 @@ export function CommandPalette({
                     {player.position} - {team.shortName}
                   </span>
                   <span className="ml-auto text-xs text-muted-foreground">
-                    OVR {overall}
+                    Form {formScore}
                   </span>
                 </CommandItem>
               ))}

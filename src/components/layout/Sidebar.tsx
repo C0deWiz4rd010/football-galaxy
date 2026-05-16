@@ -79,7 +79,7 @@ export function Sidebar() {
             }
           >
             <Globe2 className="h-4 w-4" />
-            Galaxy Map
+            {t('galaxyMap')}
           </NavLink>
 
           <div className="mb-3 px-3">

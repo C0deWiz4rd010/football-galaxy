@@ -14,10 +14,12 @@ import {
 
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { AssetImage } from '@/components/shared/AssetImage'
+import { FormBadge } from '@/components/shared/FormBadge'
 import { Badge } from '@/components/ui/badge'
+import { useLocale } from '@/contexts/LocaleContext'
 import { mockData } from '@/data/mock'
-import { useAppMode } from '@/hooks/useAppMode'
-import { getPlayerCardProfile } from '@/lib/player-ratings'
+import { getCrestSources, getPlayerPhotoSources } from '@/lib/assetSources'
+import { getFormScore } from '@/lib/player-ratings'
 import {
   createPlayerAvatar,
   createTeamCrest,
@@ -62,10 +64,13 @@ function PlayerSearch({
         className="mt-3 h-11 w-full rounded-xl border bg-background/70 px-3 text-sm"
       />
       {selected ? (
-        <div className="surface-soft mt-4 flex items-center gap-3 rounded-[1.2rem] p-3">
+        <div className="surface-soft mt-4 flex items-center gap-3 rounded-fg-lg p-3">
           <AssetImage
             src={selected.photo}
-            fallbackSrc={createPlayerAvatar(initialsFromName(selected.name), '#0f766e')}
+            fallbackSrc={[
+              ...getPlayerPhotoSources(selected),
+              createPlayerAvatar(initialsFromName(selected.name), '#0f766e'),
+            ]}
             alt={selected.name}
             className="h-12 w-12 rounded-full object-cover"
           />
@@ -73,7 +78,7 @@ function PlayerSearch({
             <p className="truncate font-semibold">{selected.name}</p>
             <div className="mt-1 flex flex-wrap gap-2">
               <Badge>{selected.position}</Badge>
-              <Badge variant="outline">OVR {getPlayerCardProfile(selected).overall}</Badge>
+              <FormBadge player={selected} variant="full" />
             </div>
           </div>
         </div>
@@ -91,7 +96,10 @@ function PlayerSearch({
           >
             <AssetImage
               src={player.photo}
-              fallbackSrc={createPlayerAvatar(initialsFromName(player.name), '#0f766e')}
+              fallbackSrc={[
+                ...getPlayerPhotoSources(player),
+                createPlayerAvatar(initialsFromName(player.name), '#0f766e'),
+              ]}
               alt={player.name}
               className="h-8 w-8 rounded-full object-cover"
             />
@@ -110,43 +118,52 @@ function CompareHeroCard({
   player: Player
   team?: Team
 }) {
-  const card = getPlayerCardProfile(player)
+  const { t } = useLocale()
+  const form = getFormScore(player)
 
   return (
-    <div className="surface-soft rounded-[1.5rem] p-4">
+    <div className="surface-soft rounded-fg-xl p-4 shadow-fg-2">
       <div className="flex items-center gap-3">
         <AssetImage
           src={player.photo}
-          fallbackSrc={createPlayerAvatar(initialsFromName(player.name), team?.primaryColor ?? '#0f766e')}
+          fallbackSrc={[
+            ...getPlayerPhotoSources(player),
+            createPlayerAvatar(initialsFromName(player.name), team?.primaryColor ?? '#0f766e'),
+          ]}
           alt={player.name}
-          className="h-14 w-14 rounded-[1.1rem] object-cover"
+          className="h-14 w-14 rounded-fg-md object-cover"
         />
         <div className="min-w-0 flex-1">
           <p className="truncate text-lg font-semibold">{player.name}</p>
           <p className="truncate text-sm text-muted-foreground">
-            {team?.name ?? 'Club unavailable'}
+            {team?.name ?? t('clubUnavailable')}
           </p>
         </div>
         <div className="rounded-[1.1rem] border border-white/10 bg-white/5 px-3 py-2 text-center">
-          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">OVR</p>
-          <p className="text-2xl font-black">{card.overall}</p>
+          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('formLabel')}</p>
+          <p className="text-2xl font-black">{form.score}</p>
         </div>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <Badge>{player.position}</Badge>
-        <Badge variant="outline">{card.archetype}</Badge>
-        <Badge variant="outline">{card.tier}</Badge>
+        <FormBadge player={player} variant="label" />
+        {form.traits.map((trait) => (
+          <Badge key={trait} variant="outline">{trait}</Badge>
+        ))}
       </div>
       {team ? (
         <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
           <AssetImage
             src={team.crest}
-            fallbackSrc={createTeamCrest(
-              team.shortName,
-              team.primaryColor ?? '#0f766e',
-              team.secondaryColor ?? '#f8fafc',
-              0,
-            )}
+            fallbackSrc={[
+              ...getCrestSources(team),
+              createTeamCrest(
+                team.shortName,
+                team.primaryColor ?? '#0f766e',
+                team.secondaryColor ?? '#f8fafc',
+                0,
+              ),
+            ]}
             alt={team.name}
             className="h-6 w-6 rounded-lg object-cover"
           />
@@ -157,7 +174,7 @@ function CompareHeroCard({
         to={`/${player.leagueId}/player/${player.id}`}
         className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary"
       >
-        Open profile
+        {t('openProfile')}
         <ArrowRight className="h-4 w-4" />
       </Link>
     </div>
@@ -165,8 +182,8 @@ function CompareHeroCard({
 }
 
 export default function Compare() {
+  const { t } = useLocale()
   const [params, setParams] = useSearchParams()
-  const { mode } = useAppMode()
   const teams = useMemo(
     () => Object.values(mockData).flatMap((league) => league.teams),
     [],
@@ -193,18 +210,18 @@ export default function Compare() {
     }
   }
 
-  const card1 = player1 ? getPlayerCardProfile(player1) : null
-  const card2 = player2 ? getPlayerCardProfile(player2) : null
+  const form1 = player1 ? getFormScore(player1) : null
+  const form2 = player2 ? getFormScore(player2) : null
 
   const rows =
-    player1 && player2 && card1 && card2
+    player1 && player2 && form1 && form2
       ? [
-          ['Goals', player1.stats.goals, player2.stats.goals],
-          ['Assists', player1.stats.assists, player2.stats.assists],
-          ['Minutes', player1.stats.minutes, player2.stats.minutes],
-          ['OVR', card1.overall, card2.overall],
-          ['Pace', card1.attributes.pace, card2.attributes.pace],
-          ['Passing', card1.attributes.passing, card2.attributes.passing],
+          [t('goals'), player1.stats.goals, player2.stats.goals],
+          [t('assists'), player1.stats.assists, player2.stats.assists],
+          [t('minutes'), player1.stats.minutes, player2.stats.minutes],
+          [t('sortForm'), form1.score, form2.score],
+          [t('appearancesLabel'), player1.stats.appearances, player2.stats.appearances],
+          [t('yellowCardsShort'), player1.stats.yellowCards, player2.stats.yellowCards],
         ] as const
       : []
 
@@ -224,35 +241,33 @@ export default function Compare() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                Compare lab
+                {t('compareLab')}
               </p>
-              <h1 className="mt-1 text-3xl font-semibold tracking-tight">Compare Players</h1>
+              <h1 className="mt-1 text-3xl font-semibold tracking-tight">{t('compareHeading')}</h1>
               <p className="mt-2 max-w-2xl text-muted-foreground">
-                Search two players and compare live output, role profile, and the Football Galaxy EA FC-style card layer.
+                {t('compareLongSubtitle')}
               </p>
             </div>
-            <Badge className="w-fit">
-              {mode === 'ea-fc' ? 'EA FC context active' : 'Galaxy Live context active'}
-            </Badge>
+            <Badge className="w-fit">{t('liveSeasonData')}</Badge>
           </div>
         </section>
 
         <div className="grid gap-4 md:grid-cols-2">
           <PlayerSearch
-            label="Player one"
+            label={t('playerOne')}
             value={p1}
             onChange={(player) => choose('p1', player)}
-            placeholder="Search player name..."
+            placeholder={t('searchPlayer1')}
           />
           <PlayerSearch
-            label="Player two"
+            label={t('playerTwo')}
             value={p2}
             onChange={(player) => choose('p2', player)}
-            placeholder="Search second player..."
+            placeholder={t('searchPlayer2')}
           />
         </div>
 
-        {player1 && player2 && card1 && card2 ? (
+        {player1 && player2 && form1 && form2 ? (
           <motion.div
             layout
             initial={{ opacity: 0, y: 8 }}
@@ -269,9 +284,9 @@ export default function Compare() {
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div>
                     <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      Attribute contrast
+                      {t('attributeContrast')}
                     </p>
-                    <h2 className="mt-1 text-lg font-semibold tracking-tight">Radar View</h2>
+                    <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('radarView')}</h2>
                   </div>
                   <Swords className="h-5 w-5 text-muted-foreground" />
                 </div>
@@ -303,33 +318,29 @@ export default function Compare() {
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div>
                     <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      Verdict
+                      {t('verdict')}
                     </p>
-                    <h2 className="mt-1 text-lg font-semibold tracking-tight">Quick Read</h2>
+                    <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('quickRead')}</h2>
                   </div>
                   <Sparkles className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div className="space-y-3 text-sm text-muted-foreground">
                   <p>
                     <span className="font-medium text-foreground">{player1.name}</span>{' '}
-                    wins the card race if you value{' '}
-                    {card1.overall >= card2.overall ? 'overall impact and projection' : 'less'}.
+                    {form1.score >= form2.score ? t('inBetterForm') : t('trailsOnForm')}.
                   </p>
                   <p>
                     <span className="font-medium text-foreground">{player2.name}</span>{' '}
-                    pulls ahead where the raw output favors{' '}
                     {player2.stats.goals + player2.stats.assists >= player1.stats.goals + player1.stats.assists
-                      ? 'direct production'
-                      : 'less direct scoring'}.
+                      ? t('leadsOnProduction')
+                      : t('behindOnGoalInvolvements')}.
                   </p>
                   <div className="surface-soft rounded-[1.2rem] p-4">
                     <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      Suggested usage
+                      {t('suggestedUsage')}
                     </p>
                     <p className="mt-2 text-sm">
-                      {mode === 'ea-fc'
-                        ? 'Use this view to compare archetypes and card value before we add the full live-vs-card split toggle.'
-                        : 'Use this view to compare real output now, then jump into EA FC mode for the attribute-first perspective.'}
+                      {t('suggestedUsageBody')}
                     </p>
                   </div>
                 </div>
@@ -340,9 +351,9 @@ export default function Compare() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                    Metric diff
+                    {t('metricDiff')}
                   </p>
-                  <h2 className="mt-1 text-lg font-semibold tracking-tight">Head-to-Head</h2>
+                  <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('headToHead')}</h2>
                 </div>
                 <Target className="h-5 w-5 text-muted-foreground" />
               </div>

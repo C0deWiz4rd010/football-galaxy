@@ -1,5 +1,5 @@
 import { leagues } from '@/lib/leagues'
-import { createFlag, createPlayerAvatar, createTeamCrest } from '@/lib/visualAssets'
+import { createPlayerAvatar, createFlag } from '@/lib/visualAssets'
 import type { Assist, LeagueId, Match, Player, Scorer, Standing, Team } from '@/services/types'
 
 const firstNames = ['Luca', 'Noah', 'Theo', 'Milan', 'Elias', 'Jonas', 'Mateo', 'Oscar', 'Hugo', 'Leo', 'Nico', 'Rafael', 'Iker', 'Enzo', 'Felix', 'Adam', 'Ivan', 'Marco']
@@ -24,10 +24,25 @@ export interface MockLeagueData {
   teams: Team[]
 }
 
+export interface RealTeamInput {
+  name: string
+  shortName: string
+  tla: string
+  crest: string
+  color: string
+  points: number
+  played: number
+  won: number
+  drawn: number
+  lost: number
+  goalsFor: number
+  goalsAgainst: number
+  form: Array<'W' | 'D' | 'L'>
+}
+
 interface CreateMockLeagueOptions {
   leagueId: LeagueId
-  teamNames: string[]
-  teamColors?: string[]
+  realTeams: RealTeamInput[]
   seed: number
 }
 
@@ -37,6 +52,15 @@ function pick<T>(items: readonly T[], index: number): T {
 
 function initials(firstName: string, lastName: string) {
   return `${firstName[0] ?? ''}${lastName[0] ?? ''}`
+}
+
+function slug(name: string) {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
 }
 
 function createPlayer(leagueId: LeagueId, teamId: string, teamColor: string, teamIndex: number, playerIndex: number): Player {
@@ -82,65 +106,59 @@ function createPlayer(leagueId: LeagueId, teamId: string, teamColor: string, tea
   }
 }
 
-export function createMockLeague({ leagueId, teamNames, teamColors, seed }: CreateMockLeagueOptions): MockLeagueData {
+export function createMockLeague({ leagueId, realTeams, seed }: CreateMockLeagueOptions): MockLeagueData {
   const league = leagues.find((item) => item.id === leagueId)!
-  const teams = teamNames.map((name, index) => {
-    const primaryColor = teamColors?.[index] ?? league.color
-    const shortName = name
-      .split(' ')
-      .map((part) => part[0])
-      .join('')
-      .slice(0, 3)
-      .toUpperCase()
+
+  const teams: Team[] = realTeams.map((rt, index) => {
+    const primaryColor = rt.color || league.color
     const secondaryColor = index % 2 === 0 ? '#18181b' : '#f4f4f5'
-    const teamId = `${leagueId}-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+    const teamId = `${leagueId}-${slug(rt.name)}`
     const team: Team = {
       id: teamId,
       leagueId,
-      name,
-      shortName,
-      crest: createTeamCrest(shortName, primaryColor, secondaryColor, index),
+      name: rt.name,
+      shortName: rt.shortName,
+      crest: rt.crest,
       manager: `${pick(firstNames, index + seed)} ${pick(lastNames, index + seed + 5)}`,
-      stadium: `${name.split(' ')[0]} Arena`,
+      stadium: `${rt.shortName} Stadium`,
       capacity: 32000 + ((index + seed) % 11) * 4200,
       primaryColor,
       secondaryColor,
     }
-    team.squad = Array.from({ length: 18 }, (_, playerIndex) => createPlayer(leagueId, teamId, primaryColor, index, playerIndex))
+    team.squad = Array.from({ length: 18 }, (_, playerIndex) =>
+      createPlayer(leagueId, teamId, primaryColor, index, playerIndex),
+    )
     return team
   })
 
-  const standings = teams
-    .map((team, index) => {
-      const played = 34 + ((index + seed) % 5)
-      const won = Math.max(4, 27 - index - (seed % 3))
-      const drawn = 3 + ((index + seed) % 8)
-      const lost = Math.max(1, played - won - drawn)
-      const goalsFor = 84 - index * 2 + (seed % 7)
-      const goalsAgainst = 25 + index * 2 + (seed % 5)
-      const goalDifference = goalsFor - goalsAgainst
-      const points = won * 3 + drawn
-      const forms = ['W', 'W', 'D', 'L', 'W', 'D', 'L'] as const
-
+  const standings: Standing[] = realTeams
+    .map((rt, index) => {
+      const team = teams[index]!
+      const forms = (rt.form && rt.form.length > 0 ? rt.form : (['W', 'D', 'L', 'W', 'D'] as const)) as Array<'W' | 'D' | 'L'>
       return {
         id: `${team.id}-standing`,
         leagueId,
         position: index + 1,
         team,
-        played,
-        won,
-        drawn,
-        lost,
-        goalsFor,
-        goalsAgainst,
-        goalDifference,
-        points,
-        avgPossession: 61 - index * 0.8,
-        form: Array.from({ length: 5 }, (_, formIndex) => ({
-          result: pick(forms, index + formIndex + seed),
+        played: rt.played,
+        won: rt.won,
+        drawn: rt.drawn,
+        lost: rt.lost,
+        goalsFor: rt.goalsFor,
+        goalsAgainst: rt.goalsAgainst,
+        goalDifference: rt.goalsFor - rt.goalsAgainst,
+        points: rt.points,
+        avgPossession: Math.max(35, 62 - index * 1.1),
+        form: forms.slice(0, 5).map((result, formIndex) => ({
+          result,
           opponent: pick(teams, index + formIndex + 3).shortName,
-          score: `${(index + formIndex) % 4}-${(index + seed + formIndex) % 3}`,
-          date: `2025-04-${String(5 + formIndex * 4).padStart(2, '0')}T15:00:00Z`,
+          score:
+            result === 'W'
+              ? `${1 + (formIndex % 3)}-${formIndex % 2}`
+              : result === 'D'
+                ? `${formIndex % 3}-${formIndex % 3}`
+                : `${formIndex % 2}-${1 + (formIndex % 3)}`,
+          date: `2026-05-${String(1 + formIndex * 4).padStart(2, '0')}T15:00:00Z`,
         })),
       } satisfies Standing
     })
@@ -148,18 +166,30 @@ export function createMockLeague({ leagueId, teamNames, teamColors, seed }: Crea
     .map((standing, index) => ({ ...standing, position: index + 1 }))
 
   const players = teams.flatMap((team) => team.squad ?? [])
-  const topScorers = players
+  const topScorers: Scorer[] = players
     .slice()
     .sort((a, b) => b.stats.goals - a.stats.goals)
     .slice(0, 15)
-    .map((player) => ({ id: `${player.id}-scorer`, player, team: teams.find((team) => team.id === player.teamId)!, goals: player.stats.goals, assists: player.stats.assists }))
-  const topAssists = players
+    .map((player) => ({
+      id: `${player.id}-scorer`,
+      player,
+      team: teams.find((team) => team.id === player.teamId)!,
+      goals: player.stats.goals,
+      assists: player.stats.assists,
+    }))
+  const topAssists: Assist[] = players
     .slice()
     .sort((a, b) => b.stats.assists - a.stats.assists)
     .slice(0, 15)
-    .map((player) => ({ id: `${player.id}-assist`, player, team: teams.find((team) => team.id === player.teamId)!, assists: player.stats.assists, goals: player.stats.goals }))
+    .map((player) => ({
+      id: `${player.id}-assist`,
+      player,
+      team: teams.find((team) => team.id === player.teamId)!,
+      assists: player.stats.assists,
+      goals: player.stats.goals,
+    }))
 
-  const recentMatches: Match[] = Array.from({ length: 10 }, (_, index) => {
+  const recentMatches: Match[] = Array.from({ length: Math.min(10, Math.floor(teams.length / 2)) }, (_, index) => {
     const homeTeam = teams[index * 2]!
     const awayTeam = teams[index * 2 + 1]!
     const homeScore = (index + seed) % 4
@@ -169,9 +199,9 @@ export function createMockLeague({ leagueId, teamNames, teamColors, seed }: Crea
     return {
       id: `${leagueId}-md38-${index + 1}`,
       leagueId,
-      season: '2024-25',
+      season: '2025-26',
       matchday: 38,
-      utcDate: `2025-05-${String(10 + index).padStart(2, '0')}T16:30:00Z`,
+      utcDate: `2026-05-${String(10 + index).padStart(2, '0')}T16:30:00Z`,
       status: index === 0 ? 'LIVE' : 'FINISHED',
       homeTeam,
       awayTeam,

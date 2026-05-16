@@ -19,6 +19,16 @@ coverage/
 # Local build logs
 build.log
 build_log.txt
+test.log
+test_log.txt
+proxy.log
+lint.log
+snap.txt
+
+# Local environment files (never commit secrets)
+.env
+.env.local
+.env.*.local
 
 # Editor-specific
 .vscode/

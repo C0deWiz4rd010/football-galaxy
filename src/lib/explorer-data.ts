@@ -1,6 +1,6 @@
 import { mockData } from '@/data/mock'
 import { leagues } from '@/lib/leagues'
-import { getPlayerCardProfile } from '@/lib/player-ratings'
+import { getFormScore, type FormLabel } from '@/lib/player-ratings'
 import type { League, LeagueId, Player, Standing, Team } from '@/services/types'
 
 export interface TeamExplorerEntry {
@@ -14,8 +14,8 @@ export interface PlayerExplorerEntry {
   player: Player
   standing?: Standing
   team: Team
-  overall: number
-  archetype: string
+  formScore: number
+  formLabel: FormLabel
 }
 
 export interface SearchResults {
@@ -45,15 +45,15 @@ const teamExplorerEntries = leagues.flatMap((league) => {
 
 const playerExplorerEntries = teamExplorerEntries.flatMap(({ league, standing, team }) =>
   (team.squad ?? []).map((player) => {
-    const card = getPlayerCardProfile(player)
+    const form = getFormScore(player)
 
     return {
       league,
       player,
       standing,
       team,
-      overall: card.overall,
-      archetype: card.archetype,
+      formScore: form.score,
+      formLabel: form.label,
     }
   }),
 )
@@ -102,12 +102,12 @@ export function searchEntities(query: string): SearchResults {
         league.name.toLowerCase().includes(normalized),
     ),
     players: playerExplorerEntries.filter(
-      ({ player, team, league, archetype }) =>
+      ({ player, team, league, formLabel }) =>
         player.name.toLowerCase().includes(normalized) ||
         player.position.toLowerCase().includes(normalized) ||
         team.name.toLowerCase().includes(normalized) ||
         league.name.toLowerCase().includes(normalized) ||
-        archetype.toLowerCase().includes(normalized),
+        formLabel.toLowerCase().includes(normalized),
     ),
   }
 }

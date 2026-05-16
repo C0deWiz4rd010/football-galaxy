@@ -79,6 +79,12 @@ export interface Player {
   heightCm: number
   weightKg: number
   photo: string
+  /**
+   * Optional ordered list of additional photo URLs to attempt before falling
+   * back to the synthetic avatar. Consumers feed this list to `AssetImage`
+   * so a single broken upstream URL never breaks the UI.
+   */
+  photoSources?: string[]
   marketValueEurCents: number
   contractUntil: string
   stats: PlayerStats
@@ -97,6 +103,12 @@ export interface Team {
   name: string
   shortName: string
   crest: string
+  /**
+   * Optional ordered list of additional crest URLs to attempt before falling
+   * back to the synthetic SVG shield. Consumers feed this list to
+   * `AssetImage`, which walks the chain on each `onError`.
+   */
+  crestSources?: string[]
   manager?: string
   stadium?: string
   capacity?: number
