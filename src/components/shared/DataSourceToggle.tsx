@@ -13,6 +13,7 @@ export function DataSourceToggle() {
   const { t } = useLocale()
 
   const runtimeLabel = source === 'live' ? t('liveProxy') : t('localFallback')
+  const showLocalControls = import.meta.env.DEV
 
   return (
     <div
@@ -20,23 +21,30 @@ export function DataSourceToggle() {
       title={proxyStatus === 'configured' ? t('liveTooltip') : t('localTooltip')}
     >
       <span className="flex items-center gap-2 px-2 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-        <RadioTower className="h-3.5 w-3.5" />
+        <RadioTower
+          className={[
+            'h-3.5 w-3.5',
+            source === 'live' ? 'text-emerald-400' : 'text-slate-400',
+          ].join(' ')}
+        />
         {runtimeLabel}
       </span>
-      <button
-        type="button"
-        onClick={() => setSource('fallback')}
-        className={[
-          'rounded-full px-3 py-1.5 font-medium transition-all duration-200',
-          source === 'fallback'
-            ? 'bg-primary text-primary-foreground shadow-[0_10px_24px_rgba(15,23,42,0.18)]'
-            : 'text-muted-foreground hover:text-foreground',
-        ].join(' ')}
-        aria-pressed={source === 'fallback'}
-        title={t('localTooltip')}
-      >
-        {t('localMode')}
-      </button>
+      {showLocalControls ? (
+        <button
+          type="button"
+          onClick={() => setSource('fallback')}
+          className={[
+            'rounded-full px-3 py-1.5 font-medium transition-all duration-200',
+            source === 'fallback'
+              ? 'bg-primary text-primary-foreground shadow-[0_10px_24px_rgba(15,23,42,0.18)]'
+              : 'text-muted-foreground hover:text-foreground',
+          ].join(' ')}
+          aria-pressed={source === 'fallback'}
+          title={t('localTooltip')}
+        >
+          {t('localMode')}
+        </button>
+      ) : null}
       <button
         type="button"
         onClick={() => setSource('live')}

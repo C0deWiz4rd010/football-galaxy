@@ -17,6 +17,7 @@ import { AssetImage } from '@/components/shared/AssetImage'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { FormDots } from '@/components/shared/FormDots'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { useLocale } from '@/contexts/LocaleContext'
 import { useFavorites } from '@/hooks/useFavorites'
 import { getCrestSources } from '@/lib/assetSources'
 import { cn } from '@/lib/utils'
@@ -116,6 +117,7 @@ const LeagueTableRow = memo(function LeagueTableRow({
 export function LeagueTable({ standings }: { standings: Standing[] }) {
   const navigate = useNavigate()
   const favorites = useFavorites()
+  const { t } = useLocale()
   const [sorting, setSorting] = useState<SortingState>([
     { id: 'points', desc: true },
     { id: 'goalDifference', desc: true },
@@ -123,10 +125,10 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
 
   const columns = useMemo<ColumnDef<Standing>[]>(
     () => [
-      { accessorKey: 'position', header: 'Pos' },
+      { accessorKey: 'position', header: t('posShort') },
       {
         accessorKey: 'team.name',
-        header: 'Team',
+        header: t('team'),
         cell: ({ row }) => (
           <div className="flex min-w-0 items-center gap-2">
             <AssetImage
@@ -149,17 +151,17 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
         ),
         enableSorting: false,
       },
-      { accessorKey: 'played', header: 'GP' },
+      { accessorKey: 'played', header: t('playedShort') },
       { accessorKey: 'won', header: 'W' },
       { accessorKey: 'drawn', header: 'D' },
       { accessorKey: 'lost', header: 'L' },
       { accessorKey: 'goalsFor', header: 'GF' },
       { accessorKey: 'goalsAgainst', header: 'GA' },
-      { accessorKey: 'goalDifference', header: 'GD' },
-      { accessorKey: 'points', header: 'Pts' },
+      { accessorKey: 'goalDifference', header: t('gdShort') },
+      { accessorKey: 'points', header: t('pointsShort') },
       {
         id: 'form',
-        header: 'Form',
+        header: t('formShort'),
         cell: ({ row }) => <FormDots form={row.original.form} />,
         enableSorting: false,
       },
@@ -170,7 +172,7 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
         enableSorting: false,
       },
     ],
-    [],
+    [t],
   )
 
   const table = useReactTable({
@@ -189,18 +191,18 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-            Primary league view
+            {t('primaryLeagueView')}
           </p>
-          <h2 className="mt-1 text-lg font-semibold tracking-tight">Full Standings Table</h2>
+          <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('fullStandings')}</h2>
         </div>
         <span className="text-xs text-muted-foreground">
-          Hover rows, sort columns, and open any team detail page
+          {t('standingsTableHint')}
         </span>
       </div>
       {standings.length === 0 ? (
         <EmptyState
-          title="No standings available"
-          description="The league table will appear here once standings data is loaded."
+          title={t('noStandingsAvailable')}
+          description={t('standingsWillAppear')}
           className="min-h-0 border-0 p-0"
         />
       ) : null}
@@ -289,6 +291,32 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
             {standings.map((standing) => (
               <LeagueTableRow key={standing.id} standing={standing} onOpen={openTeam} />
             ))}
+          </div>
+          <div className="mt-3 grid gap-2 rounded-[1rem] border border-border/45 bg-background/35 p-3 text-[11px] text-muted-foreground sm:grid-cols-2 xl:grid-cols-5">
+            <div>
+              <p className="font-semibold uppercase tracking-[0.16em] text-foreground/80">{t('tableLegend')}</p>
+              <p className="mt-1">{t('tableAbbrevLegend')}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-7 w-1.5 rounded-full bg-blue-500" />
+              <span>{t('championsLeagueLegend')}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-7 w-1.5 rounded-full bg-red-500" />
+              <span>{t('relegationLegend')}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+              <span>{t('favoriteLegend')}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <FormDots form={[
+                { result: 'W', opponent: '', score: '', date: '2026-05-01T12:00:00Z' },
+                { result: 'D', opponent: '', score: '', date: '2026-05-08T12:00:00Z' },
+                { result: 'L', opponent: '', score: '', date: '2026-05-15T12:00:00Z' },
+              ]} />
+              <span>{t('formLegend')}</span>
+            </div>
           </div>
         </>
       ) : null}

@@ -57,6 +57,7 @@ export function HandbookDialog() {
           <div className="space-y-4">
             <H>{t('handbookWelcomeTitle')}</H>
             <P>{t('handbookWelcomeBody')}</P>
+            <P>{t('handbookLanguageNote')}</P>
             <Tip tipLabel={t('tip')}>{t('handbookWelcomeTip')}</Tip>
           </div>
         ),

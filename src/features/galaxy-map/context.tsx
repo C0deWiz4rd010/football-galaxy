@@ -1,8 +1,10 @@
-import { createContext, useCallback, useContext, useMemo, useReducer } from 'react'
+import { useCallback, useMemo, useReducer } from 'react'
 import type { ReactNode } from 'react'
 
 import type { GalaxyProgress, NodeProgress } from './types'
 import { getNode } from './data'
+import { GalaxyContext } from './context-core'
+import type { GalaxyContextValue } from './context-core'
 
 const STORAGE_KEY = 'football-galaxy-map-progress'
 
@@ -106,24 +108,6 @@ function reducer(state: GalaxyProgress, action: Action): GalaxyProgress {
   }
 }
 
-export type GalaxyContextValue = {
-  progress: GalaxyProgress
-  /** Upgrade a node to next level — deducts XP cost, adds rewards */
-  upgradeNode: (nodeId: string) => void
-  /** Add XP to the pool (e.g. from a match event or challenge) */
-  addXp: (amount: number) => void
-  markLoreSeen: (loreId: string) => void
-  reset: () => void
-  /** Derived: level of a specific node */
-  nodeLevel: (nodeId: string) => number
-  /** Derived: can the player afford to upgrade this node? */
-  canUpgrade: (nodeId: string) => boolean
-  /** Derived: highest milestone index reached for a region (-1 = none) */
-  regionMilestoneIndex: (regionId: string) => number
-}
-
-const GalaxyContext = createContext<GalaxyContextValue | null>(null)
-
 export function GalaxyProvider({ children }: { children: ReactNode }) {
   const [progress, dispatch] = useReducer(reducer, undefined, loadProgress)
 
@@ -181,29 +165,4 @@ export function GalaxyProvider({ children }: { children: ReactNode }) {
   )
 
   return <GalaxyContext.Provider value={value}>{children}</GalaxyContext.Provider>
-}
-
-export function useGalaxy() {
-  const ctx = useContext(GalaxyContext)
-  if (!ctx) throw new Error('useGalaxy must be used inside GalaxyProvider')
-  return ctx
-}
-
-/** Derive XP progress toward next level threshold */
-export function xpLevelThresholds(): number[] {
-  return [0, 500, 1500, 3500, 7500, 15000]
-}
-
-export function playerLevel(totalXp: number): { level: number; current: number; next: number; pct: number } {
-  const thresholds = xpLevelThresholds()
-  for (let i = thresholds.length - 1; i >= 0; i--) {
-    if (totalXp >= (thresholds[i] ?? 0)) {
-      const current = thresholds[i] ?? 0
-      const next = thresholds[i + 1] ?? current
-      const range = next - current
-      const pct = range > 0 ? Math.min(100, Math.round(((totalXp - current) / range) * 100)) : 100
-      return { level: i + 1, current, next, pct }
-    }
-  }
-  return { level: 1, current: 0, next: 500, pct: 0 }
 }

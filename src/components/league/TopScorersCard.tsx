@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { AssetImage } from '@/components/shared/AssetImage'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { getPlayerPhotoSources } from '@/lib/assetSources'
 import { createPlayerAvatar, initialsFromName } from '@/lib/visualAssets'
 import type { Assist, Scorer } from '@/services/types'
 
@@ -30,10 +31,13 @@ const ScorersItem = memo(function ScorersItem({
       <div className="relative h-11 w-11 shrink-0">
         <AssetImage
           src={item.player.photo}
-          fallbackSrc={createPlayerAvatar(
-            initialsFromName(item.player.name),
-            item.team.primaryColor ?? '#0f766e',
-          )}
+          fallbackSrc={[
+            ...getPlayerPhotoSources(item.player),
+            createPlayerAvatar(
+              initialsFromName(item.player.name),
+              item.team.primaryColor ?? '#0f766e',
+            ),
+          ]}
           alt={item.player.name}
           className="h-11 w-11 rounded-full object-cover"
           loading="lazy"

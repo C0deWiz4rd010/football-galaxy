@@ -5,7 +5,7 @@ import { ChevronRight, Lock, Sparkles, Star, Trophy, Swords, Users, Zap } from '
 
 import { cn } from '@/lib/utils'
 import type { GalaxyNode, NodeType, Region, RegionMilestone } from './types'
-import { useGalaxy } from './context'
+import { useGalaxy } from './context-core'
 
 // ─── Node type icons ─────────────────────────────────────────────────────────
 
@@ -306,7 +306,7 @@ function RegionPanel({
 // ─── Main Galaxy Map page ────────────────────────────────────────────────────
 
 import { GALAXY_REGIONS } from './data'
-import { playerLevel } from './context'
+import { playerLevel } from './levels'
 
 export function GalaxyMapPage() {
   const { progress } = useGalaxy()

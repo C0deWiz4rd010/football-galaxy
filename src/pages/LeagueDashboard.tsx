@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+﻿import type { ReactNode } from 'react'
 
 import { Link, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
@@ -24,15 +24,16 @@ import { PageWrapper } from '@/components/layout/PageWrapper'
 import { AssetImage } from '@/components/shared/AssetImage'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { LeagueDashboardSkeleton } from '@/components/shared/LeagueDashboardSkeleton'
-import { StaggerGrid } from '@/components/shared/StaggerGrid'
+import { StaggerGrid, StaggerGridItem } from '@/components/shared/StaggerGrid'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useDataSource } from '@/contexts/DataSourceContext'
 import { useLocale } from '@/contexts/LocaleContext'
 import { useFootballData } from '@/hooks/useFootballData'
+import { getPlayerPhotoSources } from '@/lib/assetSources'
 import { getLeague, isLeagueId } from '@/lib/leagues'
 import { formatDateTime } from '@/lib/utils'
-import { createLeagueLogo } from '@/lib/visualAssets'
+import { createLeagueLogo, createPlayerAvatar, initialsFromName } from '@/lib/visualAssets'
 import type { LeagueSummary, Standing } from '@/services/types'
 
 function getFormPoints(standing: Standing) {
@@ -53,22 +54,30 @@ function SummaryStat({
   label,
   value,
   helper,
+  icon,
+  tone,
 }: {
   label: string
   value: string
   helper: string
+  icon: ReactNode
+  tone: string
 }) {
   return (
     <div className="surface-soft rounded-[1rem] px-3 py-2.5">
-      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
-      <div className="mt-1 flex items-end justify-between gap-3">
-        <p className="text-lg font-semibold tracking-tight">{value}</p>
+      <div className="flex items-center gap-2">
+        <span className="grid h-7 w-7 place-items-center rounded-lg bg-background/45" style={{ color: tone }}>
+          {icon}
+        </span>
+        <p className="min-w-0 truncate text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
+      </div>
+      <div className="mt-1.5 flex items-end justify-between gap-3">
+        <p className="text-lg font-semibold leading-none tracking-tight">{value}</p>
         <p className="truncate text-xs text-muted-foreground">{helper}</p>
       </div>
     </div>
   )
 }
-
 function StorylineCard({
   icon,
   eyebrow,
@@ -161,6 +170,8 @@ export default function LeagueDashboard() {
   const topScorers = data.topScorers ?? []
   const topAssists = data.topAssists ?? []
   const recentMatches = data.recentMatches ?? []
+  const liveUpdatedAt = source === 'live' ? data.lastUpdated : undefined
+  const isLiveSummary = Boolean(liveUpdatedAt)
   const leader = standings[0]
   const topAttack = standings.length > 0
     ? [...standings].sort((left, right) => right.goalsFor - left.goalsFor)[0]
@@ -184,7 +195,7 @@ export default function LeagueDashboard() {
   return (
     <PageWrapper>
       <StaggerGrid className="space-y-4">
-        <StaggerGrid.Item as="section"
+        <StaggerGridItem as="section"
           className="stat-card app-grid-lines overflow-hidden rounded-fg-xl p-4 shadow-fg-2 sm:p-5"
           style={{
             backgroundImage: `radial-gradient(circle at top right, ${league.color}18, transparent 26%)`,
@@ -204,7 +215,9 @@ export default function LeagueDashboard() {
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="outline">{league.country}</Badge>
-                      <Badge className="bg-white/10 text-foreground">{source === 'live' ? t('liveProxy') : t('localFallback')}</Badge>
+                      <Badge className="bg-white/10 text-foreground">
+                        {isLiveSummary ? t('liveProxy') : t('localFallback')}
+                      </Badge>
                     </div>
                     <h1 className="mt-1.5 text-2xl font-semibold tracking-tight">{league.name}</h1>
                     <p className="mt-1 text-sm text-muted-foreground">
@@ -218,9 +231,9 @@ export default function LeagueDashboard() {
                   {typeof data.season.currentMatchday === 'number' ? (
                     <Badge variant="outline">{t('matchday')} {data.season.currentMatchday}</Badge>
                   ) : null}
-                  {source === 'live' && data.lastUpdated ? (
+                  {liveUpdatedAt ? (
                     <span className="text-xs text-muted-foreground">
-                      {t('updated')} {formatDateTime(data.lastUpdated)}
+                      {t('updated')} {formatDateTime(liveUpdatedAt)}
                     </span>
                   ) : null}
                 </div>
@@ -231,21 +244,29 @@ export default function LeagueDashboard() {
                   label={t('leader')}
                   value={leader ? leader.team.shortName : '-'}
                   helper={leader ? `${leader.points} ${t('points')}` : t('noStandings')}
+                  icon={<Star className="h-4 w-4" />}
+                  tone={league.color}
                 />
                 <SummaryStat
                   label={t('bestAttack')}
                   value={topAttack ? String(topAttack.goalsFor) : '-'}
                   helper={topAttack ? topAttack.team.shortName : t('noScoringData')}
+                  icon={<Target className="h-4 w-4" />}
+                  tone="#f97316"
                 />
                 <SummaryStat
                   label={t('bestDefense')}
                   value={topDefense ? String(topDefense.goalsAgainst) : '-'}
                   helper={topDefense ? topDefense.team.shortName : t('noDefendingData')}
+                  icon={<Shield className="h-4 w-4" />}
+                  tone="#38bdf8"
                 />
                 <SummaryStat
                   label={t('formMonster')}
                   value={formLeader ? `${getFormPoints(formLeader)}/15` : '-'}
                   helper={formLeader ? formLeader.team.shortName : t('waitingTrendData')}
+                  icon={<Flame className="h-4 w-4" />}
+                  tone="#a78bfa"
                 />
               </div>
 
@@ -254,21 +275,21 @@ export default function LeagueDashboard() {
                   <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('explore')}</span>
                   <div className="mt-1 flex items-center justify-between gap-2">
                     <span className="text-sm font-medium">{t('teamsExplorer')}</span>
-                    <Sparkles className="h-4 w-4 text-muted-foreground" />
+                    <Sparkles className="h-4 w-4 text-sky-400" />
                   </div>
                 </Link>
                 <Link to="/players" className="interactive-card surface-soft rounded-[1rem] px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
                   <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('explore')}</span>
                   <div className="mt-1 flex items-center justify-between gap-2">
                     <span className="text-sm font-medium">{t('playersExplorer')}</span>
-                    <Zap className="h-4 w-4 text-muted-foreground" />
+                    <Zap className="h-4 w-4 text-amber-400" />
                   </div>
                 </Link>
                 <Link to="/compare" className="interactive-card surface-soft rounded-[1rem] px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
                   <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('teamMatchups')}</span>
                   <div className="mt-1 flex items-center justify-between gap-2">
                     <span className="text-sm font-medium">{t('playerMatchups')}</span>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                    <ArrowRight className="h-4 w-4 text-violet-400" />
                   </div>
                 </Link>
               </div>
@@ -324,7 +345,20 @@ export default function LeagueDashboard() {
                       {spotlightPlayer ? spotlightPlayer.name : t('noFeaturedPlayer')}
                     </h2>
                   </div>
-                  <Star className="h-5 w-5 text-muted-foreground" />
+                  {spotlightPlayer ? (
+                    <AssetImage
+                      src={spotlightPlayer.photo}
+                      fallbackSrc={[
+                        ...getPlayerPhotoSources(spotlightPlayer),
+                        createPlayerAvatar(initialsFromName(spotlightPlayer.name), league.color),
+                      ]}
+                      alt={spotlightPlayer.name}
+                      className="h-14 w-14 rounded-2xl object-cover ring-1 ring-white/10"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <Star className="h-5 w-5 text-amber-400" />
+                  )}
                 </div>
                 {spotlightPlayer ? (
                   <>
@@ -349,17 +383,17 @@ export default function LeagueDashboard() {
               </div>
             </div>
           </div>
-        </StaggerGrid.Item>
+        </StaggerGridItem>
 
-        <StaggerGrid.Item>
+        <StaggerGridItem>
           <LeagueTable standings={standings} />
-        </StaggerGrid.Item>
+        </StaggerGridItem>
 
-        <StaggerGrid.Item as="section" className="grid gap-3 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
+        <StaggerGridItem as="section" className="grid gap-3 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
           <div className="grid gap-3 lg:grid-cols-2">
             <StorylineCard
               cta={t('openDetails')}
-              icon={<Flame className="h-5 w-5" />}
+              icon={<Flame className="h-5 w-5 text-orange-400" />}
               eyebrow={t('risingTeam')}
               title={risingTeam ? risingTeam.team.name : t('noBreakoutYet')}
               text={
@@ -371,7 +405,7 @@ export default function LeagueDashboard() {
             />
             <StorylineCard
               cta={t('openDetails')}
-              icon={<Target className="h-5 w-5" />}
+              icon={<Target className="h-5 w-5 text-amber-400" />}
               eyebrow={t('topAssists')}
               title={playmaker ? playmaker.player.name : 'No leader yet'}
               text={
@@ -385,7 +419,7 @@ export default function LeagueDashboard() {
             />
             <StorylineCard
               cta={t('openDetails')}
-              icon={<Shield className="h-5 w-5" />}
+              icon={<Shield className="h-5 w-5 text-sky-400" />}
               eyebrow={t('bestDefense')}
               title={topDefense ? topDefense.team.name : 'No wall yet'}
               text={
@@ -397,7 +431,7 @@ export default function LeagueDashboard() {
             />
             <StorylineCard
               cta={t('openDetails')}
-              icon={<Sparkles className="h-5 w-5" />}
+              icon={<Sparkles className="h-5 w-5 text-violet-400" />}
               eyebrow={t('explore')}
               title={t('teamsExplorer') + ' & ' + t('playersExplorer')}
               text={t('tableFirstSubtitle')}
@@ -408,13 +442,13 @@ export default function LeagueDashboard() {
             <MatchOfTheDay match={recentMatches[0]} />
             <FormTableCard standings={standings} />
           </div>
-        </StaggerGrid.Item>
+        </StaggerGridItem>
 
-        <StaggerGrid.Item className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(280px,0.8fr)]">
+        <StaggerGridItem className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(280px,0.8fr)]">
           <TopScorersCard title={t('topScorers')} items={topScorers} />
           <TopAssistsCard items={topAssists} />
           <TeamStatsCard standings={standings} />
-        </StaggerGrid.Item>
+        </StaggerGridItem>
       </StaggerGrid>
     </PageWrapper>
   )

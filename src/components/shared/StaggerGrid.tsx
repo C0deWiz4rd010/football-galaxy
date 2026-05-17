@@ -3,7 +3,7 @@
  * alive on load without each section having to wire up motion props.
  *
  * Wrap the parent grid in `<StaggerGrid>` and wrap each child you want to
- * animate in `<StaggerGrid.Item>`. Use the `as` prop to keep the rendered
+ * animate in `<StaggerGridItem>`. Use the `as` prop to keep the rendered
  * element (`section`, `div`, …) sensible for accessibility.
  */
 
@@ -49,4 +49,5 @@ function StaggerItem<E extends ElementType = 'div'>({
   )
 }
 
-export const StaggerGrid = Object.assign(StaggerGridRoot, { Item: StaggerItem })
+export const StaggerGrid = StaggerGridRoot
+export const StaggerGridItem = StaggerItem

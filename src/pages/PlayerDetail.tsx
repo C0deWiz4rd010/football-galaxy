@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+﻿import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { ArrowRight, Award, Clock3, Heart, Shield, Sparkles, Target } from 'lucide-react'
@@ -13,7 +13,7 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import { BackButton } from '@/components/shared/BackButton'
 import { FormBadge } from '@/components/shared/FormBadge'
 import { SkeletonCard } from '@/components/shared/SkeletonCard'
-import { StaggerGrid } from '@/components/shared/StaggerGrid'
+import { StaggerGrid, StaggerGridItem } from '@/components/shared/StaggerGrid'
 import { ResultsTimeline } from '@/components/team/ResultsTimeline'
 import { Badge } from '@/components/ui/badge'
 import { useLocale } from '@/contexts/LocaleContext'
@@ -35,17 +35,16 @@ function DetailMetric({
   icon: React.ReactNode
 }) {
   return (
-    <div className="surface-soft rounded-[1.3rem] p-4">
-      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10">
+    <div className="surface-soft rounded-[1rem] p-3">
+      <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-xl bg-white/10">
         {icon}
       </div>
-      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
-      <p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p>
-      <p className="mt-1 text-sm text-muted-foreground">{helper}</p>
+      <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
+      <p className="mt-1 text-xl font-semibold leading-none tracking-tight">{value}</p>
+      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{helper}</p>
     </div>
   )
 }
-
 function FavoriteHeartButton({ playerId }: { playerId: string }) {
   const { t } = useLocale()
   const favorites = useFavorites()
@@ -122,11 +121,11 @@ export default function PlayerDetail() {
 
   return (
     <PageWrapper>
-      <StaggerGrid className="space-y-5">
-        <StaggerGrid.Item>
+      <StaggerGrid className="space-y-4">
+        <StaggerGridItem>
           <BackButton />
-        </StaggerGrid.Item>
-        <StaggerGrid.Item>
+        </StaggerGridItem>
+        <StaggerGridItem>
           <PlayerHeader
             player={player}
             team={team ?? undefined}
@@ -137,9 +136,9 @@ export default function PlayerDetail() {
               </div>
             }
           />
-        </StaggerGrid.Item>
+        </StaggerGridItem>
 
-        <StaggerGrid.Item className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.9fr)]">
+        <StaggerGridItem className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.72fr)]">
           <div className="space-y-4">
             <section className="stat-card">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -155,35 +154,35 @@ export default function PlayerDetail() {
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
                 <DetailMetric
                   label={t('formScore')}
                   value={String(card.score)}
                   helper={t('formDerivedFromResults', { label: card.label })}
-                  icon={<Award className="h-5 w-5" />}
+                  icon={<Award className="h-4 w-4 text-amber-400" />}
                 />
                 <DetailMetric
                   label={t('contribution')}
                   value={contributionRate}
                   helper={t('contributionHelper')}
-                  icon={<Target className="h-5 w-5" />}
+                  icon={<Target className="h-4 w-4 text-orange-400" />}
                 />
                 <DetailMetric
                   label={t('availability')}
                   value={availability}
                   helper={t('availabilityHelper')}
-                  icon={<Clock3 className="h-5 w-5" />}
+                  icon={<Clock3 className="h-4 w-4 text-sky-400" />}
                 />
                 <DetailMetric
                   label={t('discipline')}
                   value={`${player.stats.yellowCards}/${player.stats.redCards}`}
                   helper={t('disciplineHelper')}
-                  icon={<Shield className="h-5 w-5" />}
+                  icon={<Shield className="h-4 w-4 text-emerald-400" />}
                 />
               </div>
 
-              <div className="mt-5 grid gap-3 md:grid-cols-2">
-                <div className="surface-soft rounded-[1.3rem] p-4">
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                <div className="surface-soft rounded-[1rem] p-3">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
                     {t('squadContext')}
                   </p>
@@ -196,7 +195,7 @@ export default function PlayerDetail() {
                       : t('leagueStandingUnavailable')}
                   </p>
                 </div>
-                <div className="surface-soft rounded-[1.3rem] p-4">
+                <div className="surface-soft rounded-[1rem] p-3">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
                     {t('contractAndValue')}
                   </p>
@@ -253,9 +252,9 @@ export default function PlayerDetail() {
               </div>
             </section>
           </div>
-        </StaggerGrid.Item>
+        </StaggerGridItem>
 
-        <StaggerGrid.Item as="section" className="stat-card">
+        <StaggerGridItem as="section" className="stat-card">
           <div className="mb-4">
             <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
               {t('matchContext')}
@@ -270,7 +269,7 @@ export default function PlayerDetail() {
               description={t('noMatchContextHint')}
             />
           )}
-        </StaggerGrid.Item>
+        </StaggerGridItem>
       </StaggerGrid>
     </PageWrapper>
   )

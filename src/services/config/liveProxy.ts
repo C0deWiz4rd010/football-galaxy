@@ -4,7 +4,11 @@ export interface LiveProxyConfig {
 }
 
 export function getLiveProxyConfig(): LiveProxyConfig {
-  const configured = import.meta.env.VITE_LIVE_DATA_PROXY_URL?.trim()
+  const configured =
+    import.meta.env.VITE_LIVE_DATA_PROXY_URL?.trim() ||
+    (import.meta.env.DEV && import.meta.env.VITE_DISABLE_DEV_LIVE_PROXY !== 'true'
+      ? 'http://localhost:8787/api/live'
+      : '')
   const baseUrl = configured ? configured.replace(/\/$/, '') : undefined
 
   return {
