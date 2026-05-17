@@ -45,3 +45,12 @@ Turn the accepted Data Command Center concepts into the next Football Galaxy das
 - Live-data fallback is honest and cache recovery is fixed.
 - The implementation plan is documented and can be handed to another engineer without design decisions.
 - Local checks and browser QA pass before publish.
+
+## Follow-up Implementation Notes
+
+Date: 2026-05-17
+
+- Main league dashboard now follows the concept more closely: compact header stats first, table as the primary left object, and a right insights rail for spotlight player, top scorers, top assists, match card, and data freshness.
+- The standings table was compressed toward the concept anatomy: `Tore` combines goals for/against, `TD`, `Pkt`, and `Form` remain visible in the table-first layout.
+- The loading state now renders an explicit table-first skeleton with labels, so opening or switching a league no longer looks like an empty main view while live data resolves.
+- Browser QA must cover all five league nav links after every dashboard layout change.

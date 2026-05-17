@@ -152,11 +152,15 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
         enableSorting: false,
       },
       { accessorKey: 'played', header: t('playedShort') },
-      { accessorKey: 'won', header: 'W' },
-      { accessorKey: 'drawn', header: 'D' },
-      { accessorKey: 'lost', header: 'L' },
-      { accessorKey: 'goalsFor', header: 'GF' },
-      { accessorKey: 'goalsAgainst', header: 'GA' },
+      { accessorKey: 'won', header: 'S' },
+      { accessorKey: 'drawn', header: 'U' },
+      { accessorKey: 'lost', header: 'N' },
+      {
+        id: 'goals',
+        header: 'Tore',
+        cell: ({ row }) => `${row.original.goalsFor}:${row.original.goalsAgainst}`,
+        enableSorting: false,
+      },
       { accessorKey: 'goalDifference', header: t('gdShort') },
       { accessorKey: 'points', header: t('pointsShort') },
       {
@@ -208,7 +212,7 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
       ) : null}
       {standings.length > 0 ? (
         <>
-          <div className="hidden overflow-hidden rounded-[1.4rem] border border-border/50 md:block">
+          <div className="hidden overflow-hidden rounded-[1rem] border border-border/50 md:block">
             <Table>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -228,6 +232,7 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
                               ? 'descending'
                               : 'none'
                         }
+                        className="px-2 text-xs first:pl-3 last:pr-3"
                       >
                         <button
                           type="button"
@@ -269,7 +274,7 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
                     style={{ boxShadow: rowAccent(row.original.position, standings.length) }}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} role="cell" className="py-3">
+                      <TableCell key={cell.id} role="cell" className="px-2 py-2.5 first:pl-3 last:pr-3">
                         {cell.column.id === 'open' ? (
                           <div className="flex items-center justify-end gap-2">
                             {favorites.isTeamFavorite(row.original.team.id) ? (

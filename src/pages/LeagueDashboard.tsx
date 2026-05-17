@@ -1,8 +1,6 @@
 ﻿import type { ReactNode } from 'react'
 
 import { Link, useParams } from 'react-router-dom'
-import { motion } from 'framer-motion'
-
 import {
   AlertCircle,
   ArrowRight,
@@ -78,50 +76,6 @@ function SummaryStat({
     </div>
   )
 }
-function StorylineCard({
-  icon,
-  eyebrow,
-  title,
-  text,
-  href,
-  cta,
-}: {
-  icon: ReactNode
-  eyebrow: string
-  title: string
-  text: string
-  href?: string
-  cta: string
-}) {
-  const content = (
-    <>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{eyebrow}</p>
-          <h3 className="mt-1.5 text-base font-semibold tracking-tight">{title}</h3>
-        </div>
-        <div className="rounded-2xl bg-background/30 p-2 text-muted-foreground">{icon}</div>
-      </div>
-      <p className="mt-2 text-sm text-muted-foreground">{text}</p>
-      {href ? (
-        <span className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-foreground">
-          {cta}
-          <ArrowRight className="h-4 w-4" />
-        </span>
-      ) : null}
-    </>
-  )
-
-  if (!href) {
-    return <div className="stat-card p-4">{content}</div>
-  }
-
-  return (
-    <Link to={href} className="stat-card interactive-card block p-4">
-      {content}
-    </Link>
-  )
-}
 
 export default function LeagueDashboard() {
   const { leagueId: routeLeagueId } = useParams()
@@ -182,9 +136,6 @@ export default function LeagueDashboard() {
   const formLeader = standings.length > 0
     ? [...standings].sort((left, right) => getFormPoints(right) - getFormPoints(left))[0]
     : undefined
-  const risingTeam = standings.length > 0
-    ? [...standings].sort((left, right) => right.goalDifference - left.goalDifference)[0]
-    : undefined
   const playmaker = topAssists[0]
   const scorer = topScorers[0]
   const spotlightPlayer = scorer?.player ?? playmaker?.player
@@ -201,253 +152,183 @@ export default function LeagueDashboard() {
             backgroundImage: `radial-gradient(circle at top right, ${league.color}18, transparent 26%)`,
           }}
         >
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(300px,0.9fr)]">
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-3">
-                  <AssetImage
-                    src={league.logo}
-                    fallbackSrc={createLeagueLogo(league.abbreviation, league.color, league.name)}
-                    alt={`${league.name} logo`}
-                    className="h-14 w-14 rounded-[1.2rem] bg-white/90 object-contain p-2 ring-1 ring-white/10"
-                    loading="lazy"
-                  />
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="outline">{league.country}</Badge>
-                      <Badge className="bg-white/10 text-foreground">
-                        {isLiveSummary ? t('liveProxy') : t('localFallback')}
-                      </Badge>
-                    </div>
-                    <h1 className="mt-1.5 text-2xl font-semibold tracking-tight">{league.name}</h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {t('tableFirstSubtitle')}
-                    </p>
-                  </div>
-                </div>
-
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <AssetImage
+                src={league.logo}
+                fallbackSrc={createLeagueLogo(league.abbreviation, league.color, league.name)}
+                alt={`${league.name} logo`}
+                className="h-14 w-14 rounded-[1rem] bg-white/90 object-contain p-2 ring-1 ring-white/10"
+                loading="lazy"
+              />
+              <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge>{data.season.label}</Badge>
-                  {typeof data.season.currentMatchday === 'number' ? (
-                    <Badge variant="outline">{t('matchday')} {data.season.currentMatchday}</Badge>
-                  ) : null}
-                  {liveUpdatedAt ? (
-                    <span className="text-xs text-muted-foreground">
-                      {t('updated')} {formatDateTime(liveUpdatedAt)}
-                    </span>
-                  ) : null}
+                  <Badge variant="outline">{league.country}</Badge>
+                  <Badge className={isLiveSummary ? 'bg-emerald-500/15 text-emerald-200' : 'bg-slate-500/15 text-slate-200'}>
+                    {isLiveSummary ? t('liveProxy') : t('localFallback')}
+                  </Badge>
                 </div>
-              </div>
-
-              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                <SummaryStat
-                  label={t('leader')}
-                  value={leader ? leader.team.shortName : '-'}
-                  helper={leader ? `${leader.points} ${t('points')}` : t('noStandings')}
-                  icon={<Star className="h-4 w-4" />}
-                  tone={league.color}
-                />
-                <SummaryStat
-                  label={t('bestAttack')}
-                  value={topAttack ? String(topAttack.goalsFor) : '-'}
-                  helper={topAttack ? topAttack.team.shortName : t('noScoringData')}
-                  icon={<Target className="h-4 w-4" />}
-                  tone="#f97316"
-                />
-                <SummaryStat
-                  label={t('bestDefense')}
-                  value={topDefense ? String(topDefense.goalsAgainst) : '-'}
-                  helper={topDefense ? topDefense.team.shortName : t('noDefendingData')}
-                  icon={<Shield className="h-4 w-4" />}
-                  tone="#38bdf8"
-                />
-                <SummaryStat
-                  label={t('formMonster')}
-                  value={formLeader ? `${getFormPoints(formLeader)}/15` : '-'}
-                  helper={formLeader ? formLeader.team.shortName : t('waitingTrendData')}
-                  icon={<Flame className="h-4 w-4" />}
-                  tone="#a78bfa"
-                />
-              </div>
-
-              <div className="grid gap-2 sm:grid-cols-3">
-                <Link to="/teams" className="interactive-card surface-soft rounded-[1rem] px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
-                  <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('explore')}</span>
-                  <div className="mt-1 flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium">{t('teamsExplorer')}</span>
-                    <Sparkles className="h-4 w-4 text-sky-400" />
-                  </div>
-                </Link>
-                <Link to="/players" className="interactive-card surface-soft rounded-[1rem] px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
-                  <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('explore')}</span>
-                  <div className="mt-1 flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium">{t('playersExplorer')}</span>
-                    <Zap className="h-4 w-4 text-amber-400" />
-                  </div>
-                </Link>
-                <Link to="/compare" className="interactive-card surface-soft rounded-[1rem] px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
-                  <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('teamMatchups')}</span>
-                  <div className="mt-1 flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium">{t('playerMatchups')}</span>
-                    <ArrowRight className="h-4 w-4 text-violet-400" />
-                  </div>
-                </Link>
-              </div>
-            </div>
-
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
-              <div className="surface-soft rounded-[1rem] px-3 py-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                      {t('titlePulse')}
-                    </p>
-                    <h2 className="mt-1.5 text-base font-semibold tracking-tight">
-                      {(leader?.team.name ?? league.name)} {t('setThePace')}
-                    </h2>
-                  </div>
-                  <motion.span
-                    aria-hidden
-                    className="inline-flex items-center justify-center text-amber-500 drop-shadow-[0_0_8px_rgba(251,146,60,0.55)]"
-                    animate={{
-                      scale: [1, 1.18, 0.92, 1.12, 1],
-                      filter: [
-                        'drop-shadow(0 0 0px rgba(251,146,60,0.3))',
-                        'drop-shadow(0 0 10px rgba(251,146,60,0.75))',
-                        'drop-shadow(0 0 4px rgba(251,146,60,0.45))',
-                        'drop-shadow(0 0 12px rgba(251,146,60,0.8))',
-                        'drop-shadow(0 0 0px rgba(251,146,60,0.3))',
-                      ],
-                    }}
-                    transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-                  >
-                    <Flame className="h-5 w-5" />
-                  </motion.span>
-                </div>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {leader
-                    ? t('leaderSummary', {
-                        name: leader.team.name,
-                        played: leader.played,
-                        gd: leader.goalDifference,
-                      })
-                    : t('titleRacePending')}
+                <h1 className="mt-1 text-2xl font-semibold tracking-tight">{league.name}</h1>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {t('tableFirstSubtitle')}
                 </p>
               </div>
+            </div>
 
-              <div className="surface-soft rounded-[1rem] px-3 py-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                      {t('spotlightPlayer')}
-                    </p>
-                    <h2 className="mt-1.5 text-base font-semibold tracking-tight">
-                      {spotlightPlayer ? spotlightPlayer.name : t('noFeaturedPlayer')}
-                    </h2>
-                  </div>
-                  {spotlightPlayer ? (
-                    <AssetImage
-                      src={spotlightPlayer.photo}
-                      fallbackSrc={[
-                        ...getPlayerPhotoSources(spotlightPlayer),
-                        createPlayerAvatar(initialsFromName(spotlightPlayer.name), league.color),
-                      ]}
-                      alt={spotlightPlayer.name}
-                      className="h-14 w-14 rounded-2xl object-cover ring-1 ring-white/10"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <Star className="h-5 w-5 text-amber-400" />
-                  )}
-                </div>
-                {spotlightPlayer ? (
-                  <>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <Badge variant="outline">{spotlightPlayer.position}</Badge>
-                      {spotlightTeamLabel ? <Badge variant="outline">{spotlightTeamLabel}</Badge> : null}
-                      <Badge>{scorer?.player.id === spotlightPlayer.id ? t('goalsCount', { count: scorer.goals }) : t('assistsCount', { count: playmaker?.assists ?? 0 })}</Badge>
-                    </div>
-                    <Link
-                      to={`/${spotlightPlayer.leagueId}/player/${spotlightPlayer.id}`}
-                      className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary"
-                    >
-                      {t('openDetails')}
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </>
-                ) : (
-                  <p className="mt-3 text-sm text-muted-foreground">
-                    {t('featuredPlayerHint')}
-                  </p>
-                )}
-              </div>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <Badge>{data.season.label}</Badge>
+              {typeof data.season.currentMatchday === 'number' ? (
+                <Badge variant="outline">{t('matchday')} {data.season.currentMatchday}</Badge>
+              ) : null}
+              {liveUpdatedAt ? (
+                <span>{t('updated')} {formatDateTime(liveUpdatedAt)}</span>
+              ) : null}
             </div>
           </div>
+
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            <SummaryStat
+              label={t('leader')}
+              value={leader ? leader.team.shortName : '-'}
+              helper={leader ? `${leader.points} ${t('points')}` : t('noStandings')}
+              icon={<Star className="h-4 w-4" />}
+              tone={league.color}
+            />
+            <SummaryStat
+              label={t('bestAttack')}
+              value={topAttack ? String(topAttack.goalsFor) : '-'}
+              helper={topAttack ? topAttack.team.shortName : t('noScoringData')}
+              icon={<Target className="h-4 w-4" />}
+              tone="#f97316"
+            />
+            <SummaryStat
+              label={t('bestDefense')}
+              value={topDefense ? String(topDefense.goalsAgainst) : '-'}
+              helper={topDefense ? topDefense.team.shortName : t('noDefendingData')}
+              icon={<Shield className="h-4 w-4" />}
+              tone="#38bdf8"
+            />
+            <SummaryStat
+              label={t('formMonster')}
+              value={formLeader ? `${getFormPoints(formLeader)}/15` : '-'}
+              helper={formLeader ? formLeader.team.shortName : t('waitingTrendData')}
+              icon={<Flame className="h-4 w-4" />}
+              tone="#14b8a6"
+            />
+          </div>
         </StaggerGridItem>
 
-        <StaggerGridItem>
+        <StaggerGridItem as="section" className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_330px]">
           <LeagueTable standings={standings} />
-        </StaggerGridItem>
 
-        <StaggerGridItem as="section" className="grid gap-3 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
-          <div className="grid gap-3 lg:grid-cols-2">
-            <StorylineCard
-              cta={t('openDetails')}
-              icon={<Flame className="h-5 w-5 text-orange-400" />}
-              eyebrow={t('risingTeam')}
-              title={risingTeam ? risingTeam.team.name : t('noBreakoutYet')}
-              text={
-                risingTeam
-                  ? t('risingTeamSummary', { name: risingTeam.team.shortName })
-                  : t('breakoutStoryPending')
-              }
-              href={risingTeam ? `/${risingTeam.leagueId}/team/${risingTeam.team.id}` : undefined}
-            />
-            <StorylineCard
-              cta={t('openDetails')}
-              icon={<Target className="h-5 w-5 text-amber-400" />}
-              eyebrow={t('topAssists')}
-              title={playmaker ? playmaker.player.name : 'No leader yet'}
-              text={
-                playmaker
-                  ? `${playmaker.player.name} is driving the final ball for ${playmaker.team.shortName} with ${playmaker.assists} assists so far.`
-                  : 'Creative leaders will appear here once assist data is available.'
-              }
-              href={
-                playmaker ? `/${playmaker.player.leagueId}/player/${playmaker.player.id}` : undefined
-              }
-            />
-            <StorylineCard
-              cta={t('openDetails')}
-              icon={<Shield className="h-5 w-5 text-sky-400" />}
-              eyebrow={t('bestDefense')}
-              title={topDefense ? topDefense.team.name : 'No wall yet'}
-              text={
-                topDefense
-                  ? `${topDefense.team.shortName} have conceded only ${topDefense.goalsAgainst} goals, setting the defensive standard for the league.`
-                  : 'The best defensive side will appear here once enough matches are logged.'
-              }
-              href={topDefense ? `/${topDefense.leagueId}/team/${topDefense.team.id}` : undefined}
-            />
-            <StorylineCard
-              cta={t('openDetails')}
-              icon={<Sparkles className="h-5 w-5 text-violet-400" />}
-              eyebrow={t('explore')}
-              title={t('teamsExplorer') + ' & ' + t('playersExplorer')}
-              text={t('tableFirstSubtitle')}
-            />
-          </div>
+          <aside className="grid gap-3 self-start">
+            <div className="stat-card overflow-hidden p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                    {t('spotlightPlayer')}
+                  </p>
+                  <h2 className="mt-1 truncate text-base font-semibold tracking-tight">
+                    {spotlightPlayer ? spotlightPlayer.name : t('noFeaturedPlayer')}
+                  </h2>
+                  <p className="text-xs text-muted-foreground">
+                    {spotlightTeamLabel ?? league.abbreviation}
+                  </p>
+                </div>
+                {spotlightPlayer ? (
+                  <AssetImage
+                    src={spotlightPlayer.photo}
+                    fallbackSrc={[
+                      ...getPlayerPhotoSources(spotlightPlayer),
+                      createPlayerAvatar(initialsFromName(spotlightPlayer.name), league.color),
+                    ]}
+                    alt={spotlightPlayer.name}
+                    className="h-20 w-20 rounded-[0.9rem] object-cover ring-1 ring-white/10"
+                    loading="lazy"
+                  />
+                ) : (
+                  <Star className="h-5 w-5 text-amber-400" />
+                )}
+              </div>
+              {spotlightPlayer ? (
+                <>
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                    <div className="surface-soft rounded-lg px-2 py-2">
+                      <p className="font-mono text-lg font-bold">{spotlightPlayer.stats.appearances}</p>
+                      <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Spiele</p>
+                    </div>
+                    <div className="surface-soft rounded-lg px-2 py-2">
+                      <p className="font-mono text-lg font-bold">{spotlightPlayer.stats.goals}</p>
+                      <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Tore</p>
+                    </div>
+                    <div className="surface-soft rounded-lg px-2 py-2">
+                      <p className="font-mono text-lg font-bold">{spotlightPlayer.stats.assists}</p>
+                      <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Vorlagen</p>
+                    </div>
+                  </div>
+                  <Link
+                    to={`/${spotlightPlayer.leagueId}/player/${spotlightPlayer.id}`}
+                    className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary"
+                  >
+                    {t('openDetails')}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </>
+              ) : (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  {t('featuredPlayerHint')}
+                </p>
+              )}
+            </div>
 
-          <div className="grid gap-3">
+            <TopScorersCard title={t('topScorers')} items={topScorers} compact />
+            <TopAssistsCard items={topAssists} compact />
             <MatchOfTheDay match={recentMatches[0]} />
-            <FormTableCard standings={standings} />
-          </div>
+
+            <div className="stat-card p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Datenaktualität</p>
+                  <h2 className="mt-1 text-sm font-semibold tracking-tight">
+                    {isLiveSummary ? t('liveProxy') : t('localFallback')}
+                  </h2>
+                </div>
+                <span className={isLiveSummary ? 'h-2.5 w-2.5 rounded-full bg-emerald-400' : 'h-2.5 w-2.5 rounded-full bg-slate-400'} />
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {liveUpdatedAt ? `${t('updated')} ${formatDateTime(liveUpdatedAt)}` : t('tableFirstSubtitle')}
+              </p>
+            </div>
+          </aside>
         </StaggerGridItem>
 
-        <StaggerGridItem className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(280px,0.8fr)]">
-          <TopScorersCard title={t('topScorers')} items={topScorers} />
-          <TopAssistsCard items={topAssists} />
+        <StaggerGridItem className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(280px,0.8fr)]">
+          <FormTableCard standings={standings} />
           <TeamStatsCard standings={standings} />
+        </StaggerGridItem>
+
+        <StaggerGridItem className="grid gap-2 sm:grid-cols-3">
+          <Link to="/teams" className="interactive-card surface-soft rounded-[1rem] px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
+            <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('explore')}</span>
+            <div className="mt-1 flex items-center justify-between gap-2">
+              <span className="text-sm font-medium">{t('teamsExplorer')}</span>
+              <Sparkles className="h-4 w-4 text-sky-400" />
+            </div>
+          </Link>
+          <Link to="/players" className="interactive-card surface-soft rounded-[1rem] px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
+            <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('explore')}</span>
+            <div className="mt-1 flex items-center justify-between gap-2">
+              <span className="text-sm font-medium">{t('playersExplorer')}</span>
+              <Zap className="h-4 w-4 text-amber-400" />
+            </div>
+          </Link>
+          <Link to="/compare" className="interactive-card surface-soft rounded-[1rem] px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
+            <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('teamMatchups')}</span>
+            <div className="mt-1 flex items-center justify-between gap-2">
+              <span className="text-sm font-medium">{t('playerMatchups')}</span>
+              <ArrowRight className="h-4 w-4 text-violet-400" />
+            </div>
+          </Link>
         </StaggerGridItem>
       </StaggerGrid>
     </PageWrapper>

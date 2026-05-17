@@ -127,6 +127,7 @@ src/features/galaxy-map/
 
 - **Data Command Center concepts** - Three dashboard concept images were generated and saved in `docs/concepts/` for main league view, team detail, and player detail. The implementation plan lives in `docs/plans/main-dashboard-command-center-implementation-plan.md`.
 - **Live fallback honesty** - Live providers now throw on upstream failure so football-data.org or local fallback is chosen deliberately. Rejected live caches are cleared and live labels depend on a live `lastUpdated` summary.
+- **Main dashboard table-first follow-up** - The league dashboard now uses a concept-style primary table plus right insights rail. League loading uses a visible table skeleton so top-five league navigation does not appear blank while live data resolves.
 - **Phase: XP from real events** — award XP when viewing a match, completing a stat comparison, exploring a team profile.
 - **Phase: Node unlocking gates** — require previous node to be level 1 before adjacent node can be upgraded.
 - **Phase: Visual map connections** — draw SVG lines between connected nodes on the grid.
