@@ -1,5 +1,6 @@
 import { leagues } from '@/lib/leagues'
 import { createPlayerAvatar, createFlag } from '@/lib/visualAssets'
+import { getEspnPhotoSources } from '@/data/playerPhotoSources'
 import type { Assist, LeagueId, Match, Player, Scorer, Standing, Team } from '@/services/types'
 
 const fallbackFirstNames = ['Luca', 'Noah', 'Theo', 'Milan', 'Elias', 'Jonas', 'Mateo', 'Oscar', 'Hugo', 'Leo']
@@ -137,6 +138,9 @@ function createPlayerFromReal(
   const flagCode = toFlagCode(flagSlug, 'england')
   const number = real.shirtNumber ?? playerIndex + 1
 
+  const espnSources = real.id ? getEspnPhotoSources(real.id) : []
+  const avatarSvg = createPlayerAvatar(initials(real.name), teamColor)
+
   return {
     id: `${teamId}-p${real.id ?? playerIndex + 1}`,
     teamId,
@@ -149,7 +153,8 @@ function createPlayerFromReal(
     age,
     heightCm: 174 + ((teamIndex * 2 + playerIndex) % 24),
     weightKg: 68 + ((teamIndex + playerIndex * 2) % 20),
-    photo: createPlayerAvatar(initials(real.name), teamColor),
+    photo: espnSources[0] ?? avatarSvg,
+    photoSources: espnSources.length > 0 ? [...espnSources.slice(1), avatarSvg] : [avatarSvg],
     marketValueEurCents: (3_000_000 + (teamIndex * 2_100_000 + playerIndex * 775_000)) * 100,
     contractUntil: `${2026 + ((teamIndex + playerIndex) % 4)}-06-30`,
     stats: {
@@ -197,12 +202,24 @@ export function createMockLeague({ leagueId, realTeams, seed }: CreateMockLeague
     const primaryColor = rt.color || league.color
     const secondaryColor = index % 2 === 0 ? '#18181b' : '#f4f4f5'
     const teamId = `${leagueId}-${slug(rt.name)}`
+    // Build a deduplicated crestSources chain so AssetImage has multiple CDN
+    // candidates before falling back to the generated SVG shield.
+    const crestSources: string[] = []
+    if (rt.crest) {
+      crestSources.push(rt.crest)
+      // If the primary crest uses http, also try https variant.
+      if (rt.crest.startsWith('http://')) {
+        crestSources.push(rt.crest.replace('http://', 'https://'))
+      }
+    }
+
     const team: Team = {
       id: teamId,
       leagueId,
       name: rt.name,
       shortName: rt.shortName,
       crest: rt.crest,
+      crestSources: crestSources.length > 0 ? crestSources : undefined,
       manager: rt.coach?.name ?? `${pick(fallbackFirstNames, index + seed)} ${pick(fallbackLastNames, index + seed + 5)}`,
       stadium: rt.venue ?? `${rt.shortName} Stadium`,
       capacity: 32000 + ((index + seed) % 11) * 4200,
