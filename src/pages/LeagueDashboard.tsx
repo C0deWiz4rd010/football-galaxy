@@ -1,6 +1,6 @@
 ﻿import type { ReactNode } from 'react'
 
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import {
   AlertCircle,
   ArrowRight,
@@ -79,12 +79,14 @@ function SummaryStat({
 
 export default function LeagueDashboard() {
   const { leagueId: routeLeagueId } = useParams()
+  const [searchParams] = useSearchParams()
   const leagueId = isLeagueId(routeLeagueId) ? routeLeagueId : 'premier-league'
   const { source } = useDataSource()
   const { t } = useLocale()
+  const matchday = Number(searchParams.get('matchday') ?? 0) || undefined
   const { data, isLoading, error, refetch } = useFootballData<LeagueSummary>(
     'getLeagueSummary',
-    { leagueId },
+    { leagueId, matchday },
   )
   const league = data?.league ?? getLeague(leagueId)
 
@@ -255,15 +257,15 @@ export default function LeagueDashboard() {
                   <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                     <div className="surface-soft rounded-lg px-2 py-2">
                       <p className="font-mono text-lg font-bold">{spotlightPlayer.stats.appearances}</p>
-                      <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Spiele</p>
+                      <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{t('games')}</p>
                     </div>
                     <div className="surface-soft rounded-lg px-2 py-2">
                       <p className="font-mono text-lg font-bold">{spotlightPlayer.stats.goals}</p>
-                      <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Tore</p>
+                      <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{t('goals')}</p>
                     </div>
                     <div className="surface-soft rounded-lg px-2 py-2">
                       <p className="font-mono text-lg font-bold">{spotlightPlayer.stats.assists}</p>
-                      <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Vorlagen</p>
+                      <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{t('assists')}</p>
                     </div>
                   </div>
                   <Link
@@ -288,7 +290,7 @@ export default function LeagueDashboard() {
             <div className="stat-card p-3">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Datenaktualität</p>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('dataFreshness')}</p>
                   <h2 className="mt-1 text-sm font-semibold tracking-tight">
                     {isLiveSummary ? t('liveProxy') : t('localFallback')}
                   </h2>

@@ -65,6 +65,11 @@ const messages: Record<Locale, Record<string, string>> = {
     assists: 'Vorlagen',
     team: 'Team',
     playedShort: 'Sp',
+    winsShort: 'S',
+    drawsShort: 'U',
+    lossesShort: 'N',
+    goalsColHeader: 'Tore',
+    dataFreshness: 'Datenaktualität',
 
     // ── League dashboard ─────────────────────────────────────────────────────
     couldNotLoadLeague: 'Liga-Daten konnten nicht geladen werden',
@@ -402,6 +407,11 @@ const messages: Record<Locale, Record<string, string>> = {
     assists: 'Assists',
     team: 'Team',
     playedShort: 'P',
+    winsShort: 'W',
+    drawsShort: 'D',
+    lossesShort: 'L',
+    goalsColHeader: 'Goals',
+    dataFreshness: 'Data freshness',
 
     couldNotLoadLeague: "Couldn't load league data",
     noLeagueData: 'No league data',
