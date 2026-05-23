@@ -7,19 +7,22 @@ import { AssetImage } from '@/components/shared/AssetImage'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { useLocale } from '@/contexts/LocaleContext'
+import { getCrestSources } from '@/lib/assetSources'
 import { formatDateTime } from '@/lib/utils'
 import { createTeamCrest } from '@/lib/visualAssets'
 import type { Match } from '@/services/types'
 
 export function MatchOfTheDay({ match }: { match?: Match }) {
   const [open, setOpen] = useState(false)
+  const { t } = useLocale()
 
   if (!match) {
     return (
       <section className="stat-card">
         <EmptyState
-          title="No featured match yet"
-          description="Match context will appear here once fixtures or results are available."
+          title={t('noFeaturedMatch')}
+          description={t('noMatchContextAvailable')}
           className="min-h-0 border-0 p-0"
         />
       </section>
@@ -33,9 +36,9 @@ export function MatchOfTheDay({ match }: { match?: Match }) {
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-            Match Center
+            {t('matchCenter')}
           </p>
-          <h2 className="mt-1 text-lg font-semibold tracking-tight">Match of the Day</h2>
+          <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('matchOfTheDay')}</h2>
         </div>
         {isTodayLive ? (
           <Badge className="border-red-500/30 bg-red-500/15 text-red-500">LIVE</Badge>
@@ -48,12 +51,15 @@ export function MatchOfTheDay({ match }: { match?: Match }) {
         <Link to={`/${match.leagueId}/team/${match.homeTeam.id}`} className="group">
           <AssetImage
             src={match.homeTeam.crest}
-            fallbackSrc={createTeamCrest(
-              match.homeTeam.shortName,
-              match.homeTeam.primaryColor ?? '#0f766e',
-              match.homeTeam.secondaryColor ?? '#f8fafc',
-              0,
-            )}
+            fallbackSrc={[
+              ...getCrestSources(match.homeTeam),
+              createTeamCrest(
+                match.homeTeam.shortName,
+                match.homeTeam.primaryColor ?? '#0f766e',
+                match.homeTeam.secondaryColor ?? '#f8fafc',
+                0,
+              ),
+            ]}
             alt={match.homeTeam.name}
             className="mx-auto h-16 w-16 rounded-2xl object-cover transition group-hover:scale-[1.02]"
             loading="lazy"
@@ -66,12 +72,15 @@ export function MatchOfTheDay({ match }: { match?: Match }) {
         <Link to={`/${match.leagueId}/team/${match.awayTeam.id}`} className="group">
           <AssetImage
             src={match.awayTeam.crest}
-            fallbackSrc={createTeamCrest(
-              match.awayTeam.shortName,
-              match.awayTeam.primaryColor ?? '#0f766e',
-              match.awayTeam.secondaryColor ?? '#f8fafc',
-              1,
-            )}
+            fallbackSrc={[
+              ...getCrestSources(match.awayTeam),
+              createTeamCrest(
+                match.awayTeam.shortName,
+                match.awayTeam.primaryColor ?? '#0f766e',
+                match.awayTeam.secondaryColor ?? '#f8fafc',
+                1,
+              ),
+            ]}
             alt={match.awayTeam.name}
             className="mx-auto h-16 w-16 rounded-2xl object-cover transition group-hover:scale-[1.02]"
             loading="lazy"
@@ -82,15 +91,15 @@ export function MatchOfTheDay({ match }: { match?: Match }) {
 
       <div className="mt-4 rounded-[1.2rem] border border-white/8 bg-white/4 px-4 py-3 text-center">
         <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-          Kickoff and venue
+          {t('kickoffAndVenue')}
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
-          {formatDateTime(match.utcDate)} - {match.venue ?? 'Venue pending'}
+          {formatDateTime(match.utcDate)} — {match.venue ?? t('venuePending')}
         </p>
       </div>
 
       <Button variant="outline" className="mt-4 w-full" onClick={() => setOpen((value) => !value)}>
-        {open ? 'Hide Events' : 'View Events'}
+        {open ? t('hideEvents') : t('viewEvents')}
       </Button>
       <AnimatePresence initial={false}>
         {open ? (
@@ -104,7 +113,7 @@ export function MatchOfTheDay({ match }: { match?: Match }) {
             {match.events.length > 0 ? (
               match.events.map((event) => (
                 <li key={event.id} className="surface-soft rounded-xl px-3 py-2 text-sm">
-                  <span className="font-mono">{event.minute}'</span> {event.type} -{' '}
+                  <span className="font-mono">{event.minute}'</span> {event.type} —{' '}
                   {event.playerId ? (
                     <Link
                       to={`/${match.leagueId}/player/${event.playerId}`}
@@ -119,7 +128,7 @@ export function MatchOfTheDay({ match }: { match?: Match }) {
               ))
             ) : (
               <li className="surface-soft rounded-xl px-3 py-2 text-sm text-muted-foreground">
-                No event timeline is available for this match yet.
+                {t('noEventTimeline')}
               </li>
             )}
           </motion.ol>
