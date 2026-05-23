@@ -100,14 +100,27 @@ export function TopScorersCard({
                 key={item.id}
                 type="button"
                 onClick={() => navigate(`/${item.player.leagueId}/player/${item.player.id}`)}
-                className="grid w-full grid-cols-[1.5rem_minmax(0,1fr)_auto] items-center gap-2 py-2 text-left text-sm hover:text-primary"
+                className="flex w-full items-center gap-2.5 py-2 text-left text-sm transition-colors hover:text-primary"
               >
-                <span className="font-mono text-xs text-muted-foreground">{index + 1}</span>
-                <span className="min-w-0">
+                <span className="w-4 shrink-0 font-mono text-[10px] text-muted-foreground">{index + 1}</span>
+                <AssetImage
+                  src={item.player.photo}
+                  fallbackSrc={[
+                    ...getPlayerPhotoSources(item.player),
+                    createPlayerAvatar(
+                      initialsFromName(item.player.name),
+                      item.team.primaryColor ?? '#0f766e',
+                    ),
+                  ]}
+                  alt={item.player.name}
+                  className="h-8 w-8 shrink-0 rounded-full object-cover"
+                  loading="lazy"
+                />
+                <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium">{item.player.name}</span>
                   <span className="block truncate text-xs text-muted-foreground">{item.team.shortName}</span>
                 </span>
-                <span className="font-mono text-lg font-bold leading-none">{type === 'goals' ? item.goals : item.assists}</span>
+                <span className="shrink-0 font-mono text-base font-bold leading-none">{type === 'goals' ? item.goals : item.assists}</span>
               </button>
             ) : (
               <ScorersItem
