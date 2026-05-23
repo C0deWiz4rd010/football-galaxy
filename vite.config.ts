@@ -17,7 +17,7 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes('node_modules')) {
             // Split heavy per-league mock data into separate chunks so the main
-            // bundle stays lean. Each league file is ~85–105 kB of JSON-ish data.
+            // bundle stays lean. Each league file is ~85-105 kB of JSON-ish data.
             if (id.includes('/src/data/mock/')) {
               if (id.includes('premier-league')) return 'mock-premier-league'
               if (id.includes('bundesliga')) return 'mock-bundesliga'
@@ -33,7 +33,6 @@ export default defineConfig({
           if (id.includes('@radix-ui')) return 'radix'
           if (id.includes('lucide-react')) return 'icons'
           if (id.includes('cmdk')) return 'cmdk'
-          if (id.includes('react-dom')) return 'react-dom'
           return 'vendor'
         },
       },

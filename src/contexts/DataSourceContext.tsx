@@ -26,7 +26,7 @@ interface DataSourceContextValue {
   setSeason: (_season: string) => void
 }
 
-const STORAGE_KEY = 'football-galaxy-data-source'
+const STORAGE_KEY = 'football-galaxy-data-source-v2'
 const DEFAULT_SEASON = '2025-26'
 
 const DataSourceContext = createContext<DataSourceContextValue | undefined>(undefined)
@@ -37,7 +37,12 @@ function readInitialSource(isLiveAvailable: boolean): DataSource {
   }
 
   const stored = window.localStorage.getItem(STORAGE_KEY)
-  return stored === 'live' && isLiveAvailable ? 'live' : 'fallback'
+
+  if (stored === 'fallback' && import.meta.env.DEV) {
+    return 'fallback'
+  }
+
+  return isLiveAvailable ? 'live' : 'fallback'
 }
 
 export function DataSourceProvider({ children }: { children: ReactNode }) {
@@ -82,6 +87,10 @@ export function DataSourceProvider({ children }: { children: ReactNode }) {
       runtimeLabel,
       runtimeDetail,
       setSource: (nextSource) => {
+        if (nextSource === 'fallback' && !import.meta.env.DEV) {
+          return
+        }
+
         if (nextSource === 'live' && !isLiveAvailable) {
           return
         }

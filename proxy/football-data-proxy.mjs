@@ -8,6 +8,7 @@ const FOOTBALL_DATA_API_KEY = process.env.FOOTBALL_DATA_API_KEY?.trim() ?? ''
 const ALLOWED_HOSTS = new Set([
   'www.thesportsdb.com',
   'site.api.espn.com',
+  'site.web.api.espn.com',
   'api.football-data.org',
   'commons.wikimedia.org',
   'upload.wikimedia.org',

@@ -20,18 +20,20 @@ const MemoRow = memo(function MemoRow({ player }: { player: Player }) {
         <TableCell className="font-mono">{player.number}</TableCell>
         <TableCell><div className="flex items-center gap-2"><AssetImage src={player.photo} fallbackSrc={[...getPlayerPhotoSources(player), createPlayerAvatar(initialsFromName(player.name), '#0f766e')]} alt={player.name} className="h-8 w-8 rounded-full object-cover" loading="lazy" /> <span>{player.name}</span><Badge>{player.position}</Badge></div></TableCell>
         <TableCell>{player.age}</TableCell>
+        <TableCell>{player.stats.appearances}</TableCell>
+        <TableCell>{player.stats.goals}</TableCell>
+        <TableCell>{player.stats.assists}</TableCell>
+        <TableCell>{player.stats.yellowCards}</TableCell>
         <TableCell><FormBadge player={player} variant="score" /></TableCell>
         <TableCell><span className="inline-flex items-center gap-2"><img src={player.flag} alt="" className="h-4 w-6 rounded-sm object-cover" loading="lazy" /> {player.nationality}</span></TableCell>
-        <TableCell>{formatMarketValue(player.marketValueEurCents)}</TableCell>
-        <TableCell>{player.contractUntil}</TableCell>
       </TableRow>
       <AnimatePresence>
         {open ? (
           <TableRow>
-            <TableCell colSpan={7}>
+            <TableCell colSpan={9}>
               <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                 <div className="grid gap-3 rounded-lg bg-muted p-4 text-sm sm:grid-cols-6">
-                  <span className="inline-flex items-center gap-2">Form <FormBadge player={player} variant="full" /></span><span>Goals {player.stats.goals}</span><span>Assists {player.stats.assists}</span><span>Yellow {player.stats.yellowCards}</span><span>Red {player.stats.redCards}</span><span>Minutes {player.stats.minutes}</span>
+                  <span className="inline-flex items-center gap-2">Form <FormBadge player={player} variant="full" /></span><span>Minutes {player.stats.minutes}</span><span>Red {player.stats.redCards}</span><span>{formatMarketValue(player.marketValueEurCents)}</span><span>Contract {player.contractUntil}</span>
                   <Link className="font-medium text-primary" to={`/${player.leagueId}/player/${player.id}`}>View full profile -&gt;</Link>
                 </div>
               </motion.div>
@@ -62,6 +64,7 @@ function MobileSquadCard({ player }: { player: Player }) {
             <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
               <span>Age {player.age}</span>
               <span>No. {player.number}</span>
+              <span>Apps {player.stats.appearances}</span>
               <span>Goals {player.stats.goals}</span>
               <span>Assists {player.stats.assists}</span>
               <span className="col-span-2">{formatMarketValue(player.marketValueEurCents)}</span>
@@ -80,10 +83,12 @@ export function SquadTable({ players }: { players: Player[] }) {
     { accessorKey: 'number', header: '#' },
     { accessorKey: 'name', header: 'Player' },
     { accessorKey: 'age', header: 'Age' },
+    { accessorKey: 'stats.appearances', header: 'Apps' },
+    { accessorKey: 'stats.goals', header: 'G' },
+    { accessorKey: 'stats.assists', header: 'A' },
+    { accessorKey: 'stats.yellowCards', header: 'YC' },
     { id: 'form', header: 'Form', accessorFn: (player) => getFormScore(player).score },
     { accessorKey: 'nationality', header: 'Nationality' },
-    { accessorKey: 'marketValueEurCents', header: 'Market Value' },
-    { accessorKey: 'contractUntil', header: 'Contract Until' },
   ], [])
   const table = useReactTable({ data: players, columns, state: { sorting, globalFilter }, onSortingChange: setSorting, onGlobalFilterChange: setGlobalFilter, getCoreRowModel: getCoreRowModel(), getSortedRowModel: getSortedRowModel(), getFilteredRowModel: getFilteredRowModel() })
   return (

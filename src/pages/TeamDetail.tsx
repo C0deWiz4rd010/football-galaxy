@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+﻿import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { Heart, Shield, Sparkles, Users, Zap } from 'lucide-react'
@@ -13,7 +13,7 @@ import { PageWrapper } from '@/components/layout/PageWrapper'
 import { AssetImage } from '@/components/shared/AssetImage'
 import { BackButton } from '@/components/shared/BackButton'
 import { SkeletonCard } from '@/components/shared/SkeletonCard'
-import { StaggerGrid } from '@/components/shared/StaggerGrid'
+import { StaggerGrid, StaggerGridItem } from '@/components/shared/StaggerGrid'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -24,8 +24,8 @@ import { FormBadge } from '@/components/shared/FormBadge'
 import { getCrestSources, getPlayerPhotoSources } from '@/lib/assetSources'
 import { getFormScore } from '@/lib/player-ratings'
 import { formatMarketValue } from '@/lib/utils'
-import { createTeamCrest } from '@/lib/visualAssets'
-import type { LeagueSummary, Match, Squad, Team } from '@/services/types'
+import { createPlayerAvatar, createTeamCrest, initialsFromName } from '@/lib/visualAssets'
+import type { Match, Squad, Standing, Team } from '@/services/types'
 
 function TeamMetric({
   label,
@@ -37,14 +37,13 @@ function TeamMetric({
   helper: string
 }) {
   return (
-    <div className="surface-soft rounded-[1.3rem] p-4">
-      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
-      <p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p>
-      <p className="mt-1 text-sm text-muted-foreground">{helper}</p>
+    <div className="surface-soft rounded-[1rem] p-3">
+      <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
+      <p className="mt-1 text-xl font-semibold leading-none tracking-tight">{value}</p>
+      <p className="mt-1 truncate text-xs text-muted-foreground">{helper}</p>
     </div>
   )
 }
-
 export default function TeamDetail() {
   const { t } = useLocale()
   const { leagueId, teamId } = useParams()
@@ -59,7 +58,7 @@ export default function TeamDetail() {
   const { data: matches } = useFootballData<Match[]>('getMatches', {
     leagueId: leagueId as never,
   })
-  const { data: leagueSummary } = useFootballData<LeagueSummary>('getLeagueSummary', {
+  const { data: standings } = useFootballData<Standing[]>('getStandings', {
     leagueId: leagueId as never,
   })
   const favorites = useFavorites()
@@ -85,7 +84,7 @@ export default function TeamDetail() {
   }
 
   const players = squad?.players ?? team.squad ?? []
-  const standing = leagueSummary?.standings.find((item) => item.team.id === team.id)
+  const standing = standings?.find((item) => item.team.id === team.id)
   const squadValue = players.reduce(
     (sum, player) => sum + player.marketValueEurCents,
     0,
@@ -106,19 +105,19 @@ export default function TeamDetail() {
 
   return (
     <PageWrapper>
-      <StaggerGrid className="space-y-5">
-        <StaggerGrid.Item>
+      <StaggerGrid className="space-y-4">
+        <StaggerGridItem>
           <BackButton />
-        </StaggerGrid.Item>
-        <StaggerGrid.Item as="section"
+        </StaggerGridItem>
+        <StaggerGridItem as="section"
           className="stat-card overflow-hidden rounded-fg-xl p-5 text-white shadow-fg-4 sm:p-6"
           style={{
             background: `linear-gradient(135deg, ${team.primaryColor ?? '#0f766e'}, ${team.secondaryColor ?? '#0f172a'})`,
           }}
         >
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.72fr)]">
             <div>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <AssetImage
                   src={team.crest}
                   fallbackSrc={[
@@ -131,7 +130,7 @@ export default function TeamDetail() {
                     ),
                   ]}
                   alt={team.name}
-                  className="h-24 w-24 rounded-[1.8rem] object-cover ring-1 ring-white/20"
+                  className="h-20 w-20 rounded-[1.3rem] object-cover ring-1 ring-white/20"
                   loading="lazy"
                 />
                 <div className="flex-1">
@@ -139,15 +138,18 @@ export default function TeamDetail() {
                     <Badge className="border-white/20 bg-white/12 text-white">{team.shortName}</Badge>
                     <Badge className="border-white/20 bg-black/15 text-white">{t('clubView')}</Badge>
                   </div>
-                  <h1 className="mt-3 text-3xl font-semibold tracking-tight">{team.name}</h1>
-                  <p className="mt-1 text-white/80">
+                  <h1 className="mt-2 text-2xl font-semibold tracking-tight">{team.name}</h1>
+                  <p className="mt-1 text-sm text-white/80">
                     <Link
                       to={`/${team.leagueId}/team/${team.id}/coach`}
                       className="font-medium text-white hover:text-white/80"
                     >
                       {team.manager ?? t('coachPending')}
                     </Link>{' '}
-                    · {team.stadium} · {team.capacity?.toLocaleString()} {t('seats')}
+                    {' / '}
+                    {team.stadium}
+                    {' / '}
+                    {team.capacity?.toLocaleString()} {t('seats')}
                   </p>
                 </div>
                 <motion.div whileTap={{ scale: 1.14 }}>
@@ -167,7 +169,7 @@ export default function TeamDetail() {
                 </motion.div>
               </div>
 
-              <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
                 <TeamMetric
                   label={t('leaguePosition')}
                   value={standing ? `#${standing.position}` : '-'}
@@ -191,36 +193,36 @@ export default function TeamDetail() {
               </div>
             </div>
 
-            <section className="rounded-[1.8rem] border border-white/12 bg-black/18 p-5">
+            <section className="rounded-[1.2rem] border border-white/12 bg-black/18 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-white/60">
                     {t('teamSpotlight')}
                   </p>
-                  <h2 className="mt-1 text-xl font-semibold">
+                  <h2 className="mt-1 text-lg font-semibold">
                     {topRatedPlayer ? topRatedPlayer.name : t('noStandoutYet')}
                   </h2>
                 </div>
                 <Sparkles className="h-5 w-5 text-white/60" />
               </div>
               {topRatedPlayer ? (
-                <div className="mt-5 space-y-4">
+                <div className="mt-3 space-y-3">
                   <Link
                     to={`/${topRatedPlayer.leagueId}/player/${topRatedPlayer.id}`}
-                    className="flex items-center gap-4 hover:text-white/80"
+                    className="flex items-center gap-3 hover:text-white/80"
                   >
                     <AssetImage
                       src={topRatedPlayer.photo}
                       fallbackSrc={[
                         ...getPlayerPhotoSources(topRatedPlayer),
-                        createTeamCrest(team.shortName, team.primaryColor ?? '#0f766e', team.secondaryColor ?? '#f8fafc', 0),
+                        createPlayerAvatar(initialsFromName(topRatedPlayer.name), team.primaryColor ?? '#0f766e'),
                       ]}
                       alt={topRatedPlayer.name}
-                      className="h-16 w-16 rounded-[1.4rem] object-cover ring-1 ring-white/15"
+                      className="h-14 w-14 rounded-[1rem] object-cover ring-1 ring-white/15"
                       loading="lazy"
                     />
                     <div>
-                      <p className="text-lg font-semibold">{topRatedPlayer.name}</p>
+                      <p className="text-base font-semibold">{topRatedPlayer.name}</p>
                       <p className="text-sm text-white/75 flex items-center gap-2">
                         {topRatedPlayer.position}
                         <FormBadge player={topRatedPlayer} variant="full" className="bg-white/15 border-white/20 text-white" />
@@ -228,15 +230,15 @@ export default function TeamDetail() {
                     </div>
                   </Link>
                   <div className="grid grid-cols-3 gap-2">
-                    <div className="rounded-xl border border-white/10 bg-white/6 p-3">
+                    <div className="rounded-xl border border-white/10 bg-white/6 p-2.5">
                       <p className="text-[11px] uppercase tracking-[0.18em] text-white/60">{t('goals')}</p>
                       <p className="mt-1 text-xl font-semibold">{topRatedPlayer.stats.goals}</p>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/6 p-3">
+                    <div className="rounded-xl border border-white/10 bg-white/6 p-2.5">
                       <p className="text-[11px] uppercase tracking-[0.18em] text-white/60">{t('assists')}</p>
                       <p className="mt-1 text-xl font-semibold">{topRatedPlayer.stats.assists}</p>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/6 p-3">
+                    <div className="rounded-xl border border-white/10 bg-white/6 p-2.5">
                       <p className="text-[11px] uppercase tracking-[0.18em] text-white/60">{t('formShort')}</p>
                       <p className="mt-1 text-sm font-semibold">{getFormScore(topRatedPlayer).label}</p>
                     </div>
@@ -252,9 +254,9 @@ export default function TeamDetail() {
               ) : null}
             </section>
           </div>
-        </StaggerGrid.Item>
+        </StaggerGridItem>
 
-        <StaggerGrid.Item>
+        <StaggerGridItem>
         <Tabs defaultValue="overview">
           <div className="overflow-x-auto pb-1">
             <TabsList className="min-w-max">
@@ -365,7 +367,7 @@ export default function TeamDetail() {
             <FormLineChart />
           </TabsContent>
         </Tabs>
-        </StaggerGrid.Item>
+        </StaggerGridItem>
       </StaggerGrid>
     </PageWrapper>
   )

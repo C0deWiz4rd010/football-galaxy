@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { ArrowUpDown, Search, Shield, Trophy, Users } from 'lucide-react'
@@ -6,7 +6,7 @@ import { ArrowUpDown, Search, Shield, Trophy, Users } from 'lucide-react'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { AssetImage } from '@/components/shared/AssetImage'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { StaggerGrid } from '@/components/shared/StaggerGrid'
+import { StaggerGrid, StaggerGridItem } from '@/components/shared/StaggerGrid'
 import { Badge } from '@/components/ui/badge'
 import { useLocale } from '@/contexts/LocaleContext'
 import { getCrestSources } from '@/lib/assetSources'
@@ -54,7 +54,7 @@ export default function TeamsExplorer() {
   return (
     <PageWrapper>
       <StaggerGrid className="space-y-5">
-        <StaggerGrid.Item as="section" className="stat-card rounded-fg-xl p-5 shadow-fg-2 sm:p-6">
+        <StaggerGridItem as="section" className="stat-card rounded-fg-xl p-5 shadow-fg-2 sm:p-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
               <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
@@ -95,9 +95,9 @@ export default function TeamsExplorer() {
               </div>
             </div>
           </div>
-        </StaggerGrid.Item>
+        </StaggerGridItem>
 
-        <StaggerGrid.Item as="section" className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+        <StaggerGridItem as="section" className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
           <div className="surface-soft rounded-[1.2rem] px-4 py-3 text-sm text-muted-foreground">
             {selectedLeagueId !== 'all'
               ? t('showingTeamsInLeague', { count: teams.length })
@@ -116,9 +116,9 @@ export default function TeamsExplorer() {
               <option value="goalDifference">{t('sortGoalDifference')}</option>
             </select>
           </label>
-        </StaggerGrid.Item>
+        </StaggerGridItem>
 
-        <StaggerGrid.Item as="section" className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+        <StaggerGridItem as="section" className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
           {teams.length === 0 ? (
             <div className="lg:col-span-2 xl:col-span-3">
               <EmptyState
@@ -193,9 +193,9 @@ export default function TeamsExplorer() {
               </div>
             </Link>
           ))}
-        </StaggerGrid.Item>
+        </StaggerGridItem>
 
-        <StaggerGrid.Item as="section" className="grid gap-4 lg:grid-cols-3">
+        <StaggerGridItem as="section" className="grid gap-4 lg:grid-cols-3">
           <div className="stat-card p-4">
             <Trophy className="h-5 w-5 text-muted-foreground" />
             <h2 className="mt-3 text-lg font-semibold">{t('leagueContextFirst')}</h2>
@@ -217,7 +217,7 @@ export default function TeamsExplorer() {
               {t('moreFiltersNextBody')}
             </p>
           </div>
-        </StaggerGrid.Item>
+        </StaggerGridItem>
       </StaggerGrid>
     </PageWrapper>
   )

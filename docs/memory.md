@@ -1,6 +1,50 @@
-# Football Galaxy — Development Memory
+# Football Galaxy - Development Memory
 
 This file tracks implementation steps, decisions, and lessons learned across sessions.
+
+---
+
+## Session: 2026-05-17 - live-proxy-player-data-ui
+
+### Goals
+1. Make Live Proxy the primary local/product data path.
+2. Keep Local mode as a development-only fallback control.
+3. Replace synthetic live player stats with source-backed ESPN roster stats where possible.
+4. Compact sidebar, league dashboard, team detail, and player detail UI.
+5. Improve the in-app handbook and preserve dashboard structure guidance in project docs.
+
+### Data decisions
+- `src/services/config/liveProxy.ts` now uses `http://localhost:8787/api/live` as the development default when no explicit `VITE_LIVE_DATA_PROXY_URL` is set.
+- `src/contexts/DataSourceContext.tsx` now defaults to `live` when the proxy is configured by env/default.
+- `src/services/theSportsDb.ts` now maps ESPN roster players into app `Player` objects via `mapEspnPlayer`.
+- ESPN endpoint paths were corrected: `site.api.espn.com/apis/site/v2` for teams/rosters/scoreboards and `site.web.api.espn.com/apis/v2` for standings.
+- `src/services/footballData.ts` now prefers the live ESPN/TheSportsDB service before football-data.org so team IDs stay consistent across list, team, and player pages.
+- ESPN roster stats provide appearances, goals, assists, yellow cards, red cards, shots, shots on target, saves, and derived minutes.
+- Wikimedia Commons is used as a targeted player-photo fallback through Wikidata for visible top/detail players when ESPN does not expose headshots.
+- TheSportsDB mass player-photo lookups were avoided because Cloudflare rate-limited repeated roster enrichment.
+- Generated player avatars remain the final fallback because ESPN does not consistently expose official headshots.
+
+### UI decisions
+- Sidebar league rows and favorites were reduced so the five leagues fit without desktop nav scrolling.
+- League dashboard headline metrics now use colored semantic icons and the spotlight player card includes a player image.
+- The standings table now includes a compact legend for abbreviations, Champions League zone, relegation zone, favorites, and form dots.
+- Team and player detail hero areas were tightened so identity and key stats are visible sooner.
+- Squad tables now surface live stat fields directly: apps, goals, assists, yellow cards, form, and nationality.
+- Team detail now fetches standings directly and uses live-first IDs, so table position and team context match the selected ESPN club.
+
+### Documentation
+- Added `docs/plans/live-proxy-player-ui-data-quality-plan.md`.
+- Added `docs/skills/dashboard-structure-football-galaxy.md`.
+- Added `docs/features/live-proxy-player-data-ui-2026-05-17.md`.
+- Added `docs/qa/player-stats-live-comparison-2026-05-17.md`.
+- Updated README and `.env.example` to explain `npm run dev:all` and the dev proxy default.
+
+### Verification notes
+- Lint, tests, and production build passed.
+- Production preview was checked: the app renders, the `Lokal` header tab is hidden, and `Live-Proxy` remains visible.
+- Vite manual chunks were adjusted so React/ReactDOM stay in the vendor graph and no longer blank the production preview.
+- Live proxy health check passed after starting `npm run proxy:dev`.
+- ESPN roster comparison covered Liverpool, Bayern Munich, Real Madrid, Internazionale, and Paris Saint-Germain.
 
 ---
 
@@ -81,6 +125,9 @@ src/features/galaxy-map/
 
 ## Next Steps / Ideas
 
+- **Data Command Center concepts** - Three dashboard concept images were generated and saved in `docs/concepts/` for main league view, team detail, and player detail. The implementation plan lives in `docs/plans/main-dashboard-command-center-implementation-plan.md`.
+- **Live fallback honesty** - Live providers now throw on upstream failure so football-data.org or local fallback is chosen deliberately. Rejected live caches are cleared and live labels depend on a live `lastUpdated` summary.
+- **Main dashboard table-first follow-up** - The league dashboard now uses a concept-style primary table plus right insights rail. League loading uses a visible table skeleton so top-five league navigation does not appear blank while live data resolves.
 - **Phase: XP from real events** — award XP when viewing a match, completing a stat comparison, exploring a team profile.
 - **Phase: Node unlocking gates** — require previous node to be level 1 before adjacent node can be upgraded.
 - **Phase: Visual map connections** — draw SVG lines between connected nodes on the grid.

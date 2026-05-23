@@ -1,4 +1,4 @@
-import { Suspense, lazy, useMemo, useState } from 'react'
+import { Suspense, lazy, useCallback, useMemo, useState } from 'react'
 
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -8,6 +8,7 @@ import {
   Outlet,
   createBrowserRouter,
   useLocation,
+  useSearchParams,
 } from 'react-router-dom'
 
 import { Header } from '@/components/layout/Header'
@@ -123,10 +124,26 @@ function getLayoutTitle(pathname: string, t: (key: string) => string) {
 function AppLayout() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [matchday, setMatchday] = useState(0)
+  const [searchParams, setSearchParams] = useSearchParams()
   const location = useLocation()
   const { t } = useLocale()
   const layout = useMemo(() => getLayoutTitle(location.pathname, t), [location.pathname, t])
+
+  const matchday = Number(searchParams.get('matchday') ?? 0)
+
+  const handleMatchdaySelect = useCallback(
+    (value: number) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          next.set('matchday', String(value))
+          return next
+        },
+        { replace: true },
+      )
+    },
+    [setSearchParams],
+  )
 
   return (
     <>
@@ -141,7 +158,7 @@ function AppLayout() {
         <MatchdaySwiper
           leagueId={layout.leagueId}
           matchday={matchday}
-          onSelect={setMatchday}
+          onSelect={handleMatchdaySelect}
         />
       ) : null}
       {mobileMenuOpen ? (

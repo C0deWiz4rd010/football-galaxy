@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { AssetImage } from '@/components/shared/AssetImage'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { getPlayerPhotoSources } from '@/lib/assetSources'
 import { createPlayerAvatar, initialsFromName } from '@/lib/visualAssets'
 import type { Assist, Scorer } from '@/services/types'
 
@@ -30,10 +31,13 @@ const ScorersItem = memo(function ScorersItem({
       <div className="relative h-11 w-11 shrink-0">
         <AssetImage
           src={item.player.photo}
-          fallbackSrc={createPlayerAvatar(
-            initialsFromName(item.player.name),
-            item.team.primaryColor ?? '#0f766e',
-          )}
+          fallbackSrc={[
+            ...getPlayerPhotoSources(item.player),
+            createPlayerAvatar(
+              initialsFromName(item.player.name),
+              item.team.primaryColor ?? '#0f766e',
+            ),
+          ]}
           alt={item.player.name}
           className="h-11 w-11 rounded-full object-cover"
           loading="lazy"
@@ -70,29 +74,49 @@ export function TopScorersCard({
   title,
   items,
   type = 'goals',
+  compact = false,
 }: {
   title: string
   items: Item[]
   type?: 'goals' | 'assists'
+  compact?: boolean
 }) {
+  const navigate = useNavigate()
+
   return (
-    <section className="stat-card overflow-hidden">
-      <div className="mb-3 flex items-center justify-between gap-3">
+    <section className={compact ? 'surface-soft overflow-hidden rounded-[1rem] p-3' : 'stat-card overflow-hidden'}>
+      <div className={compact ? 'mb-2 flex items-center justify-between gap-3' : 'mb-3 flex items-center justify-between gap-3'}>
         <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Leaders</p>
-          <h2 className="mt-1 text-base font-semibold tracking-tight">{title}</h2>
+          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Leaders</p>
+          <h2 className={compact ? 'mt-0.5 text-sm font-semibold tracking-tight' : 'mt-1 text-base font-semibold tracking-tight'}>{title}</h2>
         </div>
         <span className="text-xs text-muted-foreground">Top 5</span>
       </div>
       {items.length > 0 ? (
-        <div className="space-y-2">
-          {items.slice(0, 5).map((item) => (
-            <ScorersItem
-              key={item.id}
-              item={item}
-              value={type === 'goals' ? item.goals : item.assists}
-              label={type}
-            />
+        <div className={compact ? 'divide-y divide-border/45' : 'space-y-2'}>
+          {items.slice(0, compact ? 3 : 5).map((item, index) => (
+            compact ? (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => navigate(`/${item.player.leagueId}/player/${item.player.id}`)}
+                className="grid w-full grid-cols-[1.5rem_minmax(0,1fr)_auto] items-center gap-2 py-2 text-left text-sm hover:text-primary"
+              >
+                <span className="font-mono text-xs text-muted-foreground">{index + 1}</span>
+                <span className="min-w-0">
+                  <span className="block truncate font-medium">{item.player.name}</span>
+                  <span className="block truncate text-xs text-muted-foreground">{item.team.shortName}</span>
+                </span>
+                <span className="font-mono text-lg font-bold leading-none">{type === 'goals' ? item.goals : item.assists}</span>
+              </button>
+            ) : (
+              <ScorersItem
+                key={item.id}
+                item={item}
+                value={type === 'goals' ? item.goals : item.assists}
+                label={type}
+              />
+            )
           ))}
         </div>
       ) : (
