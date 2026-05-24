@@ -50,29 +50,32 @@ function getFormPoints(standing: Standing) {
 
 function SummaryStat({
   label,
-  value,
-  helper,
+  team,
+  stat,
   icon,
   tone,
 }: {
   label: string
-  value: string
-  helper: string
+  team: string
+  stat: string
   icon: ReactNode
   tone: string
 }) {
   return (
-    <div className="surface-soft rounded-[1rem] px-3 py-2.5">
-      <div className="flex items-center gap-2">
-        <span className="grid h-7 w-7 place-items-center rounded-lg bg-background/45" style={{ color: tone }}>
-          {icon}
-        </span>
-        <p className="min-w-0 truncate text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
+    <div className="surface-soft flex items-center gap-3 rounded-[1rem] p-3">
+      <div
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+        style={{ color: tone, backgroundColor: `${tone}22` }}
+      >
+        {icon}
       </div>
-      <div className="mt-1.5 flex items-end justify-between gap-3">
-        <p className="text-lg font-semibold leading-none tracking-tight">{value}</p>
-        <p className="truncate text-xs text-muted-foreground">{helper}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
+        <p className="mt-0.5 truncate text-sm font-semibold leading-tight">{team}</p>
       </div>
+      <p className="shrink-0 font-mono text-lg font-black tabular-nums" style={{ color: tone }}>
+        {stat}
+      </p>
     </div>
   )
 }
@@ -191,29 +194,29 @@ export default function LeagueDashboard() {
           <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
             <SummaryStat
               label={t('leader')}
-              value={leader ? leader.team.shortName : '-'}
-              helper={leader ? `${leader.points} ${t('points')}` : t('noStandings')}
+              team={leader ? leader.team.shortName : t('noStandings')}
+              stat={leader ? `${leader.points} Pts` : '-'}
               icon={<Star className="h-4 w-4" />}
               tone={league.color}
             />
             <SummaryStat
               label={t('bestAttack')}
-              value={topAttack ? String(topAttack.goalsFor) : '-'}
-              helper={topAttack ? topAttack.team.shortName : t('noScoringData')}
+              team={topAttack ? topAttack.team.shortName : t('noScoringData')}
+              stat={topAttack ? String(topAttack.goalsFor) : '-'}
               icon={<Target className="h-4 w-4" />}
               tone="#f97316"
             />
             <SummaryStat
               label={t('bestDefense')}
-              value={topDefense ? String(topDefense.goalsAgainst) : '-'}
-              helper={topDefense ? topDefense.team.shortName : t('noDefendingData')}
+              team={topDefense ? topDefense.team.shortName : t('noDefendingData')}
+              stat={topDefense ? String(topDefense.goalsAgainst) : '-'}
               icon={<Shield className="h-4 w-4" />}
               tone="#38bdf8"
             />
             <SummaryStat
               label={t('formMonster')}
-              value={formLeader ? `${getFormPoints(formLeader)}/15` : '-'}
-              helper={formLeader ? formLeader.team.shortName : t('waitingTrendData')}
+              team={formLeader ? formLeader.team.shortName : t('waitingTrendData')}
+              stat={formLeader ? `${getFormPoints(formLeader)}/15` : '-'}
               icon={<Flame className="h-4 w-4" />}
               tone="#14b8a6"
             />

@@ -59,6 +59,7 @@ export function useFootballData<T>(
       }
 
       if (mounted.current) {
+        setData(null)        // clear stale data from previous params so UI never shows old league
         setIsLoading(true)
         setError(null)
       }

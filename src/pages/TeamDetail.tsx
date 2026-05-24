@@ -106,22 +106,20 @@ export default function TeamDetail() {
     <PageWrapper>
       <StaggerGrid className="space-y-4">
         <StaggerGridItem as="section"
-          className="stat-card overflow-hidden rounded-fg-xl p-5 text-white shadow-fg-4 sm:p-6"
+          className="stat-card relative overflow-hidden rounded-fg-xl p-5 text-white shadow-fg-4 sm:p-6"
           style={{
             background: `linear-gradient(135deg, ${team.primaryColor ?? '#0f766e'}, ${team.secondaryColor ?? '#0f172a'})`,
           }}
         >
-          {/* Back button — sits in the top-left of the coloured hero card */}
-          <div className="mb-4">
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-1.5 rounded-lg bg-black/20 px-2.5 py-1.5 text-xs text-white/80 transition hover:bg-black/30 hover:text-white"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              {t('back')}
-            </button>
-          </div>
+          {/* Back button — absolute icon in the top-left corner of the hero card */}
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            aria-label={t('back')}
+            className="absolute left-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/30 text-white/80 backdrop-blur-sm transition hover:bg-black/50 hover:text-white"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+          </button>
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.72fr)]">
             <div>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

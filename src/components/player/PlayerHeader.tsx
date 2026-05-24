@@ -9,8 +9,10 @@ import type { Player, Team } from '@/services/types'
 export function PlayerHeader({ player, team, action, backButton }: { player: Player; team?: Team; action?: React.ReactNode; backButton?: React.ReactNode }) {
   const playerFallback = createPlayerAvatar(initialsFromName(player.name), team?.primaryColor ?? '#0f766e')
   return (
-    <section className="stat-card p-4">
-      {backButton && <div className="mb-3">{backButton}</div>}
+    <section className="stat-card relative p-4">
+      {backButton && (
+        <div className="absolute left-3 top-3 z-10">{backButton}</div>
+      )}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
       <AssetImage src={player.photo} fallbackSrc={[...getPlayerPhotoSources(player), playerFallback]} alt={player.name} className="h-24 w-24 rounded-[1.35rem] object-cover ring-2" style={{ '--tw-ring-color': team?.primaryColor ?? 'hsl(var(--primary))' } as React.CSSProperties} loading="lazy" />
         <div className="flex-1">

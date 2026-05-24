@@ -130,10 +130,10 @@ export default function PlayerDetail() {
               <button
                 type="button"
                 onClick={() => navigate(-1)}
-                className="flex items-center gap-1.5 rounded-lg bg-background/40 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:bg-background/70 hover:text-foreground"
+                aria-label={t('back')}
+                className="flex h-7 w-7 items-center justify-center rounded-full border border-border/60 bg-background/80 text-muted-foreground backdrop-blur-sm transition hover:bg-background hover:text-foreground"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
-                {t('back')}
               </button>
             }
             action={
@@ -258,24 +258,24 @@ export default function PlayerDetail() {
                 ) : null}
               </div>
             </section>
-          </div>
-        </StaggerGridItem>
 
-        <StaggerGridItem as="section" className="stat-card">
-          <div className="mb-4">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-              {t('matchContext')}
-            </p>
-            <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('recentTeamMatches')}</h2>
+            <section className="stat-card">
+              <div className="mb-3">
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  {t('matchContext')}
+                </p>
+                <h2 className="mt-1 text-base font-semibold tracking-tight">{t('recentTeamMatches')}</h2>
+              </div>
+              {team ? (
+                <ResultsTimeline matches={playerMatches.slice(0, 6)} team={team} />
+              ) : (
+                <EmptyState
+                  title={t('noMatchContext')}
+                  description={t('noMatchContextHint')}
+                />
+              )}
+            </section>
           </div>
-          {team ? (
-            <ResultsTimeline matches={playerMatches.slice(0, 8)} team={team} />
-          ) : (
-            <EmptyState
-              title={t('noMatchContext')}
-              description={t('noMatchContextHint')}
-            />
-          )}
         </StaggerGridItem>
       </StaggerGrid>
     </PageWrapper>
