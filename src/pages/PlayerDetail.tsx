@@ -1,7 +1,7 @@
 ﻿import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { ArrowRight, Award, Clock3, Heart, Shield, Sparkles, Target } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Award, Clock3, Heart, Shield, Sparkles, Target } from 'lucide-react'
 
 import { CompareButton } from '@/components/player/CompareButton'
 import { PlayerHeader } from '@/components/player/PlayerHeader'
@@ -10,14 +10,14 @@ import { PlayerRadarChart } from '@/components/player/RadarChart'
 import { StatBar } from '@/components/player/StatBar'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { BackButton } from '@/components/shared/BackButton'
 import { FormBadge } from '@/components/shared/FormBadge'
-import { SkeletonCard } from '@/components/shared/SkeletonCard'
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { StaggerGrid, StaggerGridItem } from '@/components/shared/StaggerGrid'
 import { ResultsTimeline } from '@/components/team/ResultsTimeline'
 import { Badge } from '@/components/ui/badge'
 import { useLocale } from '@/contexts/LocaleContext'
 import { useFootballData } from '@/hooks/useFootballData'
+import { useNavigate } from 'react-router-dom'
 import { useFavorites } from '@/hooks/useFavorites'
 import { getFormScore } from '@/lib/player-ratings'
 import { formatMarketValue } from '@/lib/utils'
@@ -69,6 +69,7 @@ function FavoriteHeartButton({ playerId }: { playerId: string }) {
 
 export default function PlayerDetail() {
   const { t } = useLocale()
+  const navigate = useNavigate()
   const { leagueId, playerId } = useParams()
   const { data: player, isLoading } = useFootballData<Player>('getPlayer', {
     leagueId: leagueId as never,
@@ -98,10 +99,7 @@ export default function PlayerDetail() {
   if (isLoading || !player) {
     return (
       <PageWrapper>
-        <div className="space-y-4">
-          <SkeletonCard />
-          <SkeletonCard />
-        </div>
+        <LoadingSpinner />
       </PageWrapper>
     )
   }
@@ -123,12 +121,19 @@ export default function PlayerDetail() {
     <PageWrapper>
       <StaggerGrid className="space-y-4">
         <StaggerGridItem>
-          <BackButton />
-        </StaggerGridItem>
-        <StaggerGridItem>
           <PlayerHeader
             player={player}
             team={team ?? undefined}
+            backButton={
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="flex items-center gap-1.5 rounded-lg bg-background/40 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:bg-background/70 hover:text-foreground"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                {t('back')}
+              </button>
+            }
             action={
               <div className="flex items-center gap-2">
                 <FavoriteHeartButton playerId={player.id} />

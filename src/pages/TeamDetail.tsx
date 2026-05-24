@@ -1,7 +1,7 @@
 ﻿import { useMemo } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
-import { Heart, Shield, Sparkles, Users, Zap } from 'lucide-react'
+import { ArrowLeft, Heart, Shield, Sparkles, Users, Zap } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
@@ -11,8 +11,7 @@ import { ResultsTimeline } from '@/components/team/ResultsTimeline'
 import { SquadTable } from '@/components/team/SquadTable'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { AssetImage } from '@/components/shared/AssetImage'
-import { BackButton } from '@/components/shared/BackButton'
-import { SkeletonCard } from '@/components/shared/SkeletonCard'
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { StaggerGrid, StaggerGridItem } from '@/components/shared/StaggerGrid'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -46,6 +45,7 @@ function TeamMetric({
 }
 export default function TeamDetail() {
   const { t } = useLocale()
+  const navigate = useNavigate()
   const { leagueId, teamId } = useParams()
   const { data: team, isLoading } = useFootballData<Team>('getTeam', {
     leagueId: leagueId as never,
@@ -75,10 +75,7 @@ export default function TeamDetail() {
   if (isLoading || !team) {
     return (
       <PageWrapper>
-        <div className="space-y-4">
-          <SkeletonCard />
-          <SkeletonCard />
-        </div>
+        <LoadingSpinner />
       </PageWrapper>
     )
   }
@@ -106,15 +103,23 @@ export default function TeamDetail() {
   return (
     <PageWrapper>
       <StaggerGrid className="space-y-4">
-        <StaggerGridItem>
-          <BackButton />
-        </StaggerGridItem>
         <StaggerGridItem as="section"
           className="stat-card overflow-hidden rounded-fg-xl p-5 text-white shadow-fg-4 sm:p-6"
           style={{
             background: `linear-gradient(135deg, ${team.primaryColor ?? '#0f766e'}, ${team.secondaryColor ?? '#0f172a'})`,
           }}
         >
+          {/* Back button — sits in the top-left of the coloured hero card */}
+          <div className="mb-4">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-1.5 rounded-lg bg-black/20 px-2.5 py-1.5 text-xs text-white/80 transition hover:bg-black/30 hover:text-white"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              {t('back')}
+            </button>
+          </div>
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.72fr)]">
             <div>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

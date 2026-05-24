@@ -16,7 +16,7 @@ import { MatchdaySwiper } from '@/components/layout/MatchdaySwiper'
 import { MobileTabBar } from '@/components/layout/MobileTabBar'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { CommandPalette } from '@/components/shared/CommandPalette'
-import { SkeletonCard } from '@/components/shared/SkeletonCard'
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { Toaster } from '@/components/ui/toast'
 import { useLocale } from '@/contexts/LocaleContext'
 import { getLeague, isLeagueId, leagues } from '@/lib/leagues'
@@ -35,13 +35,7 @@ const GalaxyMapPageLazy = lazy(() =>
 )
 
 function LoadingGrid() {
-  return (
-    <div className="grid gap-4 lg:grid-cols-3">
-      <SkeletonCard />
-      <SkeletonCard />
-      <SkeletonCard />
-    </div>
-  )
+  return <LoadingSpinner />
 }
 
 function getLayoutTitle(pathname: string, t: (key: string) => string) {
