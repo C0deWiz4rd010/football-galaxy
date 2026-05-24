@@ -1,0 +1,52 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./tsconfig.app.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023", "DOM"],
+    "module": "esnext",
+    "types": ["vite/client", "vitest/globals"],
+    "skipLibCheck": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": [
+    "src/App.tsx",
+    "src/app/app.tsx",
+    "src/app/providers.tsx",
+    "src/app/router.tsx",
+    "src/main.tsx",
+    "src/index.css",
+    "src/vite-env.d.ts",
+    "src/assets/**/*",
+    "src/components/**/*",
+    "src/contexts/**/*",
+    "src/data/mock/**/*",
+    "src/data/historical/**/*",
+    "src/hooks/**/*",
+    "src/lib/**/*",
+    "src/pages/LeagueDashboard.tsx",
+    "src/pages/TeamDetail.tsx",
+    "src/pages/PlayerDetail.tsx",
+    "src/pages/Compare.tsx",
+    "src/services/footballData.ts",
+    "src/services/openFootball.ts",
+    "src/services/types.ts"
+  ]
+}

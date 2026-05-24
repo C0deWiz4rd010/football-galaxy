@@ -1,0 +1,34 @@
+### Windows
+# Windows thumbnail cache files
+Thumbs.db
+
+# Folder config file
+[Dd]esktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Windows shortcuts
+*.lnk
+node_modules/
+dist/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# Local build logs
+build.log
+build_log.txt
+test.log
+test_log.txt
+proxy.log
+lint.log
+snap.txt
+
+# Local environment files (never commit secrets)
+.env
+.env.local
+.env.*.local
+
+# Editor-specific
+.vscode/

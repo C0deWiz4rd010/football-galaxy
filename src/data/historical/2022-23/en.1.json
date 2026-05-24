@@ -1,0 +1,14 @@
+{
+  "name": "Premier League 2022-23",
+  "season": "2022-23",
+  "leagueId": "premier-league",
+  "table": [
+    { "team": "City of Manchester", "played": 38, "won": 28, "drawn": 5, "lost": 5, "goalsFor": 94, "goalsAgainst": 33, "points": 89 },
+    { "team": "North London Royals", "played": 38, "won": 26, "drawn": 6, "lost": 6, "goalsFor": 88, "goalsAgainst": 43, "points": 84 },
+    { "team": "Manchester Albion", "played": 38, "won": 23, "drawn": 6, "lost": 9, "goalsFor": 58, "goalsAgainst": 43, "points": 75 }
+  ],
+  "scorers": [
+    { "player": "Oscar Rossi", "team": "City of Manchester", "goals": 36 },
+    { "player": "Leo Garcia", "team": "North London Royals", "goals": 30 }
+  ]
+}

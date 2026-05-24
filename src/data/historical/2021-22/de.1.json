@@ -1,0 +1,14 @@
+{
+  "name": "Bundesliga 2021-22",
+  "season": "2021-22",
+  "leagueId": "bundesliga",
+  "table": [
+    { "team": "Munich Rekordmeister", "played": 34, "won": 24, "drawn": 5, "lost": 5, "goalsFor": 97, "goalsAgainst": 37, "points": 77 },
+    { "team": "Dortmund Schwarzgelb", "played": 34, "won": 22, "drawn": 3, "lost": 9, "goalsFor": 85, "goalsAgainst": 52, "points": 69 },
+    { "team": "Leverkusen Werkself", "played": 34, "won": 19, "drawn": 7, "lost": 8, "goalsFor": 80, "goalsAgainst": 47, "points": 64 }
+  ],
+  "scorers": [
+    { "player": "Luca Keller", "team": "Munich Rekordmeister", "goals": 35 },
+    { "player": "Milan Moretti", "team": "Dortmund Schwarzgelb", "goals": 24 }
+  ]
+}
