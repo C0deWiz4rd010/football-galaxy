@@ -35,13 +35,15 @@ function DetailMetric({
   icon: React.ReactNode
 }) {
   return (
-    <div className="surface-soft rounded-[1rem] p-3">
-      <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-xl bg-white/10">
+    <div className="surface-soft flex items-center gap-3 rounded-[1rem] p-3">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/10">
         {icon}
       </div>
-      <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
-      <p className="mt-1 text-xl font-semibold leading-none tracking-tight">{value}</p>
-      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{helper}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
+        <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{helper}</p>
+      </div>
+      <p className="shrink-0 font-mono text-xl font-black leading-none tabular-nums">{value}</p>
     </div>
   )
 }

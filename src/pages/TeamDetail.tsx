@@ -36,10 +36,12 @@ function TeamMetric({
   helper: string
 }) {
   return (
-    <div className="surface-soft rounded-[1rem] p-3">
-      <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
-      <p className="mt-1 text-xl font-semibold leading-none tracking-tight">{value}</p>
-      <p className="mt-1 truncate text-xs text-muted-foreground">{helper}</p>
+    <div className="surface-soft flex items-center gap-3 rounded-[1rem] p-3">
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
+        <p className="mt-0.5 truncate text-xs text-muted-foreground">{helper}</p>
+      </div>
+      <p className="shrink-0 font-mono text-xl font-black leading-none tabular-nums">{value}</p>
     </div>
   )
 }
