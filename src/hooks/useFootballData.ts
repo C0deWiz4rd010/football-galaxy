@@ -7,6 +7,10 @@ import type { FootballQueryName, FootballQueryParams } from '@/services/types'
 
 type ServiceMap = typeof liveService
 
+// Module-level cache: keyed by `queryFn:source:paramsJSON`.
+// Hit → return immediately, no loading state, no skeleton flash on back navigation.
+const dataCache = new Map<string, unknown>()
+
 export function useFootballData<T>(
   queryFn: FootballQueryName,
   params: FootballQueryParams = {},
@@ -29,14 +33,13 @@ export function useFootballData<T>(
     [paramsKey],
   )
 
+  const cacheKey = `${queryFn}:${source}:${paramsKey}`
+
   const refetch = useCallback(() => setTick((value) => value + 1), [])
 
   useEffect(() => {
     mounted.current = true
-
-    return () => {
-      mounted.current = false
-    }
+    return () => { mounted.current = false }
   }, [])
 
   useEffect(() => {
@@ -44,6 +47,17 @@ export function useFootballData<T>(
     const currentRequestId = ++requestId.current
 
     const load = async () => {
+      // Serve from cache instantly — no skeleton flash on back navigation.
+      const cached = dataCache.get(cacheKey) as T | undefined
+      if (cached !== undefined) {
+        if (mounted.current && requestId.current === currentRequestId) {
+          setData(cached)
+          setIsLoading(false)
+          setError(null)
+        }
+        return
+      }
+
       if (mounted.current) {
         setIsLoading(true)
         setError(null)
@@ -53,6 +67,7 @@ export function useFootballData<T>(
         const result = await service[queryFn](stableParams)
 
         if (mounted.current && requestId.current === currentRequestId) {
+          dataCache.set(cacheKey, result)
           setData(result as T)
         }
       } catch (caught) {
@@ -74,7 +89,7 @@ export function useFootballData<T>(
     }
 
     void load()
-  }, [paramsKey, queryFn, source, stableParams, tick])
+  }, [cacheKey, paramsKey, queryFn, source, stableParams, tick])
 
   return { data, isLoading, error, refetch }
 }
