@@ -27,6 +27,7 @@ const CoachDetailPage = lazy(() => import('@/pages/CoachDetail'))
 const LeagueDashboardPage = lazy(() => import('@/pages/LeagueDashboard'))
 const PlayerDetailPage = lazy(() => import('@/pages/PlayerDetail'))
 const PlayersExplorerPage = lazy(() => import('@/pages/PlayersExplorer'))
+const SettingsPage = lazy(() => import('@/pages/Settings'))
 const TeamDetailPage = lazy(() => import('@/pages/TeamDetail'))
 const TeamsExplorerPage = lazy(() => import('@/pages/TeamsExplorer'))
 const WorldCupOverviewPage = lazy(() =>
@@ -103,6 +104,15 @@ function getLayoutTitle(pathname: string, t: (key: string) => string) {
     return {
       title: t('comparePlayers'),
       subtitle: t('subtitleCompare'),
+      showSwiper: false,
+      leagueId: undefined,
+    }
+  }
+
+  if (segments[0] === 'settings') {
+    return {
+      title: t('settings'),
+      subtitle: t('settingsSubtitle'),
       showSwiper: false,
       leagueId: undefined,
     }
@@ -229,9 +239,16 @@ function AppLayout() {
               <Link
                 to="/compare"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-xl border px-4 py-3 text-sm font-medium"
+                className="block rounded-fg-md border border-border/55 px-4 py-3 text-sm font-medium"
               >
                 {t('comparePlayers')}
+              </Link>
+              <Link
+                to="/settings"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block rounded-fg-md border border-border/55 px-4 py-3 text-sm font-medium"
+              >
+                {t('settings')}
               </Link>
             </nav>
           </div>
@@ -271,6 +288,10 @@ export const router = createBrowserRouter([
       {
         path: 'compare',
         element: <ComparePage />,
+      },
+      {
+        path: 'settings',
+        element: <SettingsPage />,
       },
       {
         path: 'players',

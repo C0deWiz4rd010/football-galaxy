@@ -1,5 +1,6 @@
-import { Menu, Moon, Search, Sun } from 'lucide-react'
+import { Menu, Moon, Search, Settings, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
+import { Link } from 'react-router-dom'
 
 import { HandbookDialog } from '@/components/shared/HandbookDialog'
 import { LanguageToggle } from '@/components/shared/LanguageToggle'
@@ -45,6 +46,11 @@ export function Header({ title, subtitle, onSearch, onMenu }: HeaderProps) {
         >
           <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
           <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+        </Button>
+        <Button variant="ghost" size="icon" asChild aria-label={t('settings')}>
+          <Link to="/settings">
+            <Settings className="h-5 w-5" />
+          </Link>
         </Button>
         <Button variant="outline" size="sm" className="px-2 sm:px-3" onClick={onSearch}>
           <Search className="h-4 w-4" />

@@ -1,5 +1,5 @@
 import { Link, NavLink } from 'react-router-dom'
-import { BarChart3, CalendarDays, Globe2, Grid3X3, Shield, Star, Trophy, Users, X } from 'lucide-react'
+import { BarChart3, CalendarDays, Globe2, Grid3X3, Settings, Shield, Star, Trophy, Users, X } from 'lucide-react'
 
 import { AssetImage } from '@/components/shared/AssetImage'
 import { BrandLogo } from '@/shared/ui/brand-logo'
@@ -169,6 +169,12 @@ export function Sidebar() {
             className="surface-soft flex items-center gap-2 rounded-xl px-3 py-2 text-muted-foreground transition hover:bg-background/55 hover:text-foreground"
           >
             <BarChart3 className="h-4 w-4 text-violet-400" /> {t('comparePlayers')}
+          </Link>
+          <Link
+            to="/settings"
+            className="surface-soft flex items-center gap-2 rounded-xl px-3 py-2 text-muted-foreground transition hover:bg-background/55 hover:text-foreground"
+          >
+            <Settings className="h-4 w-4 text-sky-400" /> {t('settings')}
           </Link>
           <div className="surface-soft rounded-xl p-2.5">
             <p className="mb-1.5 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
