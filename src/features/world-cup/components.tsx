@@ -126,7 +126,7 @@ export function WorldCupQualityBadge({ quality }: { quality: DataQualityMeta }) 
 export function WorldCupDataStatus({ quality }: { quality: DataQualityMeta }) {
   const isSnapshot = quality.provider === 'snapshot' || quality.confidence === 'snapshot'
   return (
-    <div className="surface-soft rounded-[1rem] p-3">
+    <div className="surface-soft rounded-fg-lg p-3">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Data status</p>
@@ -175,9 +175,9 @@ export function WorldCupPageTitle({
 
 export function WorldCupSectionNav() {
   return (
-    <div className="relative">
+    <div className="sticky top-[4.75rem] z-20">
       <nav
-        className="flex gap-1 overflow-x-auto rounded-fg-xl border border-border/50 bg-background/35 p-1.5 backdrop-blur-xl sm:gap-2 sm:pr-8"
+        className="flex gap-1 overflow-x-auto rounded-fg-xl border border-border/50 bg-background/70 p-1.5 backdrop-blur-xl sm:gap-2 sm:pr-8"
         aria-label="World Cup sections"
       >
         {worldCupNavItems.map((item) => (
@@ -187,7 +187,7 @@ export function WorldCupSectionNav() {
             end={item.to === '/world-cup-2026'}
             className={({ isActive }) =>
               cn(
-                'min-w-max rounded-xl px-2.5 py-2 text-xs font-medium text-muted-foreground transition hover:bg-white/8 hover:text-foreground sm:px-3.5 sm:text-sm',
+                'min-w-max rounded-fg-md px-2.5 py-2 text-xs font-medium text-muted-foreground transition hover:bg-white/8 hover:text-foreground sm:px-3.5 sm:text-sm',
                 isActive &&
                   'bg-amber-300 text-amber-950 shadow-fg-2 hover:bg-amber-300 hover:text-amber-950',
               )
@@ -254,7 +254,7 @@ export function WorldCupHero({
       <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-amber-300/12 to-transparent" />
       <div className="relative flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-4">
-          <div className="flex size-14 shrink-0 items-center justify-center rounded-[1.1rem] border border-amber-300/30 bg-amber-300/12 text-amber-200 shadow-[0_0_42px_rgba(251,191,36,0.14)]">
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-fg-lg border border-amber-300/30 bg-amber-300/12 text-amber-200 shadow-[0_0_42px_rgba(251,191,36,0.14)]">
             <Trophy className="size-7" />
           </div>
           <div className="min-w-0">
@@ -304,7 +304,7 @@ export function WorldCupHero({
 
 function SignalCard({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: string; tone: string }) {
   return (
-    <div className="surface-soft flex min-h-16 items-center justify-between gap-3 rounded-[1rem] p-3">
+    <div className="surface-soft flex min-h-16 items-center justify-between gap-3 rounded-fg-lg p-3">
       <div className="flex items-center gap-3">
         <div className={cn('flex size-9 items-center justify-center rounded-xl bg-white/10', tone)}>{icon}</div>
         <span className="text-xs text-muted-foreground">{label}</span>
@@ -458,7 +458,7 @@ export function WorldCupFeatureMatch({ fixture }: { fixture?: WorldCupFixture })
 
       <div className="relative mt-4 grid flex-1 items-center gap-4 md:grid-cols-[1fr_auto_1fr]">
         <FeaturedTeam team={fixture.homeTeam} align="left" />
-        <div className="rounded-[1.1rem] border border-white/10 bg-background/40 px-5 py-3 text-center">
+        <div className="rounded-fg-lg border border-white/10 bg-background/40 px-5 py-3 text-center">
           <p className="font-mono text-4xl font-black tabular-nums">
             {fixture.homeScore ?? '-'}:{fixture.awayScore ?? '-'}
           </p>
@@ -559,7 +559,7 @@ export function WorldCupMatchCard({ fixture, compact = false }: { fixture: World
   return (
     <Link
       to={`/world-cup-2026/match/${fixture.apiFootballId ?? fixture.id}`}
-      className="interactive-card surface-soft block rounded-[1rem] p-3 transition hover:border-border/70 hover:bg-background/60"
+      className="interactive-card surface-soft block rounded-fg-lg p-3 transition hover:border-border/70 hover:bg-background/60"
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
@@ -583,7 +583,7 @@ export function WorldCupMatchCard({ fixture, compact = false }: { fixture: World
 
 export function WorldCupGroupTable({ group, rows }: { group: string; rows: WorldCupGroupStanding[] }) {
   return (
-    <div className="stat-card overflow-hidden rounded-[1rem]">
+    <div className="stat-card overflow-hidden rounded-fg-lg">
       <div className="flex items-center justify-between border-b border-white/5 px-3 py-2.5">
         <h2 className="text-sm font-semibold">Group {group}</h2>
         <div className="flex items-center gap-2">
