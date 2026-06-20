@@ -201,28 +201,28 @@ function AppLayout() {
           onClick={() => setMobileMenuOpen(false)}
         >
           <div
-            className="absolute inset-x-4 top-20 rounded-2xl border bg-background/95 p-4 shadow-2xl backdrop-blur"
+            className="absolute inset-x-4 top-20 rounded-fg-xl border border-border/55 bg-background/95 p-4 shadow-fg-4 backdrop-blur"
             onClick={(event) => event.stopPropagation()}
           >
             <nav className="space-y-2">
               <Link
                 to="/players"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-xl border px-4 py-3 text-sm font-medium"
+                className="block rounded-fg-md border border-border/55 px-4 py-3 text-sm font-medium"
               >
                 {t('playersExplorer')}
               </Link>
               <Link
                 to="/teams"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-xl border px-4 py-3 text-sm font-medium"
+                className="block rounded-fg-md border border-border/55 px-4 py-3 text-sm font-medium"
               >
                 {t('teamsExplorer')}
               </Link>
               <Link
                 to="/world-cup-2026"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-xl border border-amber-300/30 bg-amber-300/10 px-4 py-3 text-sm font-medium text-amber-100"
+                className="block rounded-fg-md border border-amber-300/30 bg-amber-300/10 px-4 py-3 text-sm font-medium text-amber-100"
               >
                 World Cup 2026
               </Link>
@@ -231,7 +231,7 @@ function AppLayout() {
                   key={item.id}
                   to={`/${item.id}`}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block rounded-xl border px-4 py-3 text-sm font-medium"
+                  className="block rounded-fg-md border border-border/55 px-4 py-3 text-sm font-medium"
                 >
                   {item.name}
                 </NavLink>
@@ -254,7 +254,7 @@ function AppLayout() {
           </div>
         </div>
       ) : null}
-      <main className="mx-auto max-w-[1440px] px-4 pb-24 pt-5 md:ml-64 md:px-6 lg:px-8">
+      <main className="mx-auto max-w-[1440px] px-4 pb-[calc(env(safe-area-inset-bottom)+6rem)] pt-5 md:ml-64 md:px-6 md:pb-12 lg:px-8">
         <Suspense fallback={<LoadingGrid />}>
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
