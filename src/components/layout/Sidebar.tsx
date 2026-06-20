@@ -1,5 +1,5 @@
 import { Link, NavLink } from 'react-router-dom'
-import { BarChart3, Globe2, Shield, Star, Users, X } from 'lucide-react'
+import { BarChart3, CalendarDays, Globe2, Grid3X3, Shield, Star, Trophy, Users, X } from 'lucide-react'
 
 import { AssetImage } from '@/components/shared/AssetImage'
 import { BrandLogo } from '@/shared/ui/brand-logo'
@@ -81,6 +81,52 @@ export function Sidebar() {
             <Globe2 className="h-4 w-4" />
             {t('galaxyMap')}
           </NavLink>
+
+          <div className="mb-1 px-3">
+            <p className="px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              WM 2026
+            </p>
+          </div>
+          <NavLink
+            to="/world-cup-2026"
+            end
+            className={({ isActive }) =>
+              cn(
+                'group mx-3 mb-1 flex items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm transition duration-150 hover:border-amber-300/40 hover:bg-amber-300/10',
+                isActive
+                  ? 'border-amber-300/40 bg-amber-300/12 text-amber-100 shadow-[0_14px_32px_rgba(0,0,0,0.12)]'
+                  : 'text-muted-foreground hover:text-amber-100',
+              )
+            }
+          >
+            <Trophy className="h-4 w-4 text-amber-300" />
+            World Cup 2026
+          </NavLink>
+          <div className="mx-3 mb-2 grid grid-cols-2 gap-1">
+            {[
+              { to: '/world-cup-2026/matches', label: 'Matches', icon: CalendarDays },
+              { to: '/world-cup-2026/groups', label: 'Groups', icon: Grid3X3 },
+              { to: '/world-cup-2026/bracket', label: 'Bracket', icon: Trophy },
+              { to: '/world-cup-2026/teams', label: 'Teams', icon: Users },
+            ].map((item) => {
+              const Icon = item.icon
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-1.5 rounded-lg border border-transparent px-2 py-1.5 text-[11px] text-muted-foreground transition hover:border-border/60 hover:bg-background/50 hover:text-foreground',
+                      isActive && 'border-amber-300/30 bg-amber-300/10 text-amber-100',
+                    )
+                  }
+                >
+                  <Icon className="h-3 w-3" />
+                  {item.label}
+                </NavLink>
+              )
+            })}
+          </div>
 
           <div className="mb-1 px-3">
             <p className="px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">

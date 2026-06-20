@@ -29,6 +29,27 @@ const PlayerDetailPage = lazy(() => import('@/pages/PlayerDetail'))
 const PlayersExplorerPage = lazy(() => import('@/pages/PlayersExplorer'))
 const TeamDetailPage = lazy(() => import('@/pages/TeamDetail'))
 const TeamsExplorerPage = lazy(() => import('@/pages/TeamsExplorer'))
+const WorldCupOverviewPage = lazy(() =>
+  import('@/pages/world-cup/WorldCupPages').then((m) => ({ default: m.WorldCupOverviewPage })),
+)
+const WorldCupMatchesPage = lazy(() =>
+  import('@/pages/world-cup/WorldCupPages').then((m) => ({ default: m.WorldCupMatchesPage })),
+)
+const WorldCupGroupsPage = lazy(() =>
+  import('@/pages/world-cup/WorldCupPages').then((m) => ({ default: m.WorldCupGroupsPage })),
+)
+const WorldCupBracketPage = lazy(() =>
+  import('@/pages/world-cup/WorldCupPages').then((m) => ({ default: m.WorldCupBracketPage })),
+)
+const WorldCupTeamsPage = lazy(() =>
+  import('@/pages/world-cup/WorldCupPages').then((m) => ({ default: m.WorldCupTeamsPage })),
+)
+const WorldCupMatchDetailPage = lazy(() =>
+  import('@/pages/world-cup/WorldCupPages').then((m) => ({ default: m.WorldCupMatchDetailPage })),
+)
+const WorldCupTeamDetailPage = lazy(() =>
+  import('@/pages/world-cup/WorldCupPages').then((m) => ({ default: m.WorldCupTeamDetailPage })),
+)
 
 const GalaxyMapPageLazy = lazy(() =>
   import('@/features/galaxy-map/GalaxyMapPage').then((m) => ({ default: m.GalaxyMapPage })),
@@ -46,6 +67,15 @@ function getLayoutTitle(pathname: string, t: (key: string) => string) {
     return {
       title: t('galaxyMap'),
       subtitle: t('subtitleExplore'),
+      showSwiper: false,
+      leagueId: undefined,
+    }
+  }
+
+  if (segments[0] === 'world-cup-2026') {
+    return {
+      title: 'World Cup 2026',
+      subtitle: 'Football Galaxy / Tournament command center',
       showSwiper: false,
       leagueId: undefined,
     }
@@ -179,6 +209,13 @@ function AppLayout() {
               >
                 {t('teamsExplorer')}
               </Link>
+              <Link
+                to="/world-cup-2026"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block rounded-xl border border-amber-300/30 bg-amber-300/10 px-4 py-3 text-sm font-medium text-amber-100"
+              >
+                World Cup 2026
+              </Link>
               {leagues.map((item) => (
                 <NavLink
                   key={item.id}
@@ -246,6 +283,34 @@ export const router = createBrowserRouter([
       {
         path: 'galaxy',
         element: <GalaxyMapPageLazy />,
+      },
+      {
+        path: 'world-cup-2026',
+        element: <WorldCupOverviewPage />,
+      },
+      {
+        path: 'world-cup-2026/matches',
+        element: <WorldCupMatchesPage />,
+      },
+      {
+        path: 'world-cup-2026/groups',
+        element: <WorldCupGroupsPage />,
+      },
+      {
+        path: 'world-cup-2026/bracket',
+        element: <WorldCupBracketPage />,
+      },
+      {
+        path: 'world-cup-2026/teams',
+        element: <WorldCupTeamsPage />,
+      },
+      {
+        path: 'world-cup-2026/match/:matchId',
+        element: <WorldCupMatchDetailPage />,
+      },
+      {
+        path: 'world-cup-2026/team/:teamId',
+        element: <WorldCupTeamDetailPage />,
       },
       {
         path: ':leagueId',
