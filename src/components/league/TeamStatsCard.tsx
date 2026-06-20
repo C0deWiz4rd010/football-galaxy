@@ -75,7 +75,7 @@ export function TeamStatsCard({ standings }: { standings: Standing[] }) {
           <Link
             key={item.key}
             to={item.team ? `/${item.team.leagueId}/team/${item.team.team.id}` : '#'}
-            className="interactive-card surface-soft flex items-center justify-between gap-3 rounded-[1.1rem] px-3 py-2.5 hover:border-border/70 hover:bg-background/60"
+            className="interactive-card surface-soft flex items-center justify-between gap-3 rounded-fg-md px-3 py-2.5 hover:border-border/70 hover:bg-background/60"
           >
             <div className="min-w-0">
               <span className="block text-xs uppercase tracking-[0.14em] text-muted-foreground">

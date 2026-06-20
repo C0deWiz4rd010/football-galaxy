@@ -26,7 +26,7 @@ const ScorersItem = memo(function ScorersItem({
     <button
       type="button"
       onClick={() => navigate(`/${item.player.leagueId}/player/${item.player.id}`)}
-      className="interactive-card surface-soft flex w-full items-center gap-3 rounded-[1.15rem] px-3 py-2.5 text-left hover:border-border/70 hover:bg-background/60"
+      className="interactive-card surface-soft flex w-full items-center gap-3 rounded-fg-md px-3 py-2.5 text-left hover:border-border/70 hover:bg-background/60"
     >
       <div className="relative h-11 w-11 shrink-0">
         <AssetImage
@@ -84,7 +84,7 @@ export function TopScorersCard({
   const navigate = useNavigate()
 
   return (
-    <section className={compact ? 'surface-soft overflow-hidden rounded-[1rem] p-3' : 'stat-card overflow-hidden'}>
+    <section className={compact ? 'surface-soft overflow-hidden rounded-fg-lg p-3' : 'stat-card overflow-hidden'}>
       <div className={compact ? 'mb-2 flex items-center justify-between gap-3' : 'mb-3 flex items-center justify-between gap-3'}>
         <div>
           <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Leaders</p>

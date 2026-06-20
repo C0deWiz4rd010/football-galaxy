@@ -46,7 +46,7 @@ export default function CoachDetail() {
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-3">
-            <div className="surface-soft rounded-[1rem] px-3 py-3">
+            <div className="surface-soft rounded-fg-lg px-3 py-3">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Building2 className="h-4 w-4" />
                 <span className="text-xs uppercase tracking-[0.16em]">{t('club')}</span>
@@ -58,7 +58,7 @@ export default function CoachDetail() {
                 {team.name}
               </Link>
             </div>
-            <div className="surface-soft rounded-[1rem] px-3 py-3">
+            <div className="surface-soft rounded-fg-lg px-3 py-3">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Trophy className="h-4 w-4" />
                 <span className="text-xs uppercase tracking-[0.16em]">{t('tableContext')}</span>
@@ -67,7 +67,7 @@ export default function CoachDetail() {
                 {standing ? t('standingShort', { position: standing.position, points: standing.points }) : t('standingsPending')}
               </p>
             </div>
-            <div className="surface-soft rounded-[1rem] px-3 py-3">
+            <div className="surface-soft rounded-fg-lg px-3 py-3">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Briefcase className="h-4 w-4" />
                 <span className="text-xs uppercase tracking-[0.16em]">{t('homeBase')}</span>

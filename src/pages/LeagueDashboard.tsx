@@ -62,7 +62,7 @@ function SummaryStat({
   tone: string
 }) {
   return (
-    <div className="surface-soft flex items-center gap-3 rounded-[1rem] p-3">
+    <div className="surface-soft flex items-center gap-3 rounded-fg-lg p-3">
       <div
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
         style={{ color: tone, backgroundColor: `${tone}22` }}
@@ -162,7 +162,7 @@ export default function LeagueDashboard() {
                 src={league.logo}
                 fallbackSrc={createLeagueLogo(league.abbreviation, league.color, league.name)}
                 alt={`${league.name} logo`}
-                className="h-14 w-14 rounded-[1rem] bg-white/90 object-contain p-2 ring-1 ring-white/10"
+                className="h-14 w-14 rounded-fg-lg bg-white/90 object-contain p-2 ring-1 ring-white/10"
                 loading="lazy"
               />
               <div className="min-w-0">
@@ -248,7 +248,7 @@ export default function LeagueDashboard() {
                       createPlayerAvatar(initialsFromName(spotlightPlayer.name), league.color),
                     ]}
                     alt={spotlightPlayer.name}
-                    className="h-20 w-20 rounded-[0.9rem] object-cover ring-1 ring-white/10"
+                    className="h-20 w-20 rounded-fg-lg object-cover ring-1 ring-white/10"
                     loading="lazy"
                   />
                 ) : (
@@ -313,21 +313,21 @@ export default function LeagueDashboard() {
         </StaggerGridItem>
 
         <StaggerGridItem className="grid gap-2 sm:grid-cols-3">
-          <Link to="/teams" className="interactive-card surface-soft rounded-[1rem] px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
+          <Link to="/teams" className="interactive-card surface-soft rounded-fg-md px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
             <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('explore')}</span>
             <div className="mt-1 flex items-center justify-between gap-2">
               <span className="text-sm font-medium">{t('teamsExplorer')}</span>
               <Sparkles className="h-4 w-4 text-sky-400" />
             </div>
           </Link>
-          <Link to="/players" className="interactive-card surface-soft rounded-[1rem] px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
+          <Link to="/players" className="interactive-card surface-soft rounded-fg-md px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
             <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('explore')}</span>
             <div className="mt-1 flex items-center justify-between gap-2">
               <span className="text-sm font-medium">{t('playersExplorer')}</span>
               <Zap className="h-4 w-4 text-amber-400" />
             </div>
           </Link>
-          <Link to="/compare" className="interactive-card surface-soft rounded-[1rem] px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
+          <Link to="/compare" className="interactive-card surface-soft rounded-fg-md px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
             <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('teamMatchups')}</span>
             <div className="mt-1 flex items-center justify-between gap-2">
               <span className="text-sm font-medium">{t('playerMatchups')}</span>

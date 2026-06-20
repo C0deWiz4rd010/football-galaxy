@@ -35,7 +35,7 @@ function DetailMetric({
   icon: React.ReactNode
 }) {
   return (
-    <div className="surface-soft flex items-center gap-3 rounded-[1rem] p-3">
+    <div className="surface-soft flex items-center gap-3 rounded-fg-lg p-3">
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/10">
         {icon}
       </div>
@@ -189,7 +189,7 @@ export default function PlayerDetail() {
               </div>
 
               <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <div className="surface-soft rounded-[1rem] p-3">
+                <div className="surface-soft rounded-fg-lg p-3">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
                     {t('squadContext')}
                   </p>
@@ -202,7 +202,7 @@ export default function PlayerDetail() {
                       : t('leagueStandingUnavailable')}
                   </p>
                 </div>
-                <div className="surface-soft rounded-[1rem] p-3">
+                <div className="surface-soft rounded-fg-lg p-3">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
                     {t('contractAndValue')}
                   </p>

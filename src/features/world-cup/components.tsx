@@ -891,7 +891,7 @@ export function WorldCupTeamCard({ team }: { team: WorldCupTeam }) {
     <Link
       key={team.id}
       to={`/world-cup-2026/team/${team.id}`}
-      className="interactive-card stat-card rounded-[1rem] p-3 hover:bg-background/60"
+      className="interactive-card stat-card rounded-fg-lg p-3 hover:bg-background/60"
     >
       <div className="flex items-center gap-3">
         <TeamFlag team={team} className="h-9 w-12" />

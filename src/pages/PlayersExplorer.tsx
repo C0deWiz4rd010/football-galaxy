@@ -94,7 +94,7 @@ export default function PlayersExplorer() {
               </p>
             </div>
 
-            <label className="surface-soft flex items-center gap-2 rounded-[1.2rem] px-3 py-3 sm:min-w-[240px]">
+            <label className="surface-soft flex items-center gap-2 rounded-fg-lg px-3 py-3 sm:min-w-[240px]">
               <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
               <input
                 value={query}
@@ -147,7 +147,7 @@ export default function PlayersExplorer() {
           ))}
 
           {/* Sort — right-aligned */}
-          <label className="surface-soft ml-auto flex items-center gap-2 rounded-[1.2rem] px-3 py-2 text-sm text-muted-foreground">
+          <label className="surface-soft ml-auto flex items-center gap-2 rounded-fg-lg px-3 py-2 text-sm text-muted-foreground">
             <ArrowUpDown className="h-3.5 w-3.5 shrink-0" />
             <select
               value={sortBy}
@@ -164,7 +164,7 @@ export default function PlayersExplorer() {
 
         {/* ── Result count ────────────────────────────────────────── */}
         <StaggerGridItem>
-          <div className="surface-soft rounded-[1.2rem] px-4 py-2.5 text-sm text-muted-foreground">
+          <div className="surface-soft rounded-fg-lg px-4 py-2.5 text-sm text-muted-foreground">
             {selectedLeagueId !== 'all'
               ? t('showingPlayersInLeague', { count: Math.min(players.length, 48) })
               : t('showingPlayersAll', { count: Math.min(players.length, 48) })}
@@ -244,15 +244,15 @@ export default function PlayersExplorer() {
 
               {/* Row 3: stat trio */}
               <div className="mt-auto grid grid-cols-3 gap-1.5">
-                <div className="surface-soft rounded-[0.75rem] p-2 text-center">
+                <div className="surface-soft rounded-fg-sm p-2 text-center">
                   <p className="font-mono text-base font-bold leading-tight">{player.stats.goals}</p>
                   <p className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">{t('goals')}</p>
                 </div>
-                <div className="surface-soft rounded-[0.75rem] p-2 text-center">
+                <div className="surface-soft rounded-fg-sm p-2 text-center">
                   <p className="font-mono text-base font-bold leading-tight">{player.stats.assists}</p>
                   <p className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">{t('assists')}</p>
                 </div>
-                <div className="surface-soft rounded-[0.75rem] p-2 text-center">
+                <div className="surface-soft rounded-fg-sm p-2 text-center">
                   <p className="font-mono text-base font-bold leading-tight">{player.stats.appearances}</p>
                   <p className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">{t('appearances')}</p>
                 </div>

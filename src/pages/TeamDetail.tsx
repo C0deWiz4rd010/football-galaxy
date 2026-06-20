@@ -135,7 +135,7 @@ export default function TeamDetail() {
                     ),
                   ]}
                   alt={team.name}
-                  className="h-20 w-20 rounded-[1.3rem] object-cover ring-1 ring-white/20"
+                  className="h-20 w-20 rounded-fg-lg object-cover ring-1 ring-white/20"
                   loading="lazy"
                 />
                 <div className="flex-1">
@@ -198,7 +198,7 @@ export default function TeamDetail() {
               </div>
             </div>
 
-            <section className="rounded-[1.2rem] border border-white/12 bg-black/18 p-4">
+            <section className="rounded-fg-lg border border-white/12 bg-black/18 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-white/60">
@@ -223,7 +223,7 @@ export default function TeamDetail() {
                         createPlayerAvatar(initialsFromName(topRatedPlayer.name), team.primaryColor ?? '#0f766e'),
                       ]}
                       alt={topRatedPlayer.name}
-                      className="h-14 w-14 rounded-[1rem] object-cover ring-1 ring-white/15"
+                      className="h-14 w-14 rounded-fg-lg object-cover ring-1 ring-white/15"
                       loading="lazy"
                     />
                     <div>
@@ -283,7 +283,7 @@ export default function TeamDetail() {
                 <Users className="h-5 w-5 text-muted-foreground" />
               </div>
               <div className="grid gap-3 md:grid-cols-2">
-                <div className="surface-soft rounded-[1.3rem] p-4">
+                <div className="surface-soft rounded-fg-lg p-4">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t('manager')}</p>
                   <Link
                     to={`/${team.leagueId}/team/${team.id}/coach`}
@@ -292,17 +292,17 @@ export default function TeamDetail() {
                     {team.manager ?? t('coachPending')}
                   </Link>
                 </div>
-                <div className="surface-soft rounded-[1.3rem] p-4">
+                <div className="surface-soft rounded-fg-lg p-4">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t('homeGround')}</p>
                   <p className="mt-2 text-lg font-semibold">{team.stadium}</p>
                 </div>
-                <div className="surface-soft rounded-[1.3rem] p-4">
+                <div className="surface-soft rounded-fg-lg p-4">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t('momentum')}</p>
                   <p className="mt-2 text-lg font-semibold">
                     {standing ? t('winsInLastFive', { count: standing.form.filter((item) => item.result === 'W').length }) : t('noTrendYet')}
                   </p>
                 </div>
-                <div className="surface-soft rounded-[1.3rem] p-4">
+                <div className="surface-soft rounded-fg-lg p-4">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t('bestCurrentEdge')}</p>
                   <p className="mt-2 text-lg font-semibold">
                     {standing && standing.goalsFor >= standing.goalsAgainst ? t('attackingOutput') : t('defensiveRecovery')}

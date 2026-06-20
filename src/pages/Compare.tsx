@@ -139,7 +139,7 @@ function CompareHeroCard({
             {team?.name ?? t('clubUnavailable')}
           </p>
         </div>
-        <div className="rounded-[1.1rem] border border-white/10 bg-white/5 px-3 py-2 text-center">
+        <div className="rounded-fg-lg border border-white/10 bg-white/5 px-3 py-2 text-center">
           <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('formLabel')}</p>
           <p className="text-2xl font-black">{form.score}</p>
         </div>
@@ -335,7 +335,7 @@ export default function Compare() {
                       ? t('leadsOnProduction')
                       : t('behindOnGoalInvolvements')}.
                   </p>
-                  <div className="surface-soft rounded-[1.2rem] p-4">
+                  <div className="surface-soft rounded-fg-lg p-4">
                     <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
                       {t('suggestedUsage')}
                     </p>

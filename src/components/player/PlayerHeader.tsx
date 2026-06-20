@@ -14,7 +14,7 @@ export function PlayerHeader({ player, team, action, backButton }: { player: Pla
         <div className="absolute left-3 top-3 z-10">{backButton}</div>
       )}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-      <AssetImage src={player.photo} fallbackSrc={[...getPlayerPhotoSources(player), playerFallback]} alt={player.name} className="h-24 w-24 rounded-[1.35rem] object-cover ring-2" style={{ '--tw-ring-color': team?.primaryColor ?? 'hsl(var(--primary))' } as React.CSSProperties} loading="lazy" />
+      <AssetImage src={player.photo} fallbackSrc={[...getPlayerPhotoSources(player), playerFallback]} alt={player.name} className="h-24 w-24 rounded-fg-lg object-cover ring-2" style={{ '--tw-ring-color': team?.primaryColor ?? 'hsl(var(--primary))' } as React.CSSProperties} loading="lazy" />
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <span className="rounded-md px-2.5 py-1 font-mono text-xl font-bold text-white" style={{ backgroundColor: team?.primaryColor ?? '#18181b' }}>{player.number}</span>
