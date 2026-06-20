@@ -49,6 +49,10 @@ const config = {
         ll: '#003f8f',
         sa: '#009246',
         l1: '#091c3e',
+        success: 'hsl(var(--success))',
+        warning: 'hsl(var(--warning))',
+        info: 'hsl(var(--info))',
+        live: 'hsl(var(--live))',
       },
       borderRadius: {
         lg: 'var(--radius)',

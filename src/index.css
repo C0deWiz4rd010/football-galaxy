@@ -43,6 +43,17 @@
     --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-soft: cubic-bezier(0.45, 0, 0.55, 1);
     --ease-exit: cubic-bezier(0.32, 0, 0.67, 0);
+
+    /* Semantic status colours — fixed across palettes (HSL triplets). */
+    --success: 152 62% 38%;
+    --warning: 38 92% 48%;
+    --info: 212 90% 50%;
+    --live: 350 85% 55%;
+
+    /* World Cup host-nation accents. */
+    --wc-host-usa: 213 70% 46%;
+    --wc-host-canada: 0 72% 50%;
+    --wc-host-mexico: 150 60% 35%;
   }
 
   .dark {
@@ -77,6 +88,86 @@
     --shadow-card: 0 22px 56px rgba(2, 6, 23, 0.32);
     --league-accent: rgba(122, 228, 168, 1);
     --league-accent-soft: rgba(122, 228, 168, 0.18);
+
+    --success: 152 58% 52%;
+    --warning: 40 96% 60%;
+    --info: 212 92% 66%;
+    --live: 350 90% 64%;
+  }
+
+  /* ---------------------------------------------------------------- Palettes
+   * Each palette overrides only the brand-facing tokens for light and dark so
+   * neutrals/surfaces stay shared. Selected via `data-palette` on <html>.
+   * "galaxy" is the default and needs no override block.
+   */
+  [data-palette='midnight'] {
+    --primary: 222 60% 42%;
+    --ring: 222 60% 42%;
+    --league-accent: rgba(79, 114, 255, 1);
+    --league-accent-soft: rgba(79, 114, 255, 0.16);
+  }
+  [data-palette='midnight'].dark {
+    --primary: 217 91% 68%;
+    --primary-foreground: 223 38% 10%;
+    --ring: 217 91% 68%;
+    --league-accent: rgba(129, 160, 255, 1);
+    --league-accent-soft: rgba(129, 160, 255, 0.18);
+  }
+
+  [data-palette='aurora'] {
+    --primary: 188 75% 32%;
+    --ring: 188 75% 32%;
+    --league-accent: rgba(20, 184, 180, 1);
+    --league-accent-soft: rgba(20, 184, 180, 0.16);
+  }
+  [data-palette='aurora'].dark {
+    --primary: 176 70% 55%;
+    --primary-foreground: 200 40% 8%;
+    --ring: 176 70% 55%;
+    --league-accent: rgba(94, 234, 212, 1);
+    --league-accent-soft: rgba(94, 234, 212, 0.18);
+  }
+
+  [data-palette='stadium'] {
+    --primary: 142 64% 30%;
+    --ring: 142 64% 30%;
+    --league-accent: rgba(34, 197, 94, 1);
+    --league-accent-soft: rgba(34, 197, 94, 0.16);
+  }
+  [data-palette='stadium'].dark {
+    --primary: 142 70% 55%;
+    --primary-foreground: 150 40% 8%;
+    --ring: 142 70% 55%;
+    --league-accent: rgba(74, 222, 128, 1);
+    --league-accent-soft: rgba(74, 222, 128, 0.18);
+  }
+
+  [data-palette='crimson'] {
+    --primary: 348 78% 42%;
+    --ring: 348 78% 42%;
+    --league-accent: rgba(244, 63, 94, 1);
+    --league-accent-soft: rgba(244, 63, 94, 0.16);
+  }
+  [data-palette='crimson'].dark {
+    --primary: 350 90% 65%;
+    --primary-foreground: 350 40% 10%;
+    --ring: 350 90% 65%;
+    --league-accent: rgba(251, 113, 133, 1);
+    --league-accent-soft: rgba(251, 113, 133, 0.18);
+  }
+
+  [data-palette='mono'] {
+    --primary: 220 14% 24%;
+    --ring: 220 14% 24%;
+    --league-accent: rgba(100, 116, 139, 1);
+    --league-accent-soft: rgba(100, 116, 139, 0.16);
+  }
+  [data-palette='mono'].dark {
+    --primary: 210 20% 90%;
+    --primary-foreground: 220 30% 12%;
+    --ring: 210 20% 90%;
+    --league-accent: rgba(203, 213, 225, 1);
+    --league-accent-soft: rgba(203, 213, 225, 0.18);
   }
 
   * {
