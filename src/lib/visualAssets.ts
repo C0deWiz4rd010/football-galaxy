@@ -70,10 +70,12 @@ export function createPlayerAvatar(initials: string, color: string) {
   const safeInitials = escapeSvgText(initials)
   return svgDataUri(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="${safeInitials}">
-      <rect width="96" height="96" rx="48" fill="${color}"/>
-      <circle cx="48" cy="35" r="17" fill="white" opacity=".35"/>
-      <path d="M20 88c4-20 17-31 28-31s24 11 28 31" fill="white" opacity=".24"/>
-      <text x="48" y="58" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="800" fill="white">${safeInitials}</text>
+      <rect width="96" height="96" rx="18" fill="${color}"/>
+      <rect y="54" width="96" height="42" fill="black" opacity=".2"/>
+      <circle cx="48" cy="32" r="19" fill="white" opacity=".38"/>
+      <path d="M18 96C16 72 30 58 48 58C66 58 80 72 78 96Z" fill="white" opacity=".28"/>
+      <path d="M43 57L48 67L53 57" fill="none" stroke="white" stroke-opacity=".45" stroke-width="2.5" stroke-linejoin="round"/>
+      <text x="48" y="39" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="17" font-weight="900" fill="white">${safeInitials}</text>
     </svg>
   `)
 }

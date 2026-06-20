@@ -84,6 +84,28 @@ export function CommandPalette({
               </CommandItem>
             </CommandGroup>
 
+            <CommandGroup heading="World Cup 2026">
+              {[
+                { to: '/world-cup-2026', label: 'Overview' },
+                { to: '/world-cup-2026/matches', label: 'Matches' },
+                { to: '/world-cup-2026/groups', label: 'Groups' },
+                { to: '/world-cup-2026/bracket', label: 'Bracket' },
+                { to: '/world-cup-2026/teams', label: 'Teams' },
+              ].map((item) => (
+                <CommandItem
+                  key={item.to}
+                  value={`World Cup 2026 ${item.label}`}
+                  onSelect={() => {
+                    navigate(item.to)
+                    onOpenChange(false)
+                  }}
+                >
+                  <span>{item.label}</span>
+                  <span className="ml-auto text-xs text-muted-foreground">WM 2026</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+
             <CommandGroup heading={t('leaguesGroup', { count: results.leagues.slice(0, 5).length })}>
               {results.leagues.slice(0, 5).map((league) => (
                 <CommandItem

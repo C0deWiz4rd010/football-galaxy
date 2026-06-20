@@ -36,10 +36,12 @@ function TeamMetric({
   helper: string
 }) {
   return (
-    <div className="surface-soft rounded-[1rem] p-3">
-      <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
-      <p className="mt-1 text-xl font-semibold leading-none tracking-tight">{value}</p>
-      <p className="mt-1 truncate text-xs text-muted-foreground">{helper}</p>
+    <div className="surface-soft flex items-center gap-3 rounded-[1rem] p-3">
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
+        <p className="mt-0.5 truncate text-xs text-muted-foreground">{helper}</p>
+      </div>
+      <p className="shrink-0 font-mono text-xl font-black leading-none tabular-nums">{value}</p>
     </div>
   )
 }
@@ -104,22 +106,20 @@ export default function TeamDetail() {
     <PageWrapper>
       <StaggerGrid className="space-y-4">
         <StaggerGridItem as="section"
-          className="stat-card overflow-hidden rounded-fg-xl p-5 text-white shadow-fg-4 sm:p-6"
+          className="stat-card relative overflow-hidden rounded-fg-xl p-5 text-white shadow-fg-4 sm:p-6"
           style={{
             background: `linear-gradient(135deg, ${team.primaryColor ?? '#0f766e'}, ${team.secondaryColor ?? '#0f172a'})`,
           }}
         >
-          {/* Back button — sits in the top-left of the coloured hero card */}
-          <div className="mb-4">
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-1.5 rounded-lg bg-black/20 px-2.5 py-1.5 text-xs text-white/80 transition hover:bg-black/30 hover:text-white"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              {t('back')}
-            </button>
-          </div>
+          {/* Back button — absolute icon in the top-left corner of the hero card */}
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            aria-label={t('back')}
+            className="absolute left-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/30 text-white/80 backdrop-blur-sm transition hover:bg-black/50 hover:text-white"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+          </button>
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.72fr)]">
             <div>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -135,7 +135,7 @@ export default function TeamDetail() {
                     ),
                   ]}
                   alt={team.name}
-                  className="h-20 w-20 rounded-[1.3rem] object-cover ring-1 ring-white/20"
+                  className="h-20 w-20 rounded-fg-lg object-cover ring-1 ring-white/20"
                   loading="lazy"
                 />
                 <div className="flex-1">
@@ -198,7 +198,7 @@ export default function TeamDetail() {
               </div>
             </div>
 
-            <section className="rounded-[1.2rem] border border-white/12 bg-black/18 p-4">
+            <section className="rounded-fg-lg border border-white/12 bg-black/18 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-white/60">
@@ -223,7 +223,7 @@ export default function TeamDetail() {
                         createPlayerAvatar(initialsFromName(topRatedPlayer.name), team.primaryColor ?? '#0f766e'),
                       ]}
                       alt={topRatedPlayer.name}
-                      className="h-14 w-14 rounded-[1rem] object-cover ring-1 ring-white/15"
+                      className="h-14 w-14 rounded-fg-lg object-cover ring-1 ring-white/15"
                       loading="lazy"
                     />
                     <div>
@@ -283,7 +283,7 @@ export default function TeamDetail() {
                 <Users className="h-5 w-5 text-muted-foreground" />
               </div>
               <div className="grid gap-3 md:grid-cols-2">
-                <div className="surface-soft rounded-[1.3rem] p-4">
+                <div className="surface-soft rounded-fg-lg p-4">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t('manager')}</p>
                   <Link
                     to={`/${team.leagueId}/team/${team.id}/coach`}
@@ -292,17 +292,17 @@ export default function TeamDetail() {
                     {team.manager ?? t('coachPending')}
                   </Link>
                 </div>
-                <div className="surface-soft rounded-[1.3rem] p-4">
+                <div className="surface-soft rounded-fg-lg p-4">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t('homeGround')}</p>
                   <p className="mt-2 text-lg font-semibold">{team.stadium}</p>
                 </div>
-                <div className="surface-soft rounded-[1.3rem] p-4">
+                <div className="surface-soft rounded-fg-lg p-4">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t('momentum')}</p>
                   <p className="mt-2 text-lg font-semibold">
                     {standing ? t('winsInLastFive', { count: standing.form.filter((item) => item.result === 'W').length }) : t('noTrendYet')}
                   </p>
                 </div>
-                <div className="surface-soft rounded-[1.3rem] p-4">
+                <div className="surface-soft rounded-fg-lg p-4">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t('bestCurrentEdge')}</p>
                   <p className="mt-2 text-lg font-semibold">
                     {standing && standing.goalsFor >= standing.goalsAgainst ? t('attackingOutput') : t('defensiveRecovery')}

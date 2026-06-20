@@ -33,7 +33,7 @@ export function FormTableCard({ standings }: { standings: Standing[] }) {
           <Link
             key={standing.id}
             to={`/${standing.leagueId}/team/${standing.team.id}`}
-            className="interactive-card surface-soft flex items-center justify-between gap-3 rounded-[1.1rem] px-3 py-2.5 hover:border-border/70 hover:bg-background/60"
+            className="interactive-card surface-soft flex items-center justify-between gap-3 rounded-fg-md px-3 py-2.5 hover:border-border/70 hover:bg-background/60"
           >
             <div className="min-w-0">
               <div className="flex items-center gap-2">

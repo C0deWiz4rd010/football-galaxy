@@ -39,14 +39,18 @@
     "src/contexts/**/*",
     "src/data/mock/**/*",
     "src/data/historical/**/*",
+    "src/features/world-cup/**/*",
     "src/hooks/**/*",
     "src/lib/**/*",
     "src/pages/LeagueDashboard.tsx",
     "src/pages/TeamDetail.tsx",
     "src/pages/PlayerDetail.tsx",
     "src/pages/Compare.tsx",
+    "src/pages/world-cup/**/*",
     "src/services/footballData.ts",
     "src/services/openFootball.ts",
+    "src/services/config/**/*",
+    "src/services/worldCup/**/*",
     "src/services/types.ts"
   ]
 }

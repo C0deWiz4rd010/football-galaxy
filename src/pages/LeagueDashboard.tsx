@@ -20,12 +20,12 @@ import { TopAssistsCard } from '@/components/league/TopAssistsCard'
 import { TopScorersCard } from '@/components/league/TopScorersCard'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { AssetImage } from '@/components/shared/AssetImage'
+import { DataSourceBadge } from '@/components/shared/DataSourceBadge'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { LeagueDashboardSkeleton } from '@/components/shared/LeagueDashboardSkeleton'
 import { StaggerGrid, StaggerGridItem } from '@/components/shared/StaggerGrid'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { useDataSource } from '@/contexts/DataSourceContext'
 import { useLocale } from '@/contexts/LocaleContext'
 import { useFootballData } from '@/hooks/useFootballData'
 import { getPlayerPhotoSources } from '@/lib/assetSources'
@@ -50,29 +50,32 @@ function getFormPoints(standing: Standing) {
 
 function SummaryStat({
   label,
-  value,
-  helper,
+  team,
+  stat,
   icon,
   tone,
 }: {
   label: string
-  value: string
-  helper: string
+  team: string
+  stat: string
   icon: ReactNode
   tone: string
 }) {
   return (
-    <div className="surface-soft rounded-[1rem] px-3 py-2.5">
-      <div className="flex items-center gap-2">
-        <span className="grid h-7 w-7 place-items-center rounded-lg bg-background/45" style={{ color: tone }}>
-          {icon}
-        </span>
-        <p className="min-w-0 truncate text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
+    <div className="surface-soft flex items-center gap-3 rounded-fg-lg p-3">
+      <div
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+        style={{ color: tone, backgroundColor: `${tone}22` }}
+      >
+        {icon}
       </div>
-      <div className="mt-1.5 flex items-end justify-between gap-3">
-        <p className="text-lg font-semibold leading-none tracking-tight">{value}</p>
-        <p className="truncate text-xs text-muted-foreground">{helper}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
+        <p className="mt-0.5 truncate text-sm font-semibold leading-tight">{team}</p>
       </div>
+      <p className="shrink-0 font-mono text-lg font-black tabular-nums" style={{ color: tone }}>
+        {stat}
+      </p>
     </div>
   )
 }
@@ -81,7 +84,6 @@ export default function LeagueDashboard() {
   const { leagueId: routeLeagueId } = useParams()
   const [searchParams] = useSearchParams()
   const leagueId = isLeagueId(routeLeagueId) ? routeLeagueId : 'premier-league'
-  const { source } = useDataSource()
   const { t } = useLocale()
   const matchday = Number(searchParams.get('matchday') ?? 0) || undefined
   const { data, isLoading, error, refetch } = useFootballData<LeagueSummary>(
@@ -126,7 +128,7 @@ export default function LeagueDashboard() {
   const topScorers = data.topScorers ?? []
   const topAssists = data.topAssists ?? []
   const recentMatches = data.recentMatches ?? []
-  const liveUpdatedAt = source === 'live' ? data.lastUpdated : undefined
+  const liveUpdatedAt = data.lastUpdated
   const isLiveSummary = Boolean(liveUpdatedAt)
   const leader = standings[0]
   const topAttack = standings.length > 0
@@ -160,15 +162,16 @@ export default function LeagueDashboard() {
                 src={league.logo}
                 fallbackSrc={createLeagueLogo(league.abbreviation, league.color, league.name)}
                 alt={`${league.name} logo`}
-                className="h-14 w-14 rounded-[1rem] bg-white/90 object-contain p-2 ring-1 ring-white/10"
+                className="h-14 w-14 rounded-fg-lg bg-white/90 object-contain p-2 ring-1 ring-white/10"
                 loading="lazy"
               />
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline">{league.country}</Badge>
-                  <Badge className={isLiveSummary ? 'bg-emerald-500/15 text-emerald-200' : 'bg-slate-500/15 text-slate-200'}>
-                    {isLiveSummary ? t('liveProxy') : t('localFallback')}
-                  </Badge>
+                  <DataSourceBadge
+                    freshness={isLiveSummary ? 'live' : 'offline'}
+                    label={t('liveProxy')}
+                  />
                 </div>
                 <h1 className="mt-1 text-2xl font-semibold tracking-tight">{league.name}</h1>
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -191,29 +194,29 @@ export default function LeagueDashboard() {
           <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
             <SummaryStat
               label={t('leader')}
-              value={leader ? leader.team.shortName : '-'}
-              helper={leader ? `${leader.points} ${t('points')}` : t('noStandings')}
+              team={leader ? leader.team.shortName : t('noStandings')}
+              stat={leader ? `${leader.points} Pts` : '-'}
               icon={<Star className="h-4 w-4" />}
               tone={league.color}
             />
             <SummaryStat
               label={t('bestAttack')}
-              value={topAttack ? String(topAttack.goalsFor) : '-'}
-              helper={topAttack ? topAttack.team.shortName : t('noScoringData')}
+              team={topAttack ? topAttack.team.shortName : t('noScoringData')}
+              stat={topAttack ? String(topAttack.goalsFor) : '-'}
               icon={<Target className="h-4 w-4" />}
               tone="#f97316"
             />
             <SummaryStat
               label={t('bestDefense')}
-              value={topDefense ? String(topDefense.goalsAgainst) : '-'}
-              helper={topDefense ? topDefense.team.shortName : t('noDefendingData')}
+              team={topDefense ? topDefense.team.shortName : t('noDefendingData')}
+              stat={topDefense ? String(topDefense.goalsAgainst) : '-'}
               icon={<Shield className="h-4 w-4" />}
               tone="#38bdf8"
             />
             <SummaryStat
               label={t('formMonster')}
-              value={formLeader ? `${getFormPoints(formLeader)}/15` : '-'}
-              helper={formLeader ? formLeader.team.shortName : t('waitingTrendData')}
+              team={formLeader ? formLeader.team.shortName : t('waitingTrendData')}
+              stat={formLeader ? `${getFormPoints(formLeader)}/15` : '-'}
               icon={<Flame className="h-4 w-4" />}
               tone="#14b8a6"
             />
@@ -245,7 +248,7 @@ export default function LeagueDashboard() {
                       createPlayerAvatar(initialsFromName(spotlightPlayer.name), league.color),
                     ]}
                     alt={spotlightPlayer.name}
-                    className="h-20 w-20 rounded-[0.9rem] object-cover ring-1 ring-white/10"
+                    className="h-20 w-20 rounded-fg-lg object-cover ring-1 ring-white/10"
                     loading="lazy"
                   />
                 ) : (
@@ -292,7 +295,7 @@ export default function LeagueDashboard() {
                 <div>
                   <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('dataFreshness')}</p>
                   <h2 className="mt-1 text-sm font-semibold tracking-tight">
-                    {isLiveSummary ? t('liveProxy') : t('localFallback')}
+                    {t('liveProxy')}
                   </h2>
                 </div>
                 <span className={isLiveSummary ? 'h-2.5 w-2.5 rounded-full bg-emerald-400' : 'h-2.5 w-2.5 rounded-full bg-slate-400'} />
@@ -310,21 +313,21 @@ export default function LeagueDashboard() {
         </StaggerGridItem>
 
         <StaggerGridItem className="grid gap-2 sm:grid-cols-3">
-          <Link to="/teams" className="interactive-card surface-soft rounded-[1rem] px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
+          <Link to="/teams" className="interactive-card surface-soft rounded-fg-md px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
             <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('explore')}</span>
             <div className="mt-1 flex items-center justify-between gap-2">
               <span className="text-sm font-medium">{t('teamsExplorer')}</span>
               <Sparkles className="h-4 w-4 text-sky-400" />
             </div>
           </Link>
-          <Link to="/players" className="interactive-card surface-soft rounded-[1rem] px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
+          <Link to="/players" className="interactive-card surface-soft rounded-fg-md px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
             <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('explore')}</span>
             <div className="mt-1 flex items-center justify-between gap-2">
               <span className="text-sm font-medium">{t('playersExplorer')}</span>
               <Zap className="h-4 w-4 text-amber-400" />
             </div>
           </Link>
-          <Link to="/compare" className="interactive-card surface-soft rounded-[1rem] px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
+          <Link to="/compare" className="interactive-card surface-soft rounded-fg-md px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
             <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('teamMatchups')}</span>
             <div className="mt-1 flex items-center justify-between gap-2">
               <span className="text-sm font-medium">{t('playerMatchups')}</span>

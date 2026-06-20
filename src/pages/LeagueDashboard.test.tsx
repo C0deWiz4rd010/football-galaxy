@@ -19,7 +19,7 @@ vi.mock('@/hooks/useFootballData', () => ({
 }))
 
 vi.mock('@/contexts/DataSourceContext', () => ({
-  useDataSource: () => ({ source: 'historical', season: '2022-23' }),
+  useDataSource: () => ({ source: 'live', season: '2025-26' }),
 }))
 
 const { useFootballData } = await import('@/hooks/useFootballData')

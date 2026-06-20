@@ -69,7 +69,7 @@ export default function TeamsExplorer() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-[minmax(0,240px)_auto]">
-              <label className="surface-soft flex items-center gap-2 rounded-[1.2rem] px-3 py-3">
+              <label className="surface-soft flex items-center gap-2 rounded-fg-lg px-3 py-3">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <input
                   value={query}
@@ -98,12 +98,12 @@ export default function TeamsExplorer() {
         </StaggerGridItem>
 
         <StaggerGridItem as="section" className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
-          <div className="surface-soft rounded-[1.2rem] px-4 py-3 text-sm text-muted-foreground">
+          <div className="surface-soft rounded-fg-lg px-4 py-3 text-sm text-muted-foreground">
             {selectedLeagueId !== 'all'
               ? t('showingTeamsInLeague', { count: teams.length })
               : t('showingTeamsAll', { count: teams.length })}
           </div>
-          <label className="surface-soft flex items-center gap-2 rounded-[1.2rem] px-3 py-3 text-sm text-muted-foreground">
+          <label className="surface-soft flex items-center gap-2 rounded-fg-lg px-3 py-3 text-sm text-muted-foreground">
             <ArrowUpDown className="h-4 w-4" />
             <span>{t('sortBy')}</span>
             <select
@@ -131,7 +131,7 @@ export default function TeamsExplorer() {
             <Link
               key={team.id}
               to={`/${team.leagueId}/team/${team.id}`}
-              className="stat-card interactive-card cursor-pointer p-4"
+              className="stat-card interactive-card flex h-full cursor-pointer flex-col p-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
@@ -171,20 +171,20 @@ export default function TeamsExplorer() {
                 <Badge variant="outline">{t('playersCount', { count: (team.squad ?? []).length })}</Badge>
               </div>
 
-              <div className="mt-4 grid grid-cols-3 gap-2">
-                <div className="surface-soft rounded-[1rem] p-3">
+              <div className="mt-auto grid grid-cols-3 gap-2 pt-4">
+                <div className="surface-soft rounded-fg-lg p-3">
                   <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                     {t('points')}
                   </p>
                   <p className="mt-1 font-semibold">{standing?.points ?? '-'}</p>
                 </div>
-                <div className="surface-soft rounded-[1rem] p-3">
+                <div className="surface-soft rounded-fg-lg p-3">
                   <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                     {t('goals')}
                   </p>
                   <p className="mt-1 font-semibold">{standing?.goalsFor ?? '-'}</p>
                 </div>
-                <div className="surface-soft rounded-[1rem] p-3">
+                <div className="surface-soft rounded-fg-lg p-3">
                   <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                     {t('gdShort')}
                   </p>

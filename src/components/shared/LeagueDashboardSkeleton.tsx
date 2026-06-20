@@ -41,7 +41,7 @@ export function LeagueDashboardSkeleton() {
             </div>
             <Skeleton className="h-4 w-56" />
           </div>
-          <div className="rounded-[1rem] border border-border/50">
+          <div className="rounded-fg-lg border border-border/50">
             <div className="grid grid-cols-[3rem_minmax(0,1fr)_repeat(5,3.5rem)] gap-3 border-b border-border/50 px-4 py-3 text-xs uppercase tracking-[0.16em] text-muted-foreground">
               <span>Pos</span>
               <span>Team</span>

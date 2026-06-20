@@ -66,7 +66,7 @@ export function MatchOfTheDay({ match }: { match?: Match }) {
           />
           <p className="mt-2 text-sm font-medium">{match.homeTeam.shortName}</p>
         </Link>
-        <div className="rounded-[1.4rem] border border-white/10 bg-white/5 px-4 py-3 font-mono text-4xl font-bold">
+        <div className="rounded-fg-lg border border-white/10 bg-white/5 px-4 py-3 font-mono text-4xl font-bold">
           {match.homeScore ?? '-'}-{match.awayScore ?? '-'}
         </div>
         <Link to={`/${match.leagueId}/team/${match.awayTeam.id}`} className="group">
@@ -89,7 +89,7 @@ export function MatchOfTheDay({ match }: { match?: Match }) {
         </Link>
       </div>
 
-      <div className="mt-4 rounded-[1.2rem] border border-white/8 bg-white/4 px-4 py-3 text-center">
+      <div className="mt-4 rounded-fg-lg border border-white/8 bg-white/4 px-4 py-3 text-center">
         <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
           {t('kickoffAndVenue')}
         </p>

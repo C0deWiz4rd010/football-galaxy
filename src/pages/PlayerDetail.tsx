@@ -35,13 +35,15 @@ function DetailMetric({
   icon: React.ReactNode
 }) {
   return (
-    <div className="surface-soft rounded-[1rem] p-3">
-      <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-xl bg-white/10">
+    <div className="surface-soft flex items-center gap-3 rounded-fg-lg p-3">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/10">
         {icon}
       </div>
-      <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
-      <p className="mt-1 text-xl font-semibold leading-none tracking-tight">{value}</p>
-      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{helper}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
+        <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{helper}</p>
+      </div>
+      <p className="shrink-0 font-mono text-xl font-black leading-none tabular-nums">{value}</p>
     </div>
   )
 }
@@ -128,10 +130,10 @@ export default function PlayerDetail() {
               <button
                 type="button"
                 onClick={() => navigate(-1)}
-                className="flex items-center gap-1.5 rounded-lg bg-background/40 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:bg-background/70 hover:text-foreground"
+                aria-label={t('back')}
+                className="flex h-7 w-7 items-center justify-center rounded-full border border-border/60 bg-background/80 text-muted-foreground backdrop-blur-sm transition hover:bg-background hover:text-foreground"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
-                {t('back')}
               </button>
             }
             action={
@@ -187,7 +189,7 @@ export default function PlayerDetail() {
               </div>
 
               <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <div className="surface-soft rounded-[1rem] p-3">
+                <div className="surface-soft rounded-fg-lg p-3">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
                     {t('squadContext')}
                   </p>
@@ -200,7 +202,7 @@ export default function PlayerDetail() {
                       : t('leagueStandingUnavailable')}
                   </p>
                 </div>
-                <div className="surface-soft rounded-[1rem] p-3">
+                <div className="surface-soft rounded-fg-lg p-3">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
                     {t('contractAndValue')}
                   </p>
@@ -256,24 +258,24 @@ export default function PlayerDetail() {
                 ) : null}
               </div>
             </section>
-          </div>
-        </StaggerGridItem>
 
-        <StaggerGridItem as="section" className="stat-card">
-          <div className="mb-4">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-              {t('matchContext')}
-            </p>
-            <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('recentTeamMatches')}</h2>
+            <section className="stat-card">
+              <div className="mb-3">
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  {t('matchContext')}
+                </p>
+                <h2 className="mt-1 text-base font-semibold tracking-tight">{t('recentTeamMatches')}</h2>
+              </div>
+              {team ? (
+                <ResultsTimeline matches={playerMatches.slice(0, 6)} team={team} />
+              ) : (
+                <EmptyState
+                  title={t('noMatchContext')}
+                  description={t('noMatchContextHint')}
+                />
+              )}
+            </section>
           </div>
-          {team ? (
-            <ResultsTimeline matches={playerMatches.slice(0, 8)} team={team} />
-          ) : (
-            <EmptyState
-              title={t('noMatchContext')}
-              description={t('noMatchContextHint')}
-            />
-          )}
         </StaggerGridItem>
       </StaggerGrid>
     </PageWrapper>

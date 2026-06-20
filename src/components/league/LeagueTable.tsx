@@ -57,7 +57,7 @@ const LeagueTableRow = memo(function LeagueTableRow({
       }}
       role="button"
       tabIndex={0}
-      className="interactive-card surface-soft w-full rounded-[1.3rem] p-4 text-left md:hidden"
+      className="interactive-card surface-soft w-full rounded-fg-lg p-4 text-left md:hidden"
       whileTap={{ scale: 0.99 }}
     >
       <div className="flex items-center justify-between gap-3">
@@ -212,7 +212,7 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
       ) : null}
       {standings.length > 0 ? (
         <>
-          <div className="hidden overflow-hidden rounded-[1rem] border border-border/50 md:block">
+          <div className="hidden overflow-hidden rounded-fg-lg border border-border/50 md:block">
             <Table>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -297,7 +297,7 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
               <LeagueTableRow key={standing.id} standing={standing} onOpen={openTeam} />
             ))}
           </div>
-          <div className="mt-3 grid gap-2 rounded-[1rem] border border-border/45 bg-background/35 p-3 text-[11px] text-muted-foreground sm:grid-cols-2 xl:grid-cols-5">
+          <div className="mt-3 grid gap-2 rounded-fg-lg border border-border/45 bg-background/35 p-3 text-[11px] text-muted-foreground sm:grid-cols-2 xl:grid-cols-5">
             <div>
               <p className="font-semibold uppercase tracking-[0.16em] text-foreground/80">{t('tableLegend')}</p>
               <p className="mt-1">{t('tableAbbrevLegend')}</p>
