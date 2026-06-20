@@ -32,3 +32,4 @@ snap.txt
 
 # Editor-specific
 .vscode/
+.claude/

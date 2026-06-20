@@ -4,6 +4,47 @@ This file tracks implementation steps, decisions, and lessons learned across ses
 
 ---
 
+## Session: 2026-06-20 — live-only data + World Cup 2026 real-data overhaul
+
+### Goals
+1. Remove local/mock data as a user-facing source (header toggle + fallbacks).
+2. Keep all dashboard cards aligned on a single baseline row.
+3. Overhaul World Cup 2026 end-to-end with real, interactive data and images.
+
+### Data decisions
+- App is now **live-only**. `DataSourceContext` exposes only `source: 'live'`,
+  `season`, and season switching. `DataSourceToggle` was deleted and removed
+  from the header; `useFootballData` always uses `liveService`.
+- `footballData.ts` cascades live providers only (live -> football-data.org)
+  with an honest error when all live sources fail — no silent mock fallback.
+  The mock-based explorer/search index is unchanged.
+- **World Cup 2026 now uses real data from football-data.org free tier**
+  (competition `WC`), via the same proxy + key as the leagues. New provider:
+  `src/services/worldCup/footballDataProvider.ts`. Cascade: football-data.org
+  (live) -> snapshot (offline fallback). See
+  `docs/plans/world-cup-2026-live-dashboard-plan.md` ("Real-Data Overhaul")
+  for endpoints, id scheme (`fd-` prefix), and free-tier gaps.
+
+### UI decisions
+- Explorer cards use `flex-col` + `mt-auto` on the stat grids so stat rows pin
+  to the card bottom and stay aligned even when team/player names wrap to two
+  lines (fixes the misaligned-card row).
+- `formatDate`/`formatDateTime` are defensive (return `—` for missing/invalid
+  dates via date-fns `isValid`) — fixes a live-data crash on empty match dates.
+- World Cup pages render real flags (official crests), group tables, fixtures
+  with HT/FT score breakdowns, referees, squads grouped by position with ages,
+  coaches, and a bracket that fills in as groups complete. Lineups, event
+  timelines, statistics, photos, and venues are not in the free tier, so the
+  UI shows explicit empty-state copy instead of inventing data.
+
+### Verification notes
+- `npm run lint`, `npm test` (15 tests), and `npm run build` all pass.
+- Validated in-browser (proxy running) across overview, matches, groups,
+  bracket, teams, team detail (Argentina / Lionel Scaloni / 26-player squad),
+  and match detail (Mexico 2-0 South Africa, ref Wilton Sampaio, HT 1:0).
+
+---
+
 ## Session: 2026-05-17 - live-proxy-player-data-ui
 
 ### Goals
