@@ -2,10 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useDataSource } from '@/contexts/DataSourceContext'
 import * as liveService from '@/services/footballData'
-import * as historicalService from '@/services/openFootball'
 import type { FootballQueryName, FootballQueryParams } from '@/services/types'
-
-type ServiceMap = typeof liveService
 
 // Module-level cache: keyed by `queryFn:source:paramsJSON`.
 // Hit → return immediately, no loading state, no skeleton flash on back navigation.
@@ -43,7 +40,7 @@ export function useFootballData<T>(
   }, [])
 
   useEffect(() => {
-    const service = (source === 'live' ? liveService : historicalService) as ServiceMap
+    const service = liveService
     const currentRequestId = ++requestId.current
 
     const load = async () => {

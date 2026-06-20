@@ -243,7 +243,7 @@ export default function PlayersExplorer() {
               </div>
 
               {/* Row 3: stat trio */}
-              <div className="grid grid-cols-3 gap-1.5">
+              <div className="mt-auto grid grid-cols-3 gap-1.5">
                 <div className="surface-soft rounded-[0.75rem] p-2 text-center">
                   <p className="font-mono text-base font-bold leading-tight">{player.stats.goals}</p>
                   <p className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">{t('goals')}</p>

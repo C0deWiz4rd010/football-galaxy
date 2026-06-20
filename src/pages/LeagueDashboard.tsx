@@ -20,12 +20,12 @@ import { TopAssistsCard } from '@/components/league/TopAssistsCard'
 import { TopScorersCard } from '@/components/league/TopScorersCard'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { AssetImage } from '@/components/shared/AssetImage'
+import { DataSourceBadge } from '@/components/shared/DataSourceBadge'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { LeagueDashboardSkeleton } from '@/components/shared/LeagueDashboardSkeleton'
 import { StaggerGrid, StaggerGridItem } from '@/components/shared/StaggerGrid'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { useDataSource } from '@/contexts/DataSourceContext'
 import { useLocale } from '@/contexts/LocaleContext'
 import { useFootballData } from '@/hooks/useFootballData'
 import { getPlayerPhotoSources } from '@/lib/assetSources'
@@ -84,7 +84,6 @@ export default function LeagueDashboard() {
   const { leagueId: routeLeagueId } = useParams()
   const [searchParams] = useSearchParams()
   const leagueId = isLeagueId(routeLeagueId) ? routeLeagueId : 'premier-league'
-  const { source } = useDataSource()
   const { t } = useLocale()
   const matchday = Number(searchParams.get('matchday') ?? 0) || undefined
   const { data, isLoading, error, refetch } = useFootballData<LeagueSummary>(
@@ -129,7 +128,7 @@ export default function LeagueDashboard() {
   const topScorers = data.topScorers ?? []
   const topAssists = data.topAssists ?? []
   const recentMatches = data.recentMatches ?? []
-  const liveUpdatedAt = source === 'live' ? data.lastUpdated : undefined
+  const liveUpdatedAt = data.lastUpdated
   const isLiveSummary = Boolean(liveUpdatedAt)
   const leader = standings[0]
   const topAttack = standings.length > 0
@@ -169,9 +168,10 @@ export default function LeagueDashboard() {
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline">{league.country}</Badge>
-                  <Badge className={isLiveSummary ? 'bg-emerald-500/15 text-emerald-200' : 'bg-slate-500/15 text-slate-200'}>
-                    {isLiveSummary ? t('liveProxy') : t('localFallback')}
-                  </Badge>
+                  <DataSourceBadge
+                    freshness={isLiveSummary ? 'live' : 'offline'}
+                    label={t('liveProxy')}
+                  />
                 </div>
                 <h1 className="mt-1 text-2xl font-semibold tracking-tight">{league.name}</h1>
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -295,7 +295,7 @@ export default function LeagueDashboard() {
                 <div>
                   <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('dataFreshness')}</p>
                   <h2 className="mt-1 text-sm font-semibold tracking-tight">
-                    {isLiveSummary ? t('liveProxy') : t('localFallback')}
+                    {t('liveProxy')}
                   </h2>
                 </div>
                 <span className={isLiveSummary ? 'h-2.5 w-2.5 rounded-full bg-emerald-400' : 'h-2.5 w-2.5 rounded-full bg-slate-400'} />

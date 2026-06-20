@@ -131,7 +131,7 @@ export default function TeamsExplorer() {
             <Link
               key={team.id}
               to={`/${team.leagueId}/team/${team.id}`}
-              className="stat-card interactive-card cursor-pointer p-4"
+              className="stat-card interactive-card flex h-full cursor-pointer flex-col p-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
@@ -171,7 +171,7 @@ export default function TeamsExplorer() {
                 <Badge variant="outline">{t('playersCount', { count: (team.squad ?? []).length })}</Badge>
               </div>
 
-              <div className="mt-4 grid grid-cols-3 gap-2">
+              <div className="mt-auto grid grid-cols-3 gap-2 pt-4">
                 <div className="surface-soft rounded-[1rem] p-3">
                   <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                     {t('points')}

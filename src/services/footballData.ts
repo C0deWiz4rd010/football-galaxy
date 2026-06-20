@@ -7,25 +7,7 @@ import {
 import { leagues } from '@/lib/leagues'
 
 import * as fdOrgService from './footballDataOrg'
-import * as fallbackService from './openFootball'
 import * as liveService from './theSportsDb'
-
-/**
- * Runtime preference for the data cascade. The DataSourceProvider sets this
- * from the user's toggle (Live Proxy / Local Fallback). When set to
- * `'fallback'`, the cascade skips all network-bound loaders so the UI never
- * waits on a missing proxy or a flaky upstream.
- */
-type SourcePreference = 'live' | 'fallback'
-let sourcePreference: SourcePreference = 'live'
-
-export function setSourcePreference(next: SourcePreference) {
-  sourcePreference = next
-}
-
-function networkLoaders<T>(live: Array<() => Promise<T>>): Array<() => Promise<T>> {
-  return sourcePreference === 'fallback' ? [] : live
-}
 import type {
   Assist,
   FootballQueryParams,
@@ -41,9 +23,10 @@ import type {
 
 /**
  * Run loaders in order, returning the first successful result. Each loader is
- * given a chance even if the previous one threw, so a broken upstream never
- * blocks the page — the cascade ends at the local mock data which always
- * resolves.
+ * given a chance even if the previous one threw, so a single broken upstream
+ * never blocks the page. The app is live-only: when every live source fails the
+ * cascade rejects and the UI shows an honest error state instead of stale local
+ * data.
  */
 async function cascade<T>(loaders: Array<() => Promise<T>>): Promise<T> {
   let lastError: unknown = new Error('No loaders provided')
@@ -123,41 +106,29 @@ async function getFootballDataOrgLeagueSummary(
 
 export function getStandings(params: FootballQueryParams = {}): Promise<Standing[]> {
   return cascade<Standing[]>([
-    ...networkLoaders<Standing[]>([
-      () => liveService.getStandings(params),
-      () => fdOrgService.getStandings(params),
-    ]),
-    () => fallbackService.getStandings(params),
+    () => liveService.getStandings(params),
+    () => fdOrgService.getStandings(params),
   ])
 }
 
 export function getTopScorers(params: FootballQueryParams = {}): Promise<Scorer[]> {
   return cascade<Scorer[]>([
-    ...networkLoaders<Scorer[]>([
-      () => liveService.getTopScorers(params),
-      () => fdOrgService.getTopScorers(params),
-    ]),
-    () => fallbackService.getTopScorers(params),
+    () => liveService.getTopScorers(params),
+    () => fdOrgService.getTopScorers(params),
   ])
 }
 
 export function getTopAssists(params: FootballQueryParams = {}): Promise<Assist[]> {
   return cascade<Assist[]>([
-    ...networkLoaders<Assist[]>([
-      () => liveService.getTopAssists(params),
-      () => fdOrgService.getTopAssists(params),
-    ]),
-    () => fallbackService.getTopAssists(params),
+    () => liveService.getTopAssists(params),
+    () => fdOrgService.getTopAssists(params),
   ])
 }
 
 export function getMatches(params: FootballQueryParams = {}): Promise<Match[]> {
   return cascade<Match[]>([
-    ...networkLoaders<Match[]>([
-      () => liveService.getMatches(params),
-      () => fdOrgService.getMatches(params),
-    ]),
-    () => fallbackService.getMatches(params),
+    () => liveService.getMatches(params),
+    () => fdOrgService.getMatches(params),
   ])
 }
 
@@ -165,35 +136,23 @@ export function getMatches(params: FootballQueryParams = {}): Promise<Match[]> {
 // football-data.org's free tier does not include squad rosters or player
 // profile pages.
 export function getTeam(params: FootballQueryParams = {}): Promise<Team> {
-  return cascade<Team>([
-    ...networkLoaders<Team>([() => liveService.getTeam(params)]),
-    () => fallbackService.getTeam(params),
-  ])
+  return cascade<Team>([() => liveService.getTeam(params)])
 }
 
 export function getSquad(params: FootballQueryParams = {}): Promise<Squad> {
-  return cascade<Squad>([
-    ...networkLoaders<Squad>([() => liveService.getSquad(params)]),
-    () => fallbackService.getSquad(params),
-  ])
+  return cascade<Squad>([() => liveService.getSquad(params)])
 }
 
 export function getPlayer(params: FootballQueryParams = {}): Promise<Player> {
-  return cascade<Player>([
-    ...networkLoaders<Player>([() => liveService.getPlayer(params)]),
-    () => fallbackService.getPlayer(params),
-  ])
+  return cascade<Player>([() => liveService.getPlayer(params)])
 }
 
 export function getLeagueSummary(
   params: FootballQueryParams = {},
 ): Promise<LeagueSummary> {
   return cascade<LeagueSummary>([
-    ...networkLoaders<LeagueSummary>([
-      () => liveService.getLeagueSummary(params),
-      () => getFootballDataOrgLeagueSummary(params),
-    ]),
-    () => fallbackService.getLeagueSummary(params),
+    () => liveService.getLeagueSummary(params),
+    () => getFootballDataOrgLeagueSummary(params),
   ])
 }
 
