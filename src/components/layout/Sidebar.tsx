@@ -26,7 +26,7 @@ export function Sidebar() {
   return (
     <aside
       data-sidebar
-      className="surface-panel fixed left-4 top-4 z-40 hidden h-[calc(100vh-2rem)] w-64 overflow-hidden rounded-fg-2xl md:flex md:flex-col"
+      className="surface-panel fixed left-3 top-3 z-40 hidden h-[calc(100vh-1.5rem)] w-64 overflow-hidden rounded-fg-2xl md:flex md:flex-col"
     >
       <Link to="/premier-league" className="app-grid-lines relative flex h-16 items-center gap-3 border-b border-white/5 px-4">
         <BrandLogo subtitle="Live dashboard" />

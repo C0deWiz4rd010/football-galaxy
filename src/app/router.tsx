@@ -254,7 +254,7 @@ function AppLayout() {
           </div>
         </div>
       ) : null}
-      <main className="mx-auto max-w-[1440px] px-4 pb-[calc(env(safe-area-inset-bottom)+6rem)] pt-5 md:ml-64 md:px-6 md:pb-12 lg:px-8">
+      <main className="mx-auto max-w-[1440px] px-4 pb-[calc(env(safe-area-inset-bottom)+6rem)] pt-5 md:ml-[17rem] md:px-6 md:pb-12 lg:px-8">
         <Suspense fallback={<LoadingGrid />}>
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
@@ -351,4 +351,6 @@ export const router = createBrowserRouter([
       },
     ],
   },
-])
+], {
+  basename: import.meta.env.BASE_URL.replace(/\/$/, '') || '/',
+})

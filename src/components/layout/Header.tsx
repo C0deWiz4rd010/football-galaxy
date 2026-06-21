@@ -19,7 +19,7 @@ export function Header({ title, subtitle, onSearch, onMenu }: HeaderProps) {
   const { t } = useLocale()
 
   return (
-    <header className="surface-panel sticky top-3 z-30 mx-3 flex min-h-16 items-center justify-between gap-3 rounded-fg-xl px-4 py-3 md:ml-[17.25rem] md:mr-6 md:px-6">
+    <header className="surface-panel sticky top-3 z-30 mx-3 flex min-h-16 items-center justify-between gap-3 rounded-fg-xl px-4 py-3 md:ml-[17rem] md:mr-3 md:px-6">
       <div className="min-w-0 flex items-center gap-3">
         <Button
           variant="ghost"
