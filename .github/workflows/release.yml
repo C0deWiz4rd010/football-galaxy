@@ -1,0 +1,90 @@
+name: Release & Deploy
+
+on:
+  push:
+    branches: [develop]
+
+# Allow pushing the version bump, publishing a Release, and deploying Pages.
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# Never run two deploys at once; let an in-flight deploy finish.
+concurrency:
+  group: release-pages
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm run test
+
+      # Auto-increment the patch number: 1.0.0 -> 1.0.1 -> 1.0.2 ...
+      - name: Bump patch version
+        id: bump
+        run: |
+          NEW_VERSION=$(npm version patch --no-git-tag-version)
+          echo "version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Released ${NEW_VERSION}"
+
+      - name: Build
+        env:
+          VITE_BASE: /football-galaxy/
+        run: npm run build
+
+      # SPA deep-link fallback so client-side routes resolve on GitHub Pages.
+      - name: Add SPA fallback
+        run: cp dist/index.html dist/404.html
+
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "chore(release): ${{ steps.bump.outputs.version }} [skip ci]"
+          git tag -a "${{ steps.bump.outputs.version }}" -m "${{ steps.bump.outputs.version }}"
+          git push origin HEAD:develop
+          git push origin "${{ steps.bump.outputs.version }}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.bump.outputs.version }}
+          name: ${{ steps.bump.outputs.version }}
+          generate_release_notes: true
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4

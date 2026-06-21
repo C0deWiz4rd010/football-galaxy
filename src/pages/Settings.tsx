@@ -82,6 +82,15 @@ export default function SettingsPage() {
           </div>
         </div>
       </PageSection>
+
+      <PageSection eyebrow="About" title="Version">
+        <div className="surface-panel flex items-center justify-between rounded-fg-lg p-fg-4">
+          <p className="text-sm text-muted-foreground">Football Galaxy</p>
+          <span className="rounded-fg-sm border border-border/55 px-2.5 py-1 font-mono text-xs font-semibold text-foreground">
+            v{__APP_VERSION__}
+          </span>
+        </div>
+      </PageSection>
     </div>
   )
 }
