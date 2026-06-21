@@ -39,6 +39,7 @@ import {
   filterWorldCupFixtures,
   groupWorldCupStandings,
 } from '@/features/world-cup/utils'
+import { MatchStatsChart } from '@/features/world-cup/charts'
 import { formatDateTime } from '@/lib/utils'
 import type {
   WorldCupBracketRound,
@@ -47,7 +48,6 @@ import type {
   WorldCupFixture,
   WorldCupGroupStanding,
   WorldCupLineup,
-  WorldCupMatchStatistic,
   WorldCupSquad,
   WorldCupTeam,
 } from '@/services/worldCup/types'
@@ -96,8 +96,10 @@ export function WorldCupOverviewPage() {
           liveCount={data.liveMatches.length}
           matchesCount={data.tournament.matchCount}
           quality={data.quality}
+          recentCount={data.recentMatches.length}
           startsAt={data.tournament.startsAt}
           teamsCount={data.tournament.teamCount}
+          upcomingCount={data.upcomingMatches.length}
         />
       </div>
 
@@ -364,7 +366,7 @@ export function WorldCupMatchDetailPage() {
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
         <Timeline fixture={data} />
         <aside className="flex flex-col gap-4">
-          <StatisticsPanel statistics={data.statistics ?? []} />
+          <StatisticsPanel fixture={data} />
           <LineupsPanel lineups={data.lineups ?? []} />
         </aside>
       </div>
@@ -443,10 +445,22 @@ function Timeline({ fixture }: { fixture: WorldCupFixture }) {
   )
 }
 
-function StatisticsPanel({ statistics }: { statistics: WorldCupMatchStatistic[] }) {
+function StatisticsPanel({ fixture }: { fixture: WorldCupFixture }) {
+  const statistics = fixture.statistics ?? []
   return (
     <section className="stat-card rounded-fg-xl p-4">
       <h2 className="text-base font-semibold">Match stats</h2>
+      {statistics.length ? (
+        <div className="mt-3">
+          <MatchStatsChart
+            awayName={fixture.awayTeam.code || fixture.awayTeam.name}
+            awayTeamId={fixture.awayTeam.id}
+            homeName={fixture.homeTeam.code || fixture.homeTeam.name}
+            homeTeamId={fixture.homeTeam.id}
+            statistics={statistics}
+          />
+        </div>
+      ) : null}
       <div className="mt-3 flex flex-col gap-2">
         {statistics.length ? (
           statistics.slice(0, 12).map((stat) => (

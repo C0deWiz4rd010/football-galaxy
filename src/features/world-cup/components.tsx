@@ -33,6 +33,7 @@ import type {
   WorldCupSquadPlayer,
   WorldCupTeam,
 } from '@/services/worldCup/types'
+import { GroupPointsChart, MatchStatePulse, SquadPositionChart } from './charts'
 import { defaultWorldCupFilters, uniqueOptions, uniqueTeamOptions } from './utils'
 
 const worldCupNavItems = [
@@ -320,16 +321,20 @@ export function WorldCupTournamentStatus({
   liveCount,
   matchesCount,
   quality,
+  recentCount = 0,
   startsAt,
   teamsCount,
+  upcomingCount = 0,
 }: {
   endsAt: string
   hostCitiesCount: number
   liveCount: number
   matchesCount: number
   quality: DataQualityMeta
+  recentCount?: number
   startsAt: string
   teamsCount: number
+  upcomingCount?: number
 }) {
   const phase = tournamentPhase(startsAt, endsAt, liveCount)
   const items = [
@@ -355,6 +360,11 @@ export function WorldCupTournamentStatus({
         </Badge>
       </div>
       <div className="grid flex-1 gap-2">
+        {(liveCount > 0 || upcomingCount > 0 || recentCount > 0) ? (
+          <div className="surface-soft rounded-xl p-2">
+            <MatchStatePulse live={liveCount} recent={recentCount} upcoming={upcomingCount} />
+          </div>
+        ) : null}
         {items.map((item) => (
           <div key={item.label} className="surface-soft flex items-center gap-3 rounded-xl p-3">
             <div className="flex size-9 items-center justify-center rounded-xl bg-white/10 text-amber-200">{item.icon}</div>
@@ -628,6 +638,12 @@ export function WorldCupGroupTable({ group, rows }: { group: string; rows: World
           </tbody>
         </table>
       </div>
+      {rows.length ? (
+        <div className="border-t border-white/5 px-3 pb-3 pt-2">
+          <p className="mb-1 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Points</p>
+          <GroupPointsChart rows={rows} />
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -1206,6 +1222,12 @@ export function WorldCupSquadByPosition({ players }: { players: WorldCupSquadPla
         <h2 className="text-base font-semibold">Squad by position</h2>
         <Badge variant="outline">{players.length} players</Badge>
       </div>
+      {players.length ? (
+        <div className="surface-soft mb-3 rounded-xl p-3">
+          <p className="mb-1 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Composition</p>
+          <SquadPositionChart players={players} />
+        </div>
+      ) : null}
       {players.length ? (
         <div className="grid gap-3 lg:grid-cols-2">
           {Object.entries(grouped).map(([position, groupPlayers]) => (

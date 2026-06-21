@@ -1,9 +1,18 @@
 import react from '@vitejs/plugin-react'
 import { fileURLToPath, URL } from 'node:url'
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vitest/config'
+
+const pkg = JSON.parse(readFileSync(fileURLToPath(new URL('./package.json', import.meta.url)), 'utf-8'))
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Allows GitHub Pages (served from /football-galaxy/) and root hosts (Hostinger)
+  // to share the same build. The CI workflow sets VITE_BASE for Pages.
+  base: process.env.VITE_BASE ?? '/',
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   plugins: [react()],
   resolve: {
     alias: {
@@ -29,6 +38,7 @@ export default defineConfig({
           }
           if (id.includes('react-router')) return 'router'
           if (id.includes('framer-motion')) return 'motion'
+          if (id.includes('echarts') || id.includes('zrender')) return 'echarts'
           if (id.includes('recharts') || id.includes('d3-')) return 'charts'
           if (id.includes('@radix-ui')) return 'radix'
           if (id.includes('lucide-react')) return 'icons'

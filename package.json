@@ -1,7 +1,7 @@
 {
   "name": "football-galaxy",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -28,6 +28,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
+    "echarts": "^5.6.0",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^11.18.2",
     "lucide-react": "^0.561.0",
