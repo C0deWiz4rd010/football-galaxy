@@ -1,4 +1,4 @@
-import { MoreHorizontal, Trophy } from 'lucide-react'
+import { RadioTower, Trophy } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { AssetImage } from '@/components/shared/AssetImage'
 import { useLocale } from '@/contexts/LocaleContext'
@@ -45,9 +45,17 @@ export function MobileTabBar() {
           <span className="mt-0.5">{league.abbreviation}</span>
         </NavLink>
       ))}
-      <NavLink to="/compare" className="flex flex-col items-center justify-center rounded-fg-lg text-[10px] text-muted-foreground transition duration-150 hover:bg-background/55">
-        <MoreHorizontal className="h-4 w-4" />
-        <span>{t('more')}</span>
+      <NavLink
+        to="/live"
+        className={({ isActive }) =>
+          cn(
+            'flex flex-col items-center justify-center rounded-fg-lg text-[10px] text-muted-foreground transition duration-150',
+            isActive && 'bg-live/10 font-semibold text-live',
+          )
+        }
+      >
+        <RadioTower className="h-4 w-4 text-live" />
+        <span>{t('live')}</span>
       </NavLink>
     </nav>
   )

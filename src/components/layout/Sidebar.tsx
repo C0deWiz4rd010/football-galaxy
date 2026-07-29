@@ -1,5 +1,5 @@
 import { Link, NavLink } from 'react-router-dom'
-import { BarChart3, CalendarDays, Globe2, Grid3X3, Settings, Shield, Star, Trophy, Users, X } from 'lucide-react'
+import { BarChart3, CalendarDays, Globe2, Grid3X3, RadioTower, Settings, Shield, Star, Trophy, Users, X } from 'lucide-react'
 
 import { AssetImage } from '@/components/shared/AssetImage'
 import { BrandLogo } from '@/shared/ui/brand-logo'
@@ -39,6 +39,20 @@ export function Sidebar() {
               {t('explore')}
             </p>
           </div>
+          <NavLink
+            to="/live"
+            className={({ isActive }) =>
+              cn(
+                'group mx-3 mb-1 flex items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm transition duration-150 hover:border-live/40 hover:bg-live/10',
+                isActive
+                  ? 'border-live/40 bg-live/12 text-live shadow-[0_14px_32px_rgba(0,0,0,0.12)]'
+                  : 'text-muted-foreground hover:text-live',
+              )
+            }
+          >
+            <RadioTower className="h-4 w-4 text-live" />
+            {t('liveScores')}
+          </NavLink>
           <NavLink
             to="/players"
             className={({ isActive }) =>

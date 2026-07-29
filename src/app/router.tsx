@@ -25,6 +25,7 @@ import { pageMotion } from '@/shared/motion/tokens'
 const ComparePage = lazy(() => import('@/pages/Compare'))
 const CoachDetailPage = lazy(() => import('@/pages/CoachDetail'))
 const LeagueDashboardPage = lazy(() => import('@/pages/LeagueDashboard'))
+const LiveScoresPage = lazy(() => import('@/pages/LiveScoresPage'))
 const PlayerDetailPage = lazy(() => import('@/pages/PlayerDetail'))
 const PlayersExplorerPage = lazy(() => import('@/pages/PlayersExplorer'))
 const SettingsPage = lazy(() => import('@/pages/Settings'))
@@ -68,6 +69,15 @@ function getLayoutTitle(pathname: string, t: (key: string) => string) {
     return {
       title: t('galaxyMap'),
       subtitle: t('subtitleExplore'),
+      showSwiper: false,
+      leagueId: undefined,
+    }
+  }
+
+  if (segments[0] === 'live') {
+    return {
+      title: t('liveScores'),
+      subtitle: t('liveScoresSubtitle'),
       showSwiper: false,
       leagueId: undefined,
     }
@@ -206,6 +216,13 @@ function AppLayout() {
           >
             <nav className="space-y-2">
               <Link
+                to="/live"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block rounded-fg-md border border-live/30 bg-live/10 px-4 py-3 text-sm font-medium text-live"
+              >
+                {t('liveScores')}
+              </Link>
+              <Link
                 to="/players"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block rounded-fg-md border border-border/55 px-4 py-3 text-sm font-medium"
@@ -288,6 +305,10 @@ export const router = createBrowserRouter([
       {
         path: 'compare',
         element: <ComparePage />,
+      },
+      {
+        path: 'live',
+        element: <LiveScoresPage />,
       },
       {
         path: 'settings',
