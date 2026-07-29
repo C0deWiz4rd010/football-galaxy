@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { motion } from 'framer-motion'
-import { ArrowRight, Sparkles, Swords, Target } from 'lucide-react'
+import { ArrowRight, Gauge, Sparkles, Swords, Target } from 'lucide-react'
 import {
   PolarAngleAxis,
   PolarGrid,
@@ -26,6 +26,61 @@ import {
   initialsFromName,
 } from '@/lib/visualAssets'
 import type { Player, Team } from '@/services/types'
+
+/** Percentile rank (0–100) of `value` within an ascending-sorted pool. */
+function percentileRank(sortedAsc: number[], value: number): number {
+  if (sortedAsc.length === 0) return 0
+  let count = 0
+  for (const entry of sortedAsc) {
+    if (entry <= value) count += 1
+    else break
+  }
+  return Math.round((count / sortedAsc.length) * 100)
+}
+
+function PercentileRow({
+  label,
+  leftPct,
+  rightPct,
+  leftValue,
+  rightValue,
+}: {
+  label: string
+  leftPct: number
+  rightPct: number
+  leftValue: number
+  rightValue: number
+}) {
+  return (
+    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-2">
+        <span className="w-8 shrink-0 text-right font-mono text-xs tabular-nums text-muted-foreground">
+          {leftValue}
+        </span>
+        <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-muted/50">
+          <div
+            className="absolute inset-y-0 right-0 rounded-full bg-primary/70"
+            style={{ width: `${leftPct}%` }}
+          />
+        </div>
+      </div>
+      <span className="min-w-[5.5rem] text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </span>
+      <div className="flex items-center gap-2">
+        <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-muted/50">
+          <div
+            className="absolute inset-y-0 left-0 rounded-full bg-emerald-500/70"
+            style={{ width: `${rightPct}%` }}
+          />
+        </div>
+        <span className="w-8 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
+          {rightValue}
+        </span>
+      </div>
+    </div>
+  )
+}
 
 function PlayerSearch({
   label,
@@ -213,6 +268,47 @@ export default function Compare() {
   const form1 = player1 ? getFormScore(player1) : null
   const form2 = player2 ? getFormScore(player2) : null
 
+  // Ascending-sorted value pools per metric, computed once across the whole
+  // catalogue so we can rank each selected player league-wide.
+  const percentileMetrics = useMemo(
+    () =>
+      [
+        { key: 'goals', label: t('goals'), get: (p: Player) => p.stats.goals },
+        { key: 'assists', label: t('assists'), get: (p: Player) => p.stats.assists },
+        { key: 'appearances', label: t('appearancesLabel'), get: (p: Player) => p.stats.appearances },
+        { key: 'minutes', label: t('minutes'), get: (p: Player) => p.stats.minutes },
+      ] as const,
+    [t],
+  )
+
+  const metricPools = useMemo(() => {
+    const pools = new Map<string, number[]>()
+    for (const metric of percentileMetrics) {
+      pools.set(
+        metric.key,
+        players.map((player) => metric.get(player)).sort((a, b) => a - b),
+      )
+    }
+    return pools
+  }, [players, percentileMetrics])
+
+  const percentileRows =
+    player1 && player2
+      ? percentileMetrics.map((metric) => {
+          const pool = metricPools.get(metric.key) ?? []
+          const leftValue = metric.get(player1)
+          const rightValue = metric.get(player2)
+          return {
+            key: metric.key,
+            label: metric.label,
+            leftValue,
+            rightValue,
+            leftPct: percentileRank(pool, leftValue),
+            rightPct: percentileRank(pool, rightValue),
+          }
+        })
+      : []
+
   const rows =
     player1 && player2 && form1 && form2
       ? [
@@ -383,6 +479,39 @@ export default function Compare() {
                   </div>
                 )
               })}
+            </section>
+
+            <section className="stat-card space-y-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    {t('percentileEyebrow')}
+                  </p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-tight">
+                    {t('percentileTitle')}
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {t('percentileSubtitle')}
+                  </p>
+                </div>
+                <Gauge className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div className="flex items-center justify-between gap-2 text-xs font-medium">
+                <span className="truncate text-primary">{player1.name}</span>
+                <span className="truncate text-right text-emerald-500">{player2.name}</span>
+              </div>
+              <div className="space-y-3">
+                {percentileRows.map((row) => (
+                  <PercentileRow
+                    key={row.key}
+                    label={row.label}
+                    leftPct={row.leftPct}
+                    rightPct={row.rightPct}
+                    leftValue={row.leftValue}
+                    rightValue={row.rightValue}
+                  />
+                ))}
+              </div>
             </section>
           </motion.div>
         ) : null}
