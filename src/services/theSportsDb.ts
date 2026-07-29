@@ -1,7 +1,7 @@
 import { mockData } from '@/data/mock'
 import { leagues } from '@/lib/leagues'
 import { createFlag, createPlayerAvatar, createTeamCrest } from '@/lib/visualAssets'
-import { buildLiveRequestUrl } from '@/services/config/liveProxy'
+import { fetchLiveJson } from '@/services/net/liveClient'
 
 import type { Assist, FootballQueryParams, LeagueId, LeagueSummary, Match, Player, ResultCode, Scorer, Squad, Standing, Team } from './types'
 
@@ -64,11 +64,7 @@ function numberFromUnknown(raw: unknown) {
 }
 
 async function getJson(url: string): Promise<ApiRecord> {
-  const response = await fetch(buildLiveRequestUrl(url))
-  if (!response.ok) {
-    throw new Error(`Football data request failed (${response.status}).`)
-  }
-  return (await response.json()) as ApiRecord
+  return fetchLiveJson<ApiRecord>(url)
 }
 
 function normalizeTeamName(name: string | undefined) {

@@ -14,7 +14,7 @@
 
 import { leagues } from '@/lib/leagues'
 import { createFlag, createPlayerAvatar, createTeamCrest, initialsFromName, normalizeImageSrc } from '@/lib/visualAssets'
-import { buildLiveRequestUrl } from '@/services/config/liveProxy'
+import { fetchLiveJson } from '@/services/net/liveClient'
 
 import type {
   Assist,
@@ -52,11 +52,7 @@ function normalizeSeason(season: string | undefined): string | undefined {
 }
 
 async function getJson<T>(url: string): Promise<T> {
-  const response = await fetch(buildLiveRequestUrl(url))
-  if (!response.ok) {
-    throw new Error(`football-data.org request failed (${response.status})`)
-  }
-  return (await response.json()) as T
+  return fetchLiveJson<T>(url)
 }
 
 // ---------------------------------------------------------------------------

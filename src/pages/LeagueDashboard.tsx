@@ -30,7 +30,7 @@ import { useLocale } from '@/contexts/LocaleContext'
 import { useFootballData } from '@/hooks/useFootballData'
 import { getPlayerPhotoSources } from '@/lib/assetSources'
 import { getLeague, isLeagueId } from '@/lib/leagues'
-import { formatDateTime } from '@/lib/utils'
+import { formatRelativeTime } from '@/lib/utils'
 import { createLeagueLogo, createPlayerAvatar, initialsFromName } from '@/lib/visualAssets'
 import type { LeagueSummary, Standing } from '@/services/types'
 
@@ -86,7 +86,7 @@ export default function LeagueDashboard() {
   const leagueId = isLeagueId(routeLeagueId) ? routeLeagueId : 'premier-league'
   const { t } = useLocale()
   const matchday = Number(searchParams.get('matchday') ?? 0) || undefined
-  const { data, isLoading, error, refetch } = useFootballData<LeagueSummary>(
+  const { data, isLoading, error, refetch, fetchedAt } = useFootballData<LeagueSummary>(
     'getLeagueSummary',
     { leagueId, matchday },
   )
@@ -130,6 +130,9 @@ export default function LeagueDashboard() {
   const recentMatches = data.recentMatches ?? []
   const liveUpdatedAt = data.lastUpdated
   const isLiveSummary = Boolean(liveUpdatedAt)
+  // Prefer the actual client fetch time (cache-aware) for the freshness label,
+  // falling back to the payload's server timestamp.
+  const freshnessAt: number | string | null = fetchedAt ?? liveUpdatedAt ?? null
   const leader = standings[0]
   const topAttack = standings.length > 0
     ? [...standings].sort((left, right) => right.goalsFor - left.goalsFor)[0]
@@ -185,8 +188,8 @@ export default function LeagueDashboard() {
               {typeof data.season.currentMatchday === 'number' ? (
                 <Badge variant="outline">{t('matchday')} {data.season.currentMatchday}</Badge>
               ) : null}
-              {liveUpdatedAt ? (
-                <span>{t('updated')} {formatDateTime(liveUpdatedAt)}</span>
+              {freshnessAt ? (
+                <span>{t('updated')} {formatRelativeTime(freshnessAt)}</span>
               ) : null}
             </div>
           </div>
@@ -301,7 +304,7 @@ export default function LeagueDashboard() {
                 <span className={isLiveSummary ? 'h-2.5 w-2.5 rounded-full bg-emerald-400' : 'h-2.5 w-2.5 rounded-full bg-slate-400'} />
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                {liveUpdatedAt ? `${t('updated')} ${formatDateTime(liveUpdatedAt)}` : t('tableFirstSubtitle')}
+                {freshnessAt ? `${t('updated')} ${formatRelativeTime(freshnessAt)}` : t('tableFirstSubtitle')}
               </p>
             </div>
           </aside>
