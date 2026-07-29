@@ -22,13 +22,20 @@ export function MatchdaySwiper({ leagueId, matchday, onSelect }: { leagueId: str
   }, [activeMatchday, api])
 
   return (
-    <div className="sticky top-16 z-20 border-b bg-background/90 px-4 py-2 backdrop-blur md:hidden" ref={ref}>
-      <div className="flex gap-2">
-        {Array.from({ length: 38 }, (_, index) => index + 1).map((item) => (
-          <Button key={item} size="sm" variant={item === activeMatchday ? 'default' : 'outline'} className="h-8 shrink-0 rounded-full px-3 text-xs" style={item === activeMatchday ? { backgroundColor: league.color } : undefined} onClick={() => onSelect(item)}>
-            {item}
-          </Button>
-        ))}
+    <div className="sticky top-16 z-20 border-b bg-background/90 backdrop-blur md:hidden">
+      <div className="relative">
+        <div className="overflow-hidden px-4 py-2" ref={ref}>
+          <div className="flex gap-2">
+            {Array.from({ length: 38 }, (_, index) => index + 1).map((item) => (
+              <Button key={item} size="sm" variant={item === activeMatchday ? 'default' : 'outline'} className="h-8 shrink-0 rounded-full px-3 text-xs" style={item === activeMatchday ? { backgroundColor: league.color } : undefined} onClick={() => onSelect(item)}>
+                {item}
+              </Button>
+            ))}
+          </div>
+        </div>
+        {/* Edge fades hint that the matchday strip scrolls horizontally. */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-background to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent" />
       </div>
     </div>
   )

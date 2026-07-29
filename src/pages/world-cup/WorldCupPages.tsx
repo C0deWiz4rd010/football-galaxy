@@ -87,7 +87,7 @@ export function WorldCupOverviewPage() {
       />
       <WorldCupSectionNav />
 
-      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.15fr_0.95fr_0.9fr]">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1.15fr_0.95fr_0.9fr]">
         <WorldCupFeatureMatch fixture={featuredMatch} />
         <WorldCupUpcomingCard fixtures={upcomingList} />
         <WorldCupTournamentStatus
@@ -105,7 +105,7 @@ export function WorldCupOverviewPage() {
 
       <WorldCupGroupsPreview grouped={grouped} />
 
-      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.25fr_0.9fr_0.85fr]">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1.25fr_0.9fr_0.85fr]">
         <WorldCupBracketPreview rounds={data.bracket} />
         <WorldCupHostCityPanel cities={data.tournament.hostCities} />
         <WorldCupTeamSpotlight standing={spotlightStanding} team={data.teams[0]} />
@@ -219,7 +219,7 @@ export function WorldCupGroupsPage() {
         </div>
       </section>
       {groupEntries.length ? (
-        <div className="grid gap-3 xl:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {groupEntries.map(([group, rows]) => (
             <WorldCupGroupTable key={group} group={group} rows={rows} />
           ))}
