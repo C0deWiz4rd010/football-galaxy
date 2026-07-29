@@ -7,6 +7,7 @@ import {
 import { leagues } from '@/lib/leagues'
 
 import * as fdOrgService from './footballDataOrg'
+import * as openLigaDbService from './openLigaDb/openLigaDb'
 import * as liveService from './theSportsDb'
 import type {
   Assist,
@@ -105,10 +106,16 @@ async function getFootballDataOrgLeagueSummary(
 }
 
 export function getStandings(params: FootballQueryParams = {}): Promise<Standing[]> {
-  return cascade<Standing[]>([
+  const loaders: Array<() => Promise<Standing[]>> = [
     () => liveService.getStandings(params),
     () => fdOrgService.getStandings(params),
-  ])
+  ]
+  // OpenLigaDB is Bundesliga-only; add it as an extra real-data safety net so a
+  // rate-limited primary source never leaves the German table empty.
+  if ((params.leagueId ?? 'premier-league') === 'bundesliga') {
+    loaders.push(() => openLigaDbService.getStandings(params))
+  }
+  return cascade<Standing[]>(loaders)
 }
 
 export function getTopScorers(params: FootballQueryParams = {}): Promise<Scorer[]> {

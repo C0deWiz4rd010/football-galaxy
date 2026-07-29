@@ -12,6 +12,7 @@ const ALLOWED_HOSTS = new Set([
   'site.web.api.espn.com',
   'api.football-data.org',
   'v3.football.api-sports.io',
+  'api.openligadb.de',
   'commons.wikimedia.org',
   'upload.wikimedia.org',
   'www.wikidata.org',
