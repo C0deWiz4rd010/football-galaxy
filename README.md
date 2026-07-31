@@ -15,7 +15,7 @@ npm install
 
 ## Run Locally
 
-Use the combined dev command when you want live data:
+Always use the combined dev command — the app is live-only and needs the proxy:
 
 ```bash
 npm run dev:all
@@ -26,7 +26,9 @@ This starts:
 - Vite on `http://localhost:5173/`
 - the local live proxy on `http://localhost:8787/api/live`
 
-You can still run only the frontend with `npm run dev`, but live provider calls will fall back if the proxy is not running.
+Running only `npm run dev` starts the frontend without the proxy, so no live data
+arrives and requests fail after a few seconds of retries. In that case a dev-only
+banner tells you to start `npm run dev:all`.
 
 ## Live Proxy
 
@@ -48,12 +50,16 @@ FOOTBALL_DATA_API_KEY=your_server_only_key
 
 ## Data Sources
 
-- `football-data.org`: standings, official crests, fixtures, scorers where available.
-- ESPN: league standings, teams, scoreboards, and live roster player stats.
-- TheSportsDB: team art and player-photo fallback candidates.
-- Local mock data: final development/offline fallback so the app always renders.
+The app is live-only. League data cascades across free sources so the table always
+has a source to fall back to:
 
-The local fallback tab is intended for development and offline QA. Product focus is the Live Proxy path.
+- `TheSportsDB` (free key `123`): primary standings, scorers, team art, player photos.
+- ESPN (keyless): standings safety net covering all top-5 leagues, plus live scoreboards.
+- `football-data.org` (free tier, server-only key): standings, official crests, fixtures, scorers.
+- OpenLigaDB (keyless): extra Bundesliga table safety net.
+
+When every live source fails, the UI shows an honest error state with a retry action
+rather than stale or fabricated data.
 
 ## League IDs
 

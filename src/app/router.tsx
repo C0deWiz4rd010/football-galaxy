@@ -14,6 +14,7 @@ import {
 import { Header } from '@/components/layout/Header'
 import { MatchdaySwiper } from '@/components/layout/MatchdaySwiper'
 import { MobileTabBar } from '@/components/layout/MobileTabBar'
+import { ProxyHealthBanner } from '@/components/layout/ProxyHealthBanner'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { CommandPalette } from '@/components/shared/CommandPalette'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
@@ -291,6 +292,7 @@ function AppLayout() {
       </main>
       <MobileTabBar />
       <CommandPalette open={searchOpen} onOpenChange={setSearchOpen} />
+      <ProxyHealthBanner />
       <Toaster />
     </>
   )
