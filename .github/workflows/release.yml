@@ -54,6 +54,11 @@ jobs:
       - name: Build
         env:
           VITE_BASE: /football-galaxy/
+          # Set a repository variable VITE_LIVE_DATA_PROXY_URL to the deployed
+          # proxy (e.g. https://your-proxy.example.com/api/live) so the Pages
+          # build routes live requests through it. When unset, the app falls
+          # back to direct upstream calls (works only for CORS-open sources).
+          VITE_LIVE_DATA_PROXY_URL: ${{ vars.VITE_LIVE_DATA_PROXY_URL }}
         run: npm run build
 
       # SPA deep-link fallback so client-side routes resolve on GitHub Pages.

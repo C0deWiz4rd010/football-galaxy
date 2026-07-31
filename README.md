@@ -61,7 +61,28 @@ has a source to fall back to:
 When every live source fails, the UI shows an honest error state with a retry action
 rather than stale or fabricated data.
 
+## Deployment
+
+The frontend deploys automatically to **GitHub Pages** on every push to `develop`
+via [`.github/workflows/release.yml`](.github/workflows/release.yml) (lint → test →
+patch version bump → build with `VITE_BASE=/football-galaxy/` → Pages deploy + release tag).
+
+Because the browser must not receive provider secrets, the deployed site still needs a
+reachable proxy for live data:
+
+1. **Deploy the proxy** ([`proxy/football-data-proxy.mjs`](proxy/football-data-proxy.mjs)) as a
+   small Node service (Hostinger Node app, a container, or any serverless Node runtime).
+   Set `FOOTBALL_DATA_API_KEY` (and optionally `SPORTSDB_API_KEY`) as environment variables
+   on that host — never in the frontend build.
+2. **Point the build at it:** add a GitHub repository variable
+   `VITE_LIVE_DATA_PROXY_URL` = `https://<your-proxy-host>/api/live`. The release workflow
+   already forwards this variable into the Pages build.
+
+Without a deployed proxy, the Pages build falls back to direct upstream calls, which only
+work for CORS-open sources.
+
 ## League IDs
+
 
 - `premier-league`
 - `bundesliga`
