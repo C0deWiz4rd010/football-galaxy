@@ -16,6 +16,7 @@ import { MatchdaySwiper } from '@/components/layout/MatchdaySwiper'
 import { MobileTabBar } from '@/components/layout/MobileTabBar'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { CommandPalette } from '@/components/shared/CommandPalette'
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { Toaster } from '@/components/ui/toast'
 import { useLocale } from '@/contexts/LocaleContext'
@@ -272,19 +273,21 @@ function AppLayout() {
         </div>
       ) : null}
       <main className="mx-auto max-w-[1440px] px-4 pb-[calc(env(safe-area-inset-bottom)+6rem)] pt-5 md:ml-[17rem] md:px-6 md:pb-12 lg:px-8">
-        <Suspense fallback={<LoadingGrid />}>
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={location.pathname}
-              initial={pageMotion.initial}
-              animate={pageMotion.animate}
-              exit={pageMotion.exit}
-              transition={pageMotion.transition}
-            >
-              <Outlet />
-            </motion.div>
-          </AnimatePresence>
-        </Suspense>
+        <ErrorBoundary key={location.pathname} title={t('routeErrorTitle')}>
+          <Suspense fallback={<LoadingGrid />}>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={location.pathname}
+                initial={pageMotion.initial}
+                animate={pageMotion.animate}
+                exit={pageMotion.exit}
+                transition={pageMotion.transition}
+              >
+                <Outlet />
+              </motion.div>
+            </AnimatePresence>
+          </Suspense>
+        </ErrorBoundary>
       </main>
       <MobileTabBar />
       <CommandPalette open={searchOpen} onOpenChange={setSearchOpen} />

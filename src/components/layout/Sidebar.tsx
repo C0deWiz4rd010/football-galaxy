@@ -1,13 +1,14 @@
+import { useEffect, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { BarChart3, CalendarDays, Globe2, Grid3X3, RadioTower, Settings, Shield, Star, Trophy, Users, X } from 'lucide-react'
 
 import { AssetImage } from '@/components/shared/AssetImage'
 import { BrandLogo } from '@/shared/ui/brand-logo'
-import { mockData } from '@/data/mock'
 import { useFavorites } from '@/hooks/useFavorites'
 import { useLeagueLogos } from '@/hooks/useLeagueLogos'
 import { useLocale } from '@/contexts/LocaleContext'
 import { leagues } from '@/lib/leagues'
+import type { Player, Team } from '@/services/types'
 import { cn } from '@/lib/utils'
 
 function favoriteHref(item: { id: string; leagueId: string; teamId?: string }) {
@@ -20,8 +21,32 @@ export function Sidebar() {
   const favorites = useFavorites()
   const leagueLogos = useLeagueLogos()
   const { t } = useLocale()
-  const teams = Object.values(mockData).flatMap((league) => league.teams)
-  const players = teams.flatMap((team) => team.squad ?? [])
+  const hasFavorites = favorites.teams.length + favorites.players.length > 0
+
+  // The favorite-name lookup needs the (heavy) mock catalog, but the sidebar
+  // renders on every route. Loading all five league files synchronously here
+  // blocked first paint by ~150-300ms, so pull the catalog in lazily and only
+  // when the user actually has favorites to resolve.
+  const [catalog, setCatalog] = useState<{ teams: Team[]; players: Player[] }>({
+    teams: [],
+    players: [],
+  })
+
+  useEffect(() => {
+    if (!hasFavorites) return
+    let cancelled = false
+    void import('@/data/mock').then(({ mockData }) => {
+      if (cancelled) return
+      const teams = Object.values(mockData).flatMap((league) => league.teams)
+      const players = teams.flatMap((team) => team.squad ?? [])
+      setCatalog({ teams, players })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [hasFavorites])
+
+  const { teams, players } = catalog
 
   return (
     <aside
