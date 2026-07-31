@@ -6,6 +6,7 @@ import {
 } from '@/lib/explorer-data'
 import { leagues } from '@/lib/leagues'
 
+import * as espnService from './espn/leagueData'
 import * as fdOrgService from './footballDataOrg'
 import * as openLigaDbService from './openLigaDb/openLigaDb'
 import * as liveService from './theSportsDb'
@@ -108,6 +109,9 @@ async function getFootballDataOrgLeagueSummary(
 export function getStandings(params: FootballQueryParams = {}): Promise<Standing[]> {
   const loaders: Array<() => Promise<Standing[]>> = [
     () => liveService.getStandings(params),
+    // ESPN is keyless and covers all top-5 leagues, so the table renders even
+    // when TheSportsDB is rate-limited and no football-data.org key is set.
+    () => espnService.getStandings(params),
     () => fdOrgService.getStandings(params),
   ]
   // OpenLigaDB is Bundesliga-only; add it as an extra real-data safety net so a
@@ -160,6 +164,8 @@ export function getLeagueSummary(
   return cascade<LeagueSummary>([
     () => liveService.getLeagueSummary(params),
     () => getFootballDataOrgLeagueSummary(params),
+    // Keyless last-resort so the dashboard's standings table always renders.
+    () => espnService.getLeagueSummary(params),
   ])
 }
 
