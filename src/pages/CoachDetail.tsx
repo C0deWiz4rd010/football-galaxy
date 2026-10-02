@@ -8,9 +8,9 @@ import { SkeletonCard } from '@/components/shared/SkeletonCard'
 import { ErrorState, NotFoundState } from '@/components/shared/StatusStates'
 import { Badge } from '@/components/ui/badge'
 import { useLocale } from '@/contexts/LocaleContext'
-import { useFootballData } from '@/hooks/useFootballData'
+import { useLeagueSummary, useTeam } from '@/hooks/queries/football'
+import { isNotFoundError } from '@/services/errors'
 import { isLeagueId } from '@/lib/leagues'
-import type { LeagueSummary, Team } from '@/services/types'
 
 export default function CoachDetail() {
   const { t } = useLocale()
@@ -18,12 +18,9 @@ export default function CoachDetail() {
   const leagueId = isLeagueId(params.leagueId) ? params.leagueId : undefined
   const teamId = params.teamId
   const enabled = Boolean(leagueId && teamId)
-  const { data: team, isLoading, error, notFound, refetch } = useFootballData<Team>(
-    'getTeam',
-    { leagueId, teamId },
-    { enabled },
-  )
-  const { data: leagueSummary } = useFootballData<LeagueSummary>('getLeagueSummary', { leagueId }, { enabled })
+  const { data: team, isPending, error, refetch } = useTeam(leagueId, teamId)
+  const notFound = isNotFoundError(error)
+  const { data: leagueSummary } = useLeagueSummary(leagueId)
 
   if (!enabled || notFound) {
     return (
@@ -41,12 +38,12 @@ export default function CoachDetail() {
   if (error && !team) {
     return (
       <PageWrapper>
-        <ErrorState onRetry={refetch} />
+        <ErrorState onRetry={() => void refetch()} />
       </PageWrapper>
     )
   }
 
-  if (isLoading || !team) {
+  if (isPending || !team) {
     return (
       <PageWrapper>
         <SkeletonCard />

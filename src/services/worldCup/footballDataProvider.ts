@@ -13,7 +13,9 @@
  * data.
  */
 
-import { buildLiveRequestUrl } from '@/services/config/liveProxy'
+import { LiveHttpError, fetchLiveJson } from '@/services/net/liveClient'
+
+import { NotFoundError } from '../errors'
 
 import { worldCupTournament } from './tournament'
 import type {
@@ -131,12 +133,17 @@ interface FdTeamDetail extends FdTeamRef {
 // Fetch helper
 // ---------------------------------------------------------------------------
 
+// Shares the app-wide fetch client: dedupe, the football-data.org throttle
+// (the WC area and the leagues use the same 10 req/min key), timeouts, retries.
 async function getJson<T>(path: string): Promise<T> {
-  const response = await fetch(buildLiveRequestUrl(`${apiBase}${path}`))
-  if (!response.ok) {
-    throw new Error(`football-data.org World Cup request failed (${response.status})`)
+  try {
+    return await fetchLiveJson<T>(`${apiBase}${path}`)
+  } catch (error) {
+    if (error instanceof LiveHttpError && error.status === 404) {
+      throw new NotFoundError(`World Cup resource ${path} not found.`)
+    }
+    throw error
   }
-  return (await response.json()) as T
 }
 
 // ---------------------------------------------------------------------------

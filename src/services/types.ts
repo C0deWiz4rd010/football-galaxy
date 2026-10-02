@@ -116,7 +116,6 @@ export interface Team {
   capacity?: number
   primaryColor?: string
   secondaryColor?: string
-  squad?: Player[]
 }
 
 export interface FormResult {
@@ -139,13 +138,32 @@ export interface Standing {
   goalsAgainst: number
   goalDifference: number
   points: number
+  /** Last five results, oldest first. Empty until season results are loaded. */
   form: FormResult[]
-  avgPossession: number
+}
+
+/**
+ * Lightweight player reference used by league-wide leader lists, which carry
+ * season totals but no profile details (position, nationality, …).
+ */
+export interface PlayerRef {
+  id: string
+  teamId: string
+  leagueId: LeagueId
+  name: string
+  number?: number
+  photo: string
+  photoSources?: string[]
+  flag?: string
+  nationality?: string
+  appearances: number
+  goals: number
+  assists: number
 }
 
 export interface Scorer {
   id: string
-  player: Player
+  player: PlayerRef
   team: Team
   goals: number
   assists: number
@@ -153,10 +171,15 @@ export interface Scorer {
 
 export interface Assist {
   id: string
-  player: Player
+  player: PlayerRef
   team: Team
   assists: number
   goals: number
+}
+
+export interface LeaguePlayer {
+  player: PlayerRef
+  team: Team
 }
 
 export interface LeagueSummary {
@@ -165,20 +188,12 @@ export interface LeagueSummary {
   standings: Standing[]
   topScorers: Scorer[]
   topAssists: Assist[]
+  /** Every player in the league's goal and assist leader lists (deduped). */
+  playerPool: LeaguePlayer[]
   recentMatches: Match[]
   teams: Team[]
   lastUpdated?: string
 }
-
-export type FootballQueryName =
-  | 'getStandings'
-  | 'getTopScorers'
-  | 'getTopAssists'
-  | 'getMatches'
-  | 'getTeam'
-  | 'getSquad'
-  | 'getPlayer'
-  | 'getLeagueSummary'
 
 export interface FootballQueryParams {
   leagueId?: LeagueId

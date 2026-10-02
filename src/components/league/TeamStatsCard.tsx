@@ -32,7 +32,7 @@ export function TeamStatsCard({ standings }: { standings: Standing[] }) {
 
   const topAttack = pickLeader(standings, (standing) => standing.goalsFor)
   const topDefense = pickLeader(standings, (standing) => standing.goalsAgainst, 'min')
-  const topControl = pickLeader(standings, (standing) => standing.avgPossession)
+  const topWins = pickLeader(standings, (standing) => standing.won)
   const topDifference = pickLeader(standings, (standing) => standing.goalDifference)
 
   const leaders = [
@@ -49,10 +49,10 @@ export function TeamStatsCard({ standings }: { standings: Standing[] }) {
       value: `${topDefense?.goalsAgainst ?? 0} GA`,
     },
     {
-      key: 'possession',
-      name: t('possession'),
-      team: topControl,
-      value: `${Math.round(topControl?.avgPossession ?? 0)}%`,
+      key: 'wins',
+      name: t('mostWins'),
+      team: topWins,
+      value: `${topWins?.won ?? 0} ${t('winsShort')}`,
     },
     {
       key: 'gd',

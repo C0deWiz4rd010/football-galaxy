@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { BarChart3, CalendarDays, Globe2, Grid3X3, RadioTower, Settings, Shield, Star, Trophy, Users, X } from 'lucide-react'
 
@@ -8,45 +7,14 @@ import { useFavorites } from '@/hooks/useFavorites'
 import { useLeagueLogos } from '@/hooks/useLeagueLogos'
 import { useLocale } from '@/contexts/LocaleContext'
 import { leagues } from '@/lib/leagues'
-import type { Player, Team } from '@/services/types'
 import { cn } from '@/lib/utils'
 
-function favoriteHref(item: { id: string; leagueId: string; teamId?: string }) {
-  return item.teamId
-    ? `/${item.leagueId}/player/${item.id}`
-    : `/${item.leagueId}/team/${item.id}`
-}
 
 export function Sidebar() {
   const favorites = useFavorites()
   const leagueLogos = useLeagueLogos()
   const { t } = useLocale()
-  const hasFavorites = favorites.teams.length + favorites.players.length > 0
 
-  // The favorite-name lookup needs the (heavy) mock catalog, but the sidebar
-  // renders on every route. Loading all five league files synchronously here
-  // blocked first paint by ~150-300ms, so pull the catalog in lazily and only
-  // when the user actually has favorites to resolve.
-  const [catalog, setCatalog] = useState<{ teams: Team[]; players: Player[] }>({
-    teams: [],
-    players: [],
-  })
-
-  useEffect(() => {
-    if (!hasFavorites) return
-    let cancelled = false
-    void import('@/data/mock').then(({ mockData }) => {
-      if (cancelled) return
-      const teams = Object.values(mockData).flatMap((league) => league.teams)
-      const players = teams.flatMap((team) => team.squad ?? [])
-      setCatalog({ teams, players })
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [hasFavorites])
-
-  const { teams, players } = catalog
 
   return (
     <aside
@@ -232,13 +200,11 @@ export function Sidebar() {
             ) : (
               <ul className="space-y-1">
                 {favorites.teams
-                  .map((id) => teams.find((team) => team.id === id))
-                  .filter((item): item is NonNullable<typeof item> => Boolean(item))
                   .slice(0, 2)
                   .map((item) => (
                     <li key={`team-${item.id}`} className="group flex items-center gap-2">
                       <Link
-                        to={favoriteHref(item)}
+                        to={`/${item.leagueId}/team/${item.id}`}
                         className="flex min-w-0 flex-1 items-center gap-2 truncate rounded-md px-1 py-0.5 text-xs text-muted-foreground hover:text-foreground"
                       >
                         <Shield className="h-3 w-3 shrink-0 opacity-70" />
@@ -248,7 +214,7 @@ export function Sidebar() {
                         type="button"
                         aria-label={t('removeFavorite')}
                         title={t('removeFavorite')}
-                        onClick={() => favorites.toggleTeam(item.id)}
+                        onClick={() => favorites.removeTeam(item.id)}
                         className="opacity-0 transition group-hover:opacity-100 hover:text-rose-400"
                       >
                         <X className="h-3 w-3" />
@@ -256,13 +222,11 @@ export function Sidebar() {
                     </li>
                   ))}
                 {favorites.players
-                  .map((id) => players.find((player) => player.id === id))
-                  .filter((item): item is NonNullable<typeof item> => Boolean(item))
                   .slice(0, 2)
                   .map((item) => (
                     <li key={`player-${item.id}`} className="group flex items-center gap-2">
                       <Link
-                        to={favoriteHref(item)}
+                        to={`/${item.leagueId}/player/${item.id}`}
                         className="flex min-w-0 flex-1 items-center gap-2 truncate rounded-md px-1 py-0.5 text-xs text-muted-foreground hover:text-foreground"
                       >
                         <Users className="h-3 w-3 shrink-0 opacity-70" />
@@ -272,7 +236,7 @@ export function Sidebar() {
                         type="button"
                         aria-label={t('removeFavorite')}
                         title={t('removeFavorite')}
-                        onClick={() => favorites.togglePlayer(item.id)}
+                        onClick={() => favorites.removePlayer(item.id)}
                         className="opacity-0 transition group-hover:opacity-100 hover:text-rose-400"
                       >
                         <X className="h-3 w-3" />

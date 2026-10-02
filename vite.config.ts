@@ -24,18 +24,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (!id.includes('node_modules')) {
-            // Split heavy per-league mock data into separate chunks so the main
-            // bundle stays lean. Each league file is ~85-105 kB of JSON-ish data.
-            if (id.includes('/src/data/mock/')) {
-              if (id.includes('premier-league')) return 'mock-premier-league'
-              if (id.includes('bundesliga')) return 'mock-bundesliga'
-              if (id.includes('la-liga')) return 'mock-la-liga'
-              if (id.includes('serie-a')) return 'mock-serie-a'
-              if (id.includes('ligue-1')) return 'mock-ligue-1'
-            }
-            return undefined
-          }
+          if (!id.includes('node_modules')) return undefined
           if (id.includes('react-router')) return 'router'
           if (id.includes('framer-motion')) return 'motion'
           if (id.includes('echarts') || id.includes('zrender')) return 'echarts'
@@ -57,10 +46,10 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/data/mock/**', 'src/vite-env.d.ts'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/vite-env.d.ts'],
       reporter: ['text-summary', 'html'],
-      // Baseline from Phase 0 (2026-10-02). Raised step by step; target in Phase 10.
-      thresholds: { lines: 25, functions: 45, branches: 55, statements: 25 },
+      // Raised after Phase 2 (2026-10-02). Raised step by step; target in Phase 10.
+      thresholds: { lines: 29, functions: 55, branches: 60, statements: 29 },
     },
   },
 })

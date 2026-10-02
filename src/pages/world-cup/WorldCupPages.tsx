@@ -4,7 +4,17 @@ import { CalendarDays, Goal, Shield, Trophy, Users } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 
 import { Badge } from '@/components/ui/badge'
-import { useWorldCupData } from '@/hooks/useWorldCupData'
+import { NotFoundState } from '@/components/shared/StatusStates'
+import {
+  useWorldCupBracket,
+  useWorldCupDashboard,
+  useWorldCupFixture,
+  useWorldCupFixtures,
+  useWorldCupGroups,
+  useWorldCupTeam,
+  useWorldCupTeams,
+} from '@/hooks/queries/worldCup'
+import { isNotFoundError } from '@/services/errors'
 import {
   MatchMetaGrid,
   TeamScore,
@@ -42,22 +52,13 @@ import {
 import { MatchStatsChart } from '@/features/world-cup/charts'
 import { formatDateTime } from '@/lib/utils'
 import type {
-  WorldCupBracketRound,
-  WorldCupDashboard,
   WorldCupFilterState,
   WorldCupFixture,
-  WorldCupGroupStanding,
   WorldCupLineup,
-  WorldCupSquad,
-  WorldCupTeam,
 } from '@/services/worldCup/types'
 
 export function WorldCupOverviewPage() {
-  const { data, error, isLoading, refetch } = useWorldCupData<WorldCupDashboard>(
-    'getDashboard',
-    {},
-    { refetchIntervalMs: 60_000 },
-  )
+  const { data, error, isPending: isLoading, refetch } = useWorldCupDashboard()
   const grouped = useMemo(() => groupWorldCupStandings(data?.groups ?? []), [data?.groups])
   const spotlightStanding = useMemo(() => {
     const leaders = (data?.groups ?? []).filter((row) => row.rank === 1)
@@ -67,7 +68,7 @@ export function WorldCupOverviewPage() {
   }, [data?.groups])
 
   if (isLoading && !data) return <WorldCupLoading />
-  if (error && !data) return <WorldCupError error={error} onRetry={refetch} />
+  if (error && !data) return <WorldCupError error={error.message} onRetry={() => void refetch()} />
   if (!data) return null
 
   const featuredMatch = data.liveMatches[0] ?? data.upcomingMatches[0] ?? data.recentMatches[0]
@@ -136,16 +137,12 @@ export function WorldCupOverviewPage() {
 }
 
 export function WorldCupMatchesPage() {
-  const { data, error, isLoading, refetch } = useWorldCupData<WorldCupFixture[]>(
-    'getFixtures',
-    {},
-    { refetchIntervalMs: 15_000 },
-  )
+  const { data, error, isPending: isLoading, refetch } = useWorldCupFixtures()
   const [filters, setFilters] = useState<WorldCupFilterState>(defaultWorldCupFilters)
   const filtered = useMemo(() => filterWorldCupFixtures(data ?? [], filters), [data, filters])
 
   if (isLoading && !data) return <WorldCupLoading />
-  if (error && !data) return <WorldCupError error={error} onRetry={refetch} />
+  if (error && !data) return <WorldCupError error={error.message} onRetry={() => void refetch()} />
 
   return (
     <WorldCupShell>
@@ -185,15 +182,11 @@ export function WorldCupMatchesPage() {
 }
 
 export function WorldCupGroupsPage() {
-  const { data, error, isLoading, refetch } = useWorldCupData<WorldCupGroupStanding[]>(
-    'getGroups',
-    {},
-    { refetchIntervalMs: 60_000 },
-  )
+  const { data, error, isPending: isLoading, refetch } = useWorldCupGroups()
   const grouped = useMemo(() => groupWorldCupStandings(data ?? []), [data])
 
   if (isLoading && !data) return <WorldCupLoading />
-  if (error && !data) return <WorldCupError error={error} onRetry={refetch} />
+  if (error && !data) return <WorldCupError error={error.message} onRetry={() => void refetch()} />
 
   const groupEntries = Object.entries(grouped)
 
@@ -235,12 +228,10 @@ export function WorldCupGroupsPage() {
 }
 
 export function WorldCupBracketPage() {
-  const { data, error, isLoading, refetch } = useWorldCupData<WorldCupBracketRound[]>('getBracket', {}, {
-    refetchIntervalMs: 60_000,
-  })
+  const { data, error, isPending: isLoading, refetch } = useWorldCupBracket()
 
   if (isLoading && !data) return <WorldCupLoading />
-  if (error && !data) return <WorldCupError error={error} onRetry={refetch} />
+  if (error && !data) return <WorldCupError error={error.message} onRetry={() => void refetch()} />
 
   return (
     <WorldCupShell>
@@ -256,7 +247,7 @@ export function WorldCupBracketPage() {
 }
 
 export function WorldCupTeamsPage() {
-  const { data, error, isLoading, refetch } = useWorldCupData<WorldCupTeam[]>('getTeams')
+  const { data, error, isPending: isLoading, refetch } = useWorldCupTeams()
   const [search, setSearch] = useState('')
   const [group, setGroup] = useState('all')
   const filteredTeams = useMemo(() => {
@@ -275,7 +266,7 @@ export function WorldCupTeamsPage() {
   }, [data, group, search])
 
   if (isLoading && !data) return <WorldCupLoading />
-  if (error && !data) return <WorldCupError error={error} onRetry={refetch} />
+  if (error && !data) return <WorldCupError error={error.message} onRetry={() => void refetch()} />
 
   return (
     <WorldCupShell>
@@ -330,14 +321,12 @@ export function WorldCupTeamsPage() {
 
 export function WorldCupMatchDetailPage() {
   const { matchId } = useParams()
-  const { data, error, isLoading, refetch } = useWorldCupData<WorldCupFixture>(
-    'getFixture',
-    { matchId },
-    { refetchIntervalMs: 15_000 },
-  )
+  const { data, error, isPending: isLoading, refetch } = useWorldCupFixture(matchId)
+
+  if (isNotFoundError(error)) return <NotFoundState backTo="/world-cup-2026/matches" />
 
   if (isLoading && !data) return <WorldCupLoading />
-  if (error && !data) return <WorldCupError error={error} onRetry={refetch} />
+  if (error && !data) return <WorldCupError error={error.message} onRetry={() => void refetch()} />
   if (!data) return null
 
   return (
@@ -376,14 +365,12 @@ export function WorldCupMatchDetailPage() {
 
 export function WorldCupTeamDetailPage() {
   const { teamId } = useParams()
-  const { data, error, isLoading, refetch } = useWorldCupData<{
-    team: WorldCupTeam
-    squad: WorldCupSquad
-    fixtures: WorldCupFixture[]
-  }>('getTeam', { teamId })
+  const { data, error, isPending: isLoading, refetch } = useWorldCupTeam(teamId)
+
+  if (isNotFoundError(error)) return <NotFoundState backTo="/world-cup-2026/teams" />
 
   if (isLoading && !data) return <WorldCupLoading />
-  if (error && !data) return <WorldCupError error={error} onRetry={refetch} />
+  if (error && !data) return <WorldCupError error={error.message} onRetry={() => void refetch()} />
   if (!data) return null
 
   return (

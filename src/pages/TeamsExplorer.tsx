@@ -12,8 +12,12 @@ import { useLocale } from '@/contexts/LocaleContext'
 import { getCrestSources } from '@/lib/assetSources'
 import { leagues } from '@/lib/leagues'
 import { createTeamCrest } from '@/lib/visualAssets'
-import { searchIndex } from '@/services/footballData'
+import { ErrorState } from '@/components/shared/StatusStates'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useLeagueSummaries } from '@/hooks/queries/football'
 import type { LeagueId } from '@/services/types'
+
+const ALL_LEAGUE_IDS = leagues.map((league) => league.id)
 
 export default function TeamsExplorer() {
   const { t } = useLocale()
@@ -21,9 +25,16 @@ export default function TeamsExplorer() {
   const [query, setQuery] = useState('')
   const [sortBy, setSortBy] = useState<'position' | 'points' | 'goalDifference'>('position')
 
+  const { summaries, isPending, isError, refetch } = useLeagueSummaries(
+    selectedLeagueId === 'all' ? ALL_LEAGUE_IDS : [selectedLeagueId],
+  )
+
   const teams = useMemo(
     () =>
-      searchIndex.teams(selectedLeagueId === 'all' ? undefined : selectedLeagueId)
+      summaries
+        .flatMap((summary) =>
+          summary.standings.map((standing) => ({ league: summary.league, standing, team: standing.team })),
+        )
         .filter(({ team, league }) => {
           const normalized = query.trim().toLowerCase()
 
@@ -48,7 +59,7 @@ export default function TeamsExplorer() {
 
           return (left.standing?.position ?? 99) - (right.standing?.position ?? 99)
         }),
-    [query, selectedLeagueId, sortBy],
+    [query, sortBy, summaries],
   )
 
   return (
@@ -119,7 +130,15 @@ export default function TeamsExplorer() {
         </StaggerGridItem>
 
         <StaggerGridItem as="section" className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
-          {teams.length === 0 ? (
+          {isError ? (
+            <div className="lg:col-span-2 xl:col-span-3">
+              <ErrorState onRetry={refetch} />
+            </div>
+          ) : null}
+          {isPending && teams.length === 0
+            ? Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-48 rounded-fg-lg" />)
+            : null}
+          {!isPending && !isError && teams.length === 0 ? (
             <div className="lg:col-span-2 xl:col-span-3">
               <EmptyState
                 title={t('noTeamsFound')}
@@ -168,7 +187,6 @@ export default function TeamsExplorer() {
               <div className="mt-4 flex flex-wrap gap-2">
                 <Badge variant="outline">{team.shortName}</Badge>
                 {standing ? <Badge>{t('positionInTable', { position: standing.position })}</Badge> : null}
-                <Badge variant="outline">{t('playersCount', { count: (team.squad ?? []).length })}</Badge>
               </div>
 
               <div className="mt-auto grid grid-cols-3 gap-2 pt-4">

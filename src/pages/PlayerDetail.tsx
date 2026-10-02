@@ -17,12 +17,13 @@ import { StaggerGrid, StaggerGridItem } from '@/components/shared/StaggerGrid'
 import { ResultsTimeline } from '@/components/team/ResultsTimeline'
 import { Badge } from '@/components/ui/badge'
 import { useLocale } from '@/contexts/LocaleContext'
-import { useFootballData } from '@/hooks/useFootballData'
+import { useLeagueSummary, usePlayer, useTeam, useTeamMatches } from '@/hooks/queries/football'
+import { isNotFoundError } from '@/services/errors'
 import { useNavigate } from 'react-router-dom'
 import { useFavorites } from '@/hooks/useFavorites'
 import { isLeagueId } from '@/lib/leagues'
+import type { Player } from '@/services/types'
 import { getFormScore } from '@/lib/player-ratings'
-import type { LeagueSummary, Match, Player, Team } from '@/services/types'
 
 function DetailMetric({
   label,
@@ -48,14 +49,14 @@ function DetailMetric({
     </div>
   )
 }
-function FavoriteHeartButton({ playerId }: { playerId: string }) {
+function FavoriteHeartButton({ player }: { player: Player }) {
   const { t } = useLocale()
   const favorites = useFavorites()
-  const isFavorite = favorites.isPlayerFavorite(playerId)
+  const isFavorite = favorites.isPlayerFavorite(player.id)
   return (
     <button
       type="button"
-      onClick={() => favorites.togglePlayer(playerId)}
+      onClick={() => favorites.togglePlayer({ id: player.id, leagueId: player.leagueId, name: player.name, image: player.photo })}
       aria-pressed={isFavorite}
       aria-label={isFavorite ? t('unfollowPlayer') : t('followPlayer')}
       title={isFavorite ? t('unfollowPlayer') : t('followPlayer')}
@@ -77,28 +78,22 @@ export default function PlayerDetail() {
   const leagueId = isLeagueId(params.leagueId) ? params.leagueId : undefined
   const playerId = params.playerId
   const enabled = Boolean(leagueId && playerId)
-  const { data: player, isLoading, error, notFound, refetch } = useFootballData<Player>(
-    'getPlayer',
-    { leagueId, playerId },
-    { enabled },
-  )
-  const { data: leagueSummary } = useFootballData<LeagueSummary>('getLeagueSummary', { leagueId }, { enabled })
-  const { data: matches } = useFootballData<Match[]>('getMatches', { leagueId }, { enabled })
-  // Only resolve the club once the player (and therefore its team id) is known.
-  const { data: team } = useFootballData<Team>(
-    'getTeam',
-    { leagueId, teamId: player?.teamId },
-    { enabled: enabled && Boolean(player?.teamId) },
-  )
+  const { data: player, isPending, error, refetch } = usePlayer(leagueId, playerId)
+  const notFound = isNotFoundError(error)
+  const { data: leagueSummary } = useLeagueSummary(leagueId)
+  const { data: matches } = useTeamMatches(leagueId, player?.teamId)
+  // Only resolves once the player (and therefore its team id) is known.
+  const { data: team } = useTeam(leagueId, player?.teamId)
 
   const playerMatches = useMemo(() => {
     if (!player || !matches) {
       return []
     }
 
-    return matches.filter(
-      (match) => match.homeTeam.id === player.teamId || match.awayTeam.id === player.teamId,
-    )
+    // Next fixture first, then the latest results, newest first.
+    const next = matches.filter((match) => match.status !== 'FINISHED').slice(0, 1)
+    const recent = matches.filter((match) => match.status === 'FINISHED').reverse()
+    return [...next, ...recent]
   }, [matches, player])
 
   if (!enabled || notFound) {
@@ -117,12 +112,12 @@ export default function PlayerDetail() {
   if (error && !player) {
     return (
       <PageWrapper>
-        <ErrorState onRetry={refetch} />
+        <ErrorState onRetry={() => void refetch()} />
       </PageWrapper>
     )
   }
 
-  if (isLoading || !player) {
+  if (isPending || !player) {
     return (
       <PageWrapper>
         <LoadingSpinner />
@@ -162,8 +157,8 @@ export default function PlayerDetail() {
             }
             action={
               <div className="flex items-center gap-2">
-                <FavoriteHeartButton playerId={player.id} />
-                <CompareButton playerId={player.id} />
+                <FavoriteHeartButton player={player} />
+                <CompareButton playerId={player.id} leagueId={player.leagueId} />
               </div>
             }
           />

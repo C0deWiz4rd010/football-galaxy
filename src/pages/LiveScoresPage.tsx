@@ -12,7 +12,7 @@ import {
   LiveMatchCardSkeleton,
   LiveMatchGrid,
 } from '@/features/live/LiveTicker'
-import { useLiveScores } from '@/hooks/useLiveScores'
+import { useLiveScores } from '@/hooks/queries/liveScores'
 import { leagues } from '@/lib/leagues'
 import { cn, formatRelativeTime } from '@/lib/utils'
 import { hasLiveMatch, type LiveMatch } from '@/services/espn/liveScores'
@@ -51,9 +51,11 @@ function FilterChip({
 export default function LiveScoresPage() {
   const { t } = useLocale()
   const [filter, setFilter] = useState<LeagueFilter>('all')
-  const { data, isLoading, error, fetchedAt, refetch } = useLiveScores(
+  const { data, isPending, isFetching, error, dataUpdatedAt, refetch } = useLiveScores(
     filter === 'all' ? undefined : filter,
   )
+  const fetchedAt = dataUpdatedAt || null
+  const isLoading = isPending
 
   const matches: LiveMatch[] = useMemo(() => data ?? [], [data])
   const liveCount = useMemo(
@@ -94,10 +96,10 @@ export default function LiveScoresPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={refetch}
+              onClick={() => void refetch()}
               className="gap-1.5"
             >
-              <RefreshCw className={cn('size-4', isLoading && 'animate-spin')} />
+              <RefreshCw className={cn('size-4', isFetching && 'animate-spin')} />
               {t('refresh')}
             </Button>
           </div>
@@ -133,9 +135,9 @@ export default function LiveScoresPage() {
                 <h2 className="text-base font-semibold tracking-tight">
                   {t('liveScoresError')}
                 </h2>
-                <p className="text-sm text-muted-foreground">{error}</p>
+                <p className="text-sm text-muted-foreground">{error.message}</p>
               </div>
-              <Button onClick={refetch}>{t('retry')}</Button>
+              <Button onClick={() => void refetch()}>{t('retry')}</Button>
             </div>
           ) : matches.length === 0 ? (
             <EmptyState

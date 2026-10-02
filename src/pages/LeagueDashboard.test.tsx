@@ -1,68 +1,51 @@
-import { render, screen } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { FavoritesProvider } from '@/contexts/FavoritesContext'
-import { LocaleProvider } from '@/contexts/LocaleContext'
-import { leagues } from '@/lib/leagues'
-import { mockData } from '@/data/mock'
-import type { LeagueSummary } from '@/services/types'
+import { makeLeagueSummary } from '@/test/fixtures'
+import { renderRoute } from '@/test/renderWithProviders'
 
 import LeagueDashboard from './LeagueDashboard'
 
-
-vi.mock('@/hooks/useFootballData', () => ({
-  useFootballData: vi.fn(),
+vi.mock('@/services/footballData', () => ({
+  getLeagueSummary: vi.fn(),
 }))
 
-vi.mock('@/contexts/DataSourceContext', () => ({
-  useDataSource: () => ({ source: 'live', season: '2025-26' }),
-}))
+const football = await import('@/services/footballData')
+const getLeagueSummary = vi.mocked(football.getLeagueSummary)
 
-const { useFootballData } = await import('@/hooks/useFootballData')
+const summary = makeLeagueSummary()
 
-const summary: LeagueSummary = {
-  league: leagues[0]!,
-  season: {
-    id: '2022-23',
-    label: '2022/23',
-    startDate: '2022-08-01T00:00:00Z',
-    endDate: '2023-05-31T23:59:59Z',
-    currentMatchday: 38,
-  },
-  standings: mockData['premier-league'].standings,
-  topScorers: mockData['premier-league'].topScorers,
-  topAssists: mockData['premier-league'].topAssists,
-  recentMatches: mockData['premier-league'].recentMatches,
-  teams: mockData['premier-league'].teams,
-}
+const renderDashboard = (url = '/premier-league') => renderRoute(<LeagueDashboard />, { path: '/:leagueId', url })
+
+afterEach(() => {
+  vi.clearAllMocks()
+})
 
 describe('LeagueDashboard', () => {
-  beforeEach(() => {
-    vi.mocked(useFootballData).mockReturnValue({
-      data: summary,
-      isLoading: false,
-      error: null,
-      refetch: vi.fn(),
-      fetchedAt: null,
-      notFound: false,
-    })
+  it('renders the standings surface once the summary resolves', async () => {
+    getLeagueSummary.mockResolvedValue(summary)
+    renderDashboard()
+
+    expect(await screen.findByRole('heading', { name: /full standings table|komplette tabelle/i })).toBeInTheDocument()
+    expect(screen.getAllByText(/premier league/i).length).toBeGreaterThan(0)
+    expect(getLeagueSummary).toHaveBeenCalledWith(expect.objectContaining({ leagueId: 'premier-league' }))
   })
 
-  it('renders the main standings surface', () => {
-    render(
-      <LocaleProvider>
-        <FavoritesProvider>
-          <MemoryRouter initialEntries={['/premier-league']}>
-            <Routes>
-              <Route path="/:leagueId" element={<LeagueDashboard />} />
-            </Routes>
-          </MemoryRouter>
-        </FavoritesProvider>
-      </LocaleProvider>,
-    )
+  it('shows a recoverable error card with a working retry when the load fails', async () => {
+    getLeagueSummary.mockRejectedValueOnce(new Error('All live sources failed')).mockResolvedValueOnce(summary)
+    renderDashboard()
 
-    expect(screen.getByRole('heading', { name: /full standings table|komplette tabelle/i })).toBeInTheDocument()
-    expect(screen.getByText(/premier league/i)).toBeInTheDocument()
+    expect(await screen.findByText('All live sources failed')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /erneut versuchen|try again/i }))
+    expect(await screen.findByRole('heading', { name: /full standings table|komplette tabelle/i })).toBeInTheDocument()
+    expect(getLeagueSummary).toHaveBeenCalledTimes(2)
+  })
+
+  it('shows a not-found state for an unknown league without fetching', () => {
+    renderDashboard('/not-a-league')
+
+    expect(screen.getByText(/seite nicht gefunden|page not found/i)).toBeInTheDocument()
+    expect(getLeagueSummary).not.toHaveBeenCalled()
   })
 })

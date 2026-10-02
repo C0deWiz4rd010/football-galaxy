@@ -1,69 +1,53 @@
-import {
-  getLeagueCatalog,
-  getPlayerExplorerEntries,
-  getTeamExplorerEntries,
-  searchEntities,
-} from '@/lib/explorer-data'
+/**
+ * Football data facade used by the query layer.
+ *
+ * ESPN (keyless) is the primary source for everything. Where an independent
+ * source exists it is tried next, so one broken upstream never blanks a page:
+ * football-data.org (key held by the proxy) for tables, scorers and matches,
+ * and OpenLigaDB for the Bundesliga table. The app is live-only: when every
+ * source fails the promise rejects and the UI shows an honest error state.
+ */
 import { leagues } from '@/lib/leagues'
 import { currentMatchdayFromTable, currentSeasonId, seasonInfo } from '@/lib/season'
 
-import * as espnService from './espn/leagueData'
-import * as fdOrgService from './footballDataOrg'
-import * as openLigaDbService from './openLigaDb/openLigaDb'
-import * as liveService from './theSportsDb'
-import type {
-  Assist,
-  FootballQueryParams,
-  LeagueId,
-  LeagueSummary,
-  Match,
-  Player,
-  Scorer,
-  Squad,
-  Standing,
-  Team,
-} from './types'
+import { isNotFoundError } from './errors'
+import * as espn from './espn/league'
+import * as fdOrg from './footballDataOrg'
+import * as openLigaDb from './openLigaDb/openLigaDb'
+import type { FootballQueryParams, LeagueId, LeagueSummary, Match, Player, Squad, Standing, Team } from './types'
 
 /**
- * Run loaders in order, returning the first successful result. Each loader is
- * given a chance even if the previous one threw, so a single broken upstream
- * never blocks the page. The app is live-only: when every live source fails the
- * cascade rejects and the UI shows an honest error state instead of stale local
- * data.
+ * Runs loaders in order and returns the first success. A not-found answer is
+ * final: other sources use different ids, so asking them cannot help.
  */
-async function cascade<T>(loaders: Array<() => Promise<T>>): Promise<T> {
+export async function cascade<T>(loaders: Array<() => Promise<T>>): Promise<T> {
   let lastError: unknown = new Error('No loaders provided')
   for (const loader of loaders) {
     try {
       return await loader()
     } catch (error) {
+      if (isNotFoundError(error)) throw error
       lastError = error
     }
   }
   throw lastError instanceof Error ? lastError : new Error(String(lastError))
 }
 
-function leagueOrDefault(leagueId?: LeagueId): LeagueId {
-  return leagueId ?? 'premier-league'
+function requireLeague(leagueId: LeagueId | undefined): LeagueId {
+  if (!leagueId) throw new Error('A league id is required.')
+  return leagueId
 }
 
-async function getFootballDataOrgLeagueSummary(
-  params: FootballQueryParams = {},
-): Promise<LeagueSummary> {
-  const leagueId = leagueOrDefault(params.leagueId)
-  const league = leagues.find((item) => item.id === leagueId)
-  if (!league) {
-    throw new Error(`Unknown leagueId: ${leagueId}`)
-  }
-
+async function getFootballDataOrgLeagueSummary(params: FootballQueryParams): Promise<LeagueSummary> {
+  const leagueId = requireLeague(params.leagueId)
   const [standings, topScorers, topAssists, recentMatches] = await Promise.all([
-    fdOrgService.getStandings(params),
-    fdOrgService.getTopScorers(params),
-    fdOrgService.getTopAssists(params),
-    fdOrgService.getMatches(params),
+    fdOrg.getStandings(params),
+    fdOrg.getTopScorers(params),
+    fdOrg.getTopAssists(params),
+    fdOrg.getMatches(params),
   ])
   return {
-    league,
+    league: leagues.find((item) => item.id === leagueId)!,
     season: {
       ...seasonInfo(params.season ?? currentSeasonId()),
       currentMatchday: currentMatchdayFromTable(standings, recentMatches),
@@ -71,78 +55,47 @@ async function getFootballDataOrgLeagueSummary(
     standings,
     topScorers,
     topAssists,
+    playerPool: topScorers.map(({ player, team }) => ({ player, team })),
     recentMatches,
     teams: standings.map((standing) => standing.team),
     lastUpdated: new Date().toISOString(),
   }
 }
 
+export function getLeagueSummary(params: FootballQueryParams = {}): Promise<LeagueSummary> {
+  const leagueId = requireLeague(params.leagueId)
+  return cascade([() => espn.getLeagueSummary(leagueId), () => getFootballDataOrgLeagueSummary(params)])
+}
+
 export function getStandings(params: FootballQueryParams = {}): Promise<Standing[]> {
-  const loaders: Array<() => Promise<Standing[]>> = [
-    () => liveService.getStandings(params),
-    // ESPN is keyless and covers all top-5 leagues, so the table renders even
-    // when TheSportsDB is rate-limited and no football-data.org key is set.
-    () => espnService.getStandings(params),
-    () => fdOrgService.getStandings(params),
-  ]
-  // OpenLigaDB is Bundesliga-only; add it as an extra real-data safety net so a
-  // rate-limited primary source never leaves the German table empty.
-  if ((params.leagueId ?? 'premier-league') === 'bundesliga') {
-    loaders.push(() => openLigaDbService.getStandings(params))
-  }
-  return cascade<Standing[]>(loaders)
+  const leagueId = requireLeague(params.leagueId)
+  const loaders: Array<() => Promise<Standing[]>> = [() => espn.getStandings(leagueId), () => fdOrg.getStandings(params)]
+  if (leagueId === 'bundesliga') loaders.push(() => openLigaDb.getStandings(params))
+  return cascade(loaders)
 }
 
-export function getTopScorers(params: FootballQueryParams = {}): Promise<Scorer[]> {
-  return cascade<Scorer[]>([
-    () => liveService.getTopScorers(params),
-    () => fdOrgService.getTopScorers(params),
-  ])
-}
-
-export function getTopAssists(params: FootballQueryParams = {}): Promise<Assist[]> {
-  return cascade<Assist[]>([
-    () => liveService.getTopAssists(params),
-    () => fdOrgService.getTopAssists(params),
-  ])
-}
-
+/** All league matches this season (results from every club schedule + live window). */
 export function getMatches(params: FootballQueryParams = {}): Promise<Match[]> {
-  return cascade<Match[]>([
-    () => liveService.getMatches(params),
-    () => fdOrgService.getMatches(params),
-  ])
+  const leagueId = requireLeague(params.leagueId)
+  return cascade([() => espn.getMatches(leagueId), () => fdOrg.getMatches(params)])
 }
 
-// Team/Squad/Player details still go through TheSportsDB first because
-// football-data.org's free tier does not include squad rosters or player
-// profile pages.
+// Team, squad and player pages are keyed by ESPN ids, so they have no
+// alternative source.
 export function getTeam(params: FootballQueryParams = {}): Promise<Team> {
-  return cascade<Team>([() => liveService.getTeam(params)])
+  return espn.getTeam(requireLeague(params.leagueId), params.teamId)
+}
+
+export function getTeamMatches(params: FootballQueryParams = {}): Promise<Match[]> {
+  return espn.getTeamMatches(requireLeague(params.leagueId), params.teamId)
 }
 
 export function getSquad(params: FootballQueryParams = {}): Promise<Squad> {
-  return cascade<Squad>([() => liveService.getSquad(params)])
+  return espn.getSquad(requireLeague(params.leagueId), params.teamId)
 }
 
 export function getPlayer(params: FootballQueryParams = {}): Promise<Player> {
-  return cascade<Player>([() => liveService.getPlayer(params)])
+  return espn.getPlayer(requireLeague(params.leagueId), params.playerId)
 }
 
-export function getLeagueSummary(
-  params: FootballQueryParams = {},
-): Promise<LeagueSummary> {
-  return cascade<LeagueSummary>([
-    () => liveService.getLeagueSummary(params),
-    () => getFootballDataOrgLeagueSummary(params),
-    // Keyless last-resort so the dashboard's standings table always renders.
-    () => espnService.getLeagueSummary(params),
-  ])
-}
-
-export const searchIndex = {
-  leagues: () => getLeagueCatalog().map(({ league }) => league),
-  teams: (leagueId?: LeagueId) => getTeamExplorerEntries(leagueId),
-  players: (leagueId?: LeagueId) => getPlayerExplorerEntries(leagueId),
-  search: (query: string) => searchEntities(query),
-}
+export { formFromMatches } from './espn/league'

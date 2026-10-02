@@ -83,4 +83,36 @@ describe('fetchLiveJson', () => {
     await assertion
     expect(fetchImpl).toHaveBeenCalledTimes(2)
   })
+
+  it('times out a hung request and reports it', async () => {
+    const fetchImpl = vi.fn(
+      (_url: string, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
+        }),
+    )
+
+    await expect(
+      fetchLiveJson('https://example.com/hang', { fetchImpl: fetchImpl as unknown as typeof fetch, timeoutMs: 20, maxRetries: 0 }),
+    ).rejects.toThrow(/timed out/)
+  })
+
+  it('does not retry when the caller aborts', async () => {
+    const controller = new AbortController()
+    const fetchImpl = vi.fn(async () => {
+      controller.abort()
+      throw new DOMException('Aborted', 'AbortError')
+    })
+
+    await expect(
+      fetchLiveJson('https://example.com/abort', { fetchImpl, init: { signal: controller.signal } }),
+    ).rejects.toThrow()
+    expect(fetchImpl).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not retry non-retryable statuses and exposes the status', async () => {
+    const fetchImpl = vi.fn(async () => errorResponse(404))
+    await expect(fetchLiveJson('https://example.com/missing', { fetchImpl })).rejects.toMatchObject({ status: 404 })
+    expect(fetchImpl).toHaveBeenCalledTimes(1)
+  })
 })

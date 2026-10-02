@@ -1,22 +1,10 @@
-import {
-  createContext,
-  type ReactNode,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react'
+import { createContext, type ReactNode, useContext, useMemo, useState } from 'react'
 
 import { currentSeasonId } from '@/lib/season'
-import { setSourcePreference } from '@/services/config/dataSource'
 
-// The app is live-only: there is no local/fallback data source any more. The
-// context is kept as the single place that owns the active season and signals
-// the data layer to always run live loaders.
-type DataSource = 'live'
-
+// The app is live-only. This context owns the active season, which is part of
+// every football query key.
 interface DataSourceContextValue {
-  source: DataSource
   season: string
   availableSeasons: string[]
   setSeason: (_season: string) => void
@@ -30,17 +18,8 @@ const DataSourceContext = createContext<DataSourceContextValue | undefined>(unde
 export function DataSourceProvider({ children }: { children: ReactNode }) {
   const [season, setSeason] = useState(DEFAULT_SEASON)
 
-  useEffect(() => {
-    setSourcePreference('live')
-  }, [])
-
   const value = useMemo<DataSourceContextValue>(
-    () => ({
-      source: 'live',
-      season,
-      availableSeasons: [DEFAULT_SEASON],
-      setSeason,
-    }),
+    () => ({ season, availableSeasons: [DEFAULT_SEASON], setSeason }),
     [season],
   )
 

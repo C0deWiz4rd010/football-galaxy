@@ -1,70 +1,46 @@
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 
 import { getLiveProxyConfig } from '@/services/config/liveProxy'
 
 export type ProxyHealth = 'checking' | 'ok' | 'offline' | 'disabled'
 
-function healthUrlFrom(baseUrl: string | undefined): string | null {
+/** `?health=1` on the proxy endpoint itself works for any deploy path (Node or PHP). */
+export function healthUrlFrom(baseUrl: string | undefined): string | null {
   if (!baseUrl) return null
-  // baseUrl looks like http://localhost:8787/api/live -> swap the path for /health.
-  try {
-    const url = new URL(baseUrl)
-    url.pathname = '/health'
-    url.search = ''
-    return url.toString()
-  } catch {
-    return null
-  }
+  return `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}health=1`
 }
 
+const RETRY_DELAYS_MS = [15_000, 30_000, 60_000]
+
 /**
- * Pings the live-data proxy's /health endpoint so the UI can tell the user when
- * the proxy is not running (the #1 cause of "endless loading, no data" during
- * local development). Re-checks periodically while offline so the banner clears
- * itself once `npm run dev:all` is up.
+ * Pings the live-data proxy so the UI can tell the user when it is not running
+ * (the #1 cause of "endless loading, no data" during local development). While
+ * offline it re-checks with a growing delay so the banner clears itself once
+ * the proxy is up; once healthy it stops polling entirely.
  */
 export function useProxyHealth(): ProxyHealth {
   const { baseUrl, isEnabled } = getLiveProxyConfig()
-  const [status, setStatus] = useState<ProxyHealth>(isEnabled ? 'checking' : 'disabled')
+  const healthUrl = healthUrlFrom(baseUrl)
 
-  useEffect(() => {
-    const healthUrl = healthUrlFrom(baseUrl)
-    if (!isEnabled || !healthUrl) {
-      // Initial state already reflects the disabled case; nothing to poll.
-      return
-    }
+  const query = useQuery({
+    queryKey: ['proxy-health', healthUrl],
+    queryFn: async ({ signal }) => {
+      const timeout = AbortSignal.timeout(3000)
+      // AbortSignal.any is missing on older iOS Safari; the timeout alone is enough there.
+      const combined = typeof AbortSignal.any === 'function' ? AbortSignal.any([signal, timeout]) : timeout
+      const response = await fetch(healthUrl!, { signal: combined }).catch(() => null)
+      return response?.ok ? ('ok' as const) : ('offline' as const)
+    },
+    enabled: isEnabled && Boolean(healthUrl),
+    retry: false,
+    staleTime: Infinity,
+    meta: { persist: false, silent: true },
+    refetchInterval: (current) =>
+      current.state.data === 'ok'
+        ? false
+        : RETRY_DELAYS_MS[Math.min(current.state.dataUpdateCount, RETRY_DELAYS_MS.length - 1)],
+  })
 
-    let cancelled = false
-    let timer: ReturnType<typeof setTimeout> | undefined
-
-    const check = async () => {
-      const controller = new AbortController()
-      const abortTimer = setTimeout(() => controller.abort(), 3000)
-      try {
-        const res = await fetch(healthUrl, { signal: controller.signal })
-        if (cancelled) return
-        setStatus(res.ok ? 'ok' : 'offline')
-      } catch {
-        if (cancelled) return
-        setStatus('offline')
-      } finally {
-        clearTimeout(abortTimer)
-      }
-      // Keep polling only while offline so the banner self-heals; stop once ok.
-      if (!cancelled) {
-        timer = setTimeout(() => {
-          void check()
-        }, 15000)
-      }
-    }
-
-    void check()
-
-    return () => {
-      cancelled = true
-      if (timer) clearTimeout(timer)
-    }
-  }, [baseUrl, isEnabled])
-
-  return status
+  if (!isEnabled || !healthUrl) return 'disabled'
+  return query.data ?? 'checking'
 }

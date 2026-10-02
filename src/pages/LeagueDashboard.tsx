@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { type ReactNode, useMemo } from 'react'
 
 import { Link, useParams } from 'react-router-dom'
 import {
@@ -26,12 +26,13 @@ import { LeagueDashboardSkeleton } from '@/components/shared/LeagueDashboardSkel
 import { StaggerGrid, StaggerGridItem } from '@/components/shared/StaggerGrid'
 import { Badge } from '@/components/ui/badge'
 import { useLocale } from '@/contexts/LocaleContext'
-import { useFootballData } from '@/hooks/useFootballData'
+import { useLeagueSummary, useMatches } from '@/hooks/queries/football'
+import { formFromMatches } from '@/services/footballData'
 import { getPlayerPhotoSources } from '@/lib/assetSources'
 import { getLeague, isLeagueId } from '@/lib/leagues'
 import { formatRelativeTime } from '@/lib/utils'
 import { createLeagueLogo, createPlayerAvatar, initialsFromName } from '@/lib/visualAssets'
-import type { LeagueSummary, Standing } from '@/services/types'
+import type { Standing } from '@/services/types'
 
 function getFormPoints(standing: Standing) {
   return standing.form.reduce((total, item) => {
@@ -84,10 +85,17 @@ export default function LeagueDashboard() {
   const validLeague = isLeagueId(routeLeagueId)
   const leagueId = validLeague ? routeLeagueId : 'premier-league'
   const { t } = useLocale()
-  const { data, isLoading, error, refetch, fetchedAt } = useFootballData<LeagueSummary>(
-    'getLeagueSummary',
-    { leagueId },
-    { enabled: validLeague },
+  const { data, isPending, error, refetch, dataUpdatedAt } = useLeagueSummary(validLeague ? leagueId : undefined)
+  const fetchedAt = dataUpdatedAt || null
+  // Season results (one schedule per club) load after the table and only
+  // enrich it with the form column, so they never delay the first paint.
+  const { data: seasonMatches } = useMatches(validLeague ? leagueId : undefined)
+  const standingsWithForm = useMemo(
+    () =>
+      (data?.standings ?? []).map((standing) =>
+        standing.form.length || !seasonMatches ? standing : { ...standing, form: formFromMatches(seasonMatches, standing.team.id) },
+      ),
+    [data?.standings, seasonMatches],
   )
   const league = data?.league ?? getLeague(leagueId)
 
@@ -99,18 +107,18 @@ export default function LeagueDashboard() {
     )
   }
 
-  if (isLoading && !data) {
+  if (error && !data) {
     return (
       <PageWrapper>
-        <LeagueDashboardSkeleton />
+        <ErrorState title={t('couldNotLoadLeague')} description={error.message} onRetry={() => void refetch()} />
       </PageWrapper>
     )
   }
 
-  if (error && !data) {
+  if (isPending) {
     return (
       <PageWrapper>
-        <ErrorState title={t('couldNotLoadLeague')} description={error} onRetry={refetch} />
+        <LeagueDashboardSkeleton />
       </PageWrapper>
     )
   }
@@ -124,7 +132,7 @@ export default function LeagueDashboard() {
     )
   }
 
-  const standings = data.standings ?? []
+  const standings = standingsWithForm
   const topScorers = data.topScorers ?? []
   const topAssists = data.topAssists ?? []
   const recentMatches = data.recentMatches ?? []
@@ -262,15 +270,15 @@ export default function LeagueDashboard() {
                 <>
                   <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                     <div className="surface-soft rounded-lg px-2 py-2">
-                      <p className="font-mono text-lg font-bold">{spotlightPlayer.stats.appearances}</p>
+                      <p className="font-mono text-lg font-bold">{spotlightPlayer.appearances}</p>
                       <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{t('games')}</p>
                     </div>
                     <div className="surface-soft rounded-lg px-2 py-2">
-                      <p className="font-mono text-lg font-bold">{spotlightPlayer.stats.goals}</p>
+                      <p className="font-mono text-lg font-bold">{spotlightPlayer.goals}</p>
                       <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{t('goals')}</p>
                     </div>
                     <div className="surface-soft rounded-lg px-2 py-2">
-                      <p className="font-mono text-lg font-bold">{spotlightPlayer.stats.assists}</p>
+                      <p className="font-mono text-lg font-bold">{spotlightPlayer.assists}</p>
                       <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{t('assists')}</p>
                     </div>
                   </div>

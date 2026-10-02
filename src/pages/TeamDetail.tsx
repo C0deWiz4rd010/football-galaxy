@@ -16,13 +16,14 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useLocale } from '@/contexts/LocaleContext'
 import { useFavorites } from '@/hooks/useFavorites'
-import { useFootballData } from '@/hooks/useFootballData'
+import { useSquad, useStandings, useTeam, useTeamMatches } from '@/hooks/queries/football'
+import { isNotFoundError } from '@/services/errors'
+import { formFromMatches } from '@/services/footballData'
 import { FormBadge } from '@/components/shared/FormBadge'
 import { getCrestSources, getPlayerPhotoSources } from '@/lib/assetSources'
 import { getFormScore } from '@/lib/player-ratings'
 import { createPlayerAvatar, createTeamCrest, initialsFromName } from '@/lib/visualAssets'
 import { isLeagueId } from '@/lib/leagues'
-import type { Match, Squad, Standing, Team } from '@/services/types'
 
 function TeamMetric({
   label,
@@ -50,14 +51,11 @@ export default function TeamDetail() {
   const leagueId = isLeagueId(params.leagueId) ? params.leagueId : undefined
   const teamId = params.teamId
   const enabled = Boolean(leagueId && teamId)
-  const { data: team, isLoading, error, notFound, refetch } = useFootballData<Team>(
-    'getTeam',
-    { leagueId, teamId },
-    { enabled },
-  )
-  const { data: squad } = useFootballData<Squad>('getSquad', { leagueId, teamId }, { enabled })
-  const { data: matches } = useFootballData<Match[]>('getMatches', { leagueId }, { enabled })
-  const { data: standings } = useFootballData<Standing[]>('getStandings', { leagueId }, { enabled })
+  const { data: team, isPending, error, refetch } = useTeam(leagueId, teamId)
+  const notFound = isNotFoundError(error)
+  const { data: squad } = useSquad(leagueId, teamId)
+  const { data: matches } = useTeamMatches(leagueId, teamId)
+  const { data: standings } = useStandings(leagueId)
   const favorites = useFavorites()
   const teamMatches = useMemo(
     () =>
@@ -85,12 +83,12 @@ export default function TeamDetail() {
   if (error && !team) {
     return (
       <PageWrapper>
-        <ErrorState onRetry={refetch} />
+        <ErrorState onRetry={() => void refetch()} />
       </PageWrapper>
     )
   }
 
-  if (isLoading || !team) {
+  if (isPending || !team) {
     return (
       <PageWrapper>
         <LoadingSpinner />
@@ -98,8 +96,9 @@ export default function TeamDetail() {
     )
   }
 
-  const players = squad?.players ?? team.squad ?? []
+  const players = squad?.players ?? []
   const standing = standings?.find((item) => item.team.id === team.id)
+  const recentForm = formFromMatches(matches ?? [], team.id)
   const ages = players.map((player) => player.age).filter((age): age is number => typeof age === 'number')
   const averageAge = ages.length > 0 ? (ages.reduce((sum, age) => sum + age, 0) / ages.length).toFixed(1) : '-'
   const topRatedPlayer = players
@@ -152,20 +151,23 @@ export default function TeamDetail() {
                   </div>
                   <h1 className="mt-2 text-2xl font-semibold tracking-tight">{team.name}</h1>
                   <p className="mt-1 text-sm text-white/80">
-                    <Link
-                      to={`/${team.leagueId}/team/${team.id}/coach`}
-                      className="font-medium text-white hover:text-white/80"
-                    >
-                      {team.manager ?? t('coachPending')}
-                    </Link>
-                    {team.stadium ? <>{' / '}{team.stadium}</> : null}
-                    {team.capacity ? <>{' / '}{team.capacity.toLocaleString()} {t('seats')}</> : null}
+                    {[
+                      team.manager ? (
+                        <Link key="coach" to={`/${team.leagueId}/team/${team.id}/coach`} className="font-medium text-white hover:text-white/80">
+                          {team.manager}
+                        </Link>
+                      ) : null,
+                      team.stadium ? <span key="stadium">{team.stadium}</span> : null,
+                      team.capacity ? <span key="capacity">{team.capacity.toLocaleString()} {t('seats')}</span> : null,
+                    ]
+                      .filter(Boolean)
+                      .flatMap((item, index) => (index ? [<span key={`sep-${index}`} aria-hidden> · </span>, item] : [item]))}
                   </p>
                 </div>
                 <motion.div whileTap={{ scale: 1.14 }}>
                   <Button
                     variant="secondary"
-                    onClick={() => favorites.toggleTeam(team.id)}
+                    onClick={() => favorites.toggleTeam({ id: team.id, leagueId: team.leagueId, name: team.name, image: team.crest })}
                   >
                     <Heart
                       className={
@@ -294,12 +296,16 @@ export default function TeamDetail() {
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="surface-soft rounded-fg-lg p-4">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t('manager')}</p>
-                  <Link
-                    to={`/${team.leagueId}/team/${team.id}/coach`}
-                    className="mt-2 inline-block text-lg font-semibold hover:text-primary"
-                  >
-                    {team.manager ?? t('coachPending')}
-                  </Link>
+                  {team.manager ? (
+                    <Link
+                      to={`/${team.leagueId}/team/${team.id}/coach`}
+                      className="mt-2 inline-block text-lg font-semibold hover:text-primary"
+                    >
+                      {team.manager}
+                    </Link>
+                  ) : (
+                    <p className="mt-2 text-lg font-semibold text-muted-foreground">{t('notAvailable')}</p>
+                  )}
                 </div>
                 <div className="surface-soft rounded-fg-lg p-4">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t('homeGround')}</p>
@@ -308,7 +314,7 @@ export default function TeamDetail() {
                 <div className="surface-soft rounded-fg-lg p-4">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t('momentum')}</p>
                   <p className="mt-2 text-lg font-semibold">
-                    {standing ? t('winsInLastFive', { count: standing.form.filter((item) => item.result === 'W').length }) : t('noTrendYet')}
+                    {recentForm.length ? t('winsInLastFive', { count: recentForm.filter((item) => item.result === 'W').length }) : t('noTrendYet')}
                   </p>
                 </div>
                 <div className="surface-soft rounded-fg-lg p-4">
@@ -337,7 +343,7 @@ export default function TeamDetail() {
           </TabsContent>
 
           <TabsContent value="results" className="stat-card">
-            <ResultsTimeline matches={teamMatches} team={team} />
+            <ResultsTimeline matches={[...teamMatches].reverse()} team={team} />
           </TabsContent>
 
           <TabsContent value="statistics" className="grid gap-4">

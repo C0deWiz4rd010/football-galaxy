@@ -105,7 +105,9 @@ const server = createServer(async (request, response) => {
 
   const url = new URL(request.url, `http://${request.headers.host ?? 'localhost'}`)
 
-  if (url.pathname === '/health') {
+  // `?health=1` on the endpoint itself mirrors the PHP proxy, so the app can
+  // derive the health URL from VITE_LIVE_DATA_PROXY_URL on any deploy path.
+  if (url.pathname === '/health' || (url.pathname === '/api/live' && url.searchParams.has('health'))) {
     writeJson(response, 200, {
       status: 'ok',
       allowedHosts: [...ALLOWED_HOSTS],

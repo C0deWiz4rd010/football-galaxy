@@ -102,7 +102,6 @@ function mapStanding(entry: TableEntry, index: number): Standing {
     goalDifference: entry.goalDiff ?? goalsFor - goalsAgainst,
     points: entry.points ?? 0,
     form: [],
-    avgPossession: 50,
   }
 }
 

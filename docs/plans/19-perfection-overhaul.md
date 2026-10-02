@@ -189,3 +189,24 @@ Zielbreiten testen: 360, 390, 768, 1024, 1280, 1440, 1920 + Landscape-Phone.
 - Spiele-Historie fehlt weitgehend (ESPN-Scoreboard liefert nur ~11 Spiele im aktuellen Fenster, TheSportsDB `eventsseason` liefert mit Free-Key nichts) → ESPN-Team-Spielplan (`/teams/{id}/schedule`) als Quelle für komplette Saison-Ergebnisse.
 - Persistenter Cache überlebt Code-Änderungen → Cache-Buster mit App-Version im Query-Persister.
 - Ein Liga-Summary kostet ~45 Upstream-Calls (20 Kader + Wikidata-Bilder) → Kader/Bilder lazy erst auf Team-/Spielerseiten.
+
+### Phase 2 – erledigt (2026-10-02)
+- **TanStack Query** (`src/app/queryClient.ts`, `src/hooks/queries/*`, `src/services/queryKeys.ts`): Persistenz in localStorage mit App-Version als Cache-Buster, ein Toast pro fehlgeschlagener Query, Not-Found wird nicht wiederholt. `useFootballData`, `useWorldCupData`, `useLiveScores` (alt) und `persistentCache` entfernt.
+- **Neue, mock-freie ESPN-Schicht** (`src/services/espn/{schemas,players,league,search}.ts`, Zod-validiert) ersetzt `theSportsDb.ts` (960 Z.) und `espn/leagueData.ts`:
+  - Dashboard: 5 statt ~45 Upstream-Calls (teams, standings, scoreboard, statistics-Leader, Team-Metadaten).
+  - Saisonergebnisse/Form: Team-Spielpläne als separate, nicht blockierende Query.
+  - Spielerprofil: Athlete-Lookup + 1 Kader statt bis zu 20 Kader.
+  - Live-Suche (⌘K, Vergleich) über ESPN-Suche, gefiltert auf die Top-5-Ligen.
+- Team-Metadaten aus football-data.org (Stadion, Trainer) + TheSportsDB (Matching über `idESPN`); unbekannter Trainer wird ausgeblendet statt „steht aus“.
+- **Alles live**: `src/data/mock` (~430 KB), Generator-Skripte und Snapshots entfernt; Tests nutzen `src/test/fixtures.ts`. Explorer, Vergleich, Suche, Favoriten (Snapshots v2) laufen auf Live-Daten. Erfundenes `avgPossession` → „Meiste Siege“.
+- `liveClient`: Timeout, kein Retry bei Abort/4xx, `LiveHttpError`, Throttle außerhalb des Slots, Dedupe-Key inkl. Header. WM-Provider nutzt ihn ebenfalls.
+- **WM 2026 = Archiv**: kein Polling, 24 h stale, Offline-Snapshot entfernt.
+- `useProxyHealth`: Query mit Backoff, stoppt bei OK; Health via `?health=1` (pfadunabhängig, auch für PHP).
+- Form-Score neu kalibriert (Output/90, Spielzeitanteil, positionsgewichtet) – Haaland 5 Tore/5 Spiele: vorher „Cold“, jetzt „Top Form“.
+- Zod für football-data.org; persistierter Cache 437 KB statt 18,5 MB.
+
+**Offen / für spätere Phasen notiert:**
+- Live-Ticker zeigt bei angesetzten Spielen „0“ statt „–“ (Phase 3/4).
+- WM-Übersicht nach Turnierende: „Upcoming matches“, „Group TBD“, „Host city pending“ → Archiv-gerechte Darstellung (Phase 3/7).
+- WM-Provider-Antworten noch ohne Zod (nur Typ-Casts).
+- `vendor`-Chunk 522 KB (TanStack/Zod hinzugekommen) → Phase 5.
