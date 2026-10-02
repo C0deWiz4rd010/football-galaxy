@@ -100,7 +100,7 @@ describe('fetchLeagueLiveScores', () => {
 
     expect(matches.map((m) => m.state)).toEqual(['live', 'pre', 'ft'])
 
-    const live = matches[0]
+    const live = matches[0]!
     expect(live.leagueLabel).toBe('Premier League')
     expect(live.statusLabel).toBe("67'")
     expect(live.home.score).toBe(1)
@@ -113,7 +113,7 @@ describe('fetchLeagueLiveScores', () => {
       minute: "23'",
     })
 
-    const upcoming = matches[1]
+    const upcoming = matches[1]!
     expect(upcoming.home.score).toBeNull()
     expect(upcoming.statusLabel).not.toBe('Live')
   })

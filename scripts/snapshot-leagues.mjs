@@ -36,5 +36,5 @@ for (const code of codes) {
   await new Promise((r) => setTimeout(r, 7000)) // respect rate-limit (10/min)
 }
 
-writeFileSync(new URL('../standings-snapshot.json', import.meta.url), JSON.stringify(out, null, 2))
+writeFileSync(new URL('./data/standings-snapshot.json', import.meta.url), JSON.stringify(out, null, 2))
 console.log('Saved standings-snapshot.json')

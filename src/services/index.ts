@@ -1,7 +1,0 @@
-export * from './api/provider'
-export * from './config/leagues'
-export * from './mappers/standings'
-export * from './queries/query-keys'
-export * from './queries/use-league-standings'
-export * from './schemas/domain'
-export * from './schemas/the-sports-db'

@@ -24,13 +24,12 @@ The project should grow step by step:
 
 | Plan | Status | Description |
 |------|--------|-------------|
-| `docs/plans/milestone-1-standings.md` | planned | First milestone: API research, stack decision, and standings dashboard plan |
-| `docs/plans/api-research.md` | planned | Compare free/freemium football APIs |
-| `docs/plans/ui-system.md` | planned | Define visual direction, components, layout, and interaction patterns |
+| [`docs/plans/19-perfection-overhaul.md`](docs/plans/19-perfection-overhaul.md) | active | Phased overhaul: bugs, TanStack Query data layer, design system, responsiveness, performance, a11y, i18n, Hostinger deploy, SEO |
 
 ## Completed Plans
 
-No completed plans yet.
+Plans 00–18 are completed or superseded. See the full chronological index in
+[`docs/plans/README.md`](docs/plans/README.md).
 
 ## Planning Rules
 

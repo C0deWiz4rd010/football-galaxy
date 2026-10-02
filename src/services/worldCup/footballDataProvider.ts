@@ -39,7 +39,7 @@ const competition = 'WC'
 // Raw football-data.org response shapes (only the fields we read)
 // ---------------------------------------------------------------------------
 
-interface FdTeamRef {
+export interface FdTeamRef {
   id?: number
   name?: string
   shortName?: string
@@ -68,7 +68,7 @@ interface FdReferee {
   nationality?: string
 }
 
-interface FdMatch {
+export interface FdMatch {
   id: number
   utcDate: string
   status: string
@@ -233,7 +233,7 @@ function half(score?: FdScoreHalf) {
   return { home, away }
 }
 
-function mapFixture(raw: FdMatch): WorldCupFixture {
+export function mapFixture(raw: FdMatch): WorldCupFixture {
   const group = normalizeGroup(raw.group)
   const status = statusOf(raw.status)
   const fullTime = half(raw.score?.fullTime)

@@ -47,6 +47,7 @@ describe('LeagueDashboard', () => {
       isLoading: false,
       error: null,
       refetch: vi.fn(),
+      fetchedAt: null,
     })
   })
 

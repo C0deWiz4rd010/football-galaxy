@@ -1,4 +1,4 @@
-﻿import { useMemo } from 'react'
+import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { ArrowLeft, ArrowRight, Award, Clock3, Heart, Shield, Sparkles, Target } from 'lucide-react'

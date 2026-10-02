@@ -53,6 +53,14 @@ export default defineConfig({
     globals: true,
     setupFiles: './src/test/setup.ts',
     css: true,
-    exclude: ['node_modules/**', 'dist/**', 'src/app/**', 'src/features/**'],
+    exclude: ['node_modules/**', 'dist/**'],
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/data/mock/**', 'src/vite-env.d.ts'],
+      reporter: ['text-summary', 'html'],
+      // Baseline from Phase 0 (2026-10-02). Raised step by step; target in Phase 10.
+      thresholds: { lines: 25, functions: 45, branches: 55, statements: 25 },
+    },
   },
 })

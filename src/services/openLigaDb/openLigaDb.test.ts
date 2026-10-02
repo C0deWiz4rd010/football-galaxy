@@ -62,11 +62,11 @@ describe('openLigaDb.getStandings', () => {
       goalDifference: 28,
       points: 34,
     })
-    expect(standings[0].team.name).toBe('FC Bayern München')
-    expect(standings[0].team.crest).toBe('https://example.com/bayern.png')
+    expect(standings[0]!.team.name).toBe('FC Bayern München')
+    expect(standings[0]!.team.crest).toBe('https://example.com/bayern.png')
     // goalDiff is derived when the feed omits it.
-    expect(standings[1].goalDifference).toBe(12)
-    expect(standings[1].position).toBe(2)
+    expect(standings[1]!.goalDifference).toBe(12)
+    expect(standings[1]!.position).toBe(2)
   })
 
   it('rejects non-Bundesliga leagues so the cascade skips it', async () => {

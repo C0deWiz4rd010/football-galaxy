@@ -80,7 +80,7 @@ export function useLiveScores(leagueId?: LeagueId) {
     const tick = async () => {
       if (cancelled) return
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
-        timer = setTimeout(tick, HIDDEN_RECHECK_MS)
+        timer = setTimeout(() => void tick(), HIDDEN_RECHECK_MS)
         return
       }
       const result = await load()
@@ -88,7 +88,7 @@ export function useLiveScores(leagueId?: LeagueId) {
       const interval = hasLiveMatch(result ?? undefined)
         ? LIVE_INTERVAL_MS
         : IDLE_INTERVAL_MS
-      timer = setTimeout(tick, interval)
+      timer = setTimeout(() => void tick(), interval)
     }
 
     void tick()

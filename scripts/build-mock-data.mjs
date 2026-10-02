@@ -8,10 +8,10 @@ import { dirname, resolve } from 'node:path'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = resolve(here, '..')
-const snapshot = JSON.parse(readFileSync(resolve(root, 'standings-snapshot.json'), 'utf8'))
+const snapshot = JSON.parse(readFileSync(resolve(root, 'scripts/data/standings-snapshot.json'), 'utf8'))
 let squadsByCode = {}
 try {
-  squadsByCode = JSON.parse(readFileSync(resolve(root, 'squads-snapshot.json'), 'utf8'))
+  squadsByCode = JSON.parse(readFileSync(resolve(root, 'scripts/data/squads-snapshot.json'), 'utf8'))
   console.log('Loaded squads-snapshot.json (real player data will be embedded)')
 } catch {
   console.log('No squads-snapshot.json found — squads will be synthetic. Run `node scripts/snapshot-squads.mjs` to generate.')

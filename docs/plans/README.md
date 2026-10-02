@@ -41,3 +41,6 @@ language lives in [`docs/design-system.md`](../design-system.md).
 
 - [15 — Final product direction](15-final-product-direction.md)
 - [16 — Mobile-first redesign, design system & multi-theme](16-mobile-first-design-system-plan.md)
+- [17 — Data acquisition & mobile features](17-data-acquisition-mobile-features-plan.md)
+- [18 — Release-ready overhaul](18-release-ready-overhaul-plan.md)
+- [19 — Perfection overhaul (active)](19-perfection-overhaul.md)
