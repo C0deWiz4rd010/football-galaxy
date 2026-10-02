@@ -12,6 +12,7 @@ import { PageWrapper } from '@/components/layout/PageWrapper'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { FormBadge } from '@/components/shared/FormBadge'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { ErrorState, NotFoundState } from '@/components/shared/StatusStates'
 import { StaggerGrid, StaggerGridItem } from '@/components/shared/StaggerGrid'
 import { ResultsTimeline } from '@/components/team/ResultsTimeline'
 import { Badge } from '@/components/ui/badge'
@@ -19,8 +20,8 @@ import { useLocale } from '@/contexts/LocaleContext'
 import { useFootballData } from '@/hooks/useFootballData'
 import { useNavigate } from 'react-router-dom'
 import { useFavorites } from '@/hooks/useFavorites'
+import { isLeagueId } from '@/lib/leagues'
 import { getFormScore } from '@/lib/player-ratings'
-import { formatMarketValue } from '@/lib/utils'
 import type { LeagueSummary, Match, Player, Team } from '@/services/types'
 
 function DetailMetric({
@@ -72,21 +73,23 @@ function FavoriteHeartButton({ playerId }: { playerId: string }) {
 export default function PlayerDetail() {
   const { t } = useLocale()
   const navigate = useNavigate()
-  const { leagueId, playerId } = useParams()
-  const { data: player, isLoading } = useFootballData<Player>('getPlayer', {
-    leagueId: leagueId as never,
-    playerId,
-  })
-  const { data: leagueSummary } = useFootballData<LeagueSummary>('getLeagueSummary', {
-    leagueId: leagueId as never,
-  })
-  const { data: matches } = useFootballData<Match[]>('getMatches', {
-    leagueId: leagueId as never,
-  })
-  const { data: team } = useFootballData<Team>('getTeam', {
-    leagueId: leagueId as never,
-    teamId: player?.teamId,
-  })
+  const params = useParams()
+  const leagueId = isLeagueId(params.leagueId) ? params.leagueId : undefined
+  const playerId = params.playerId
+  const enabled = Boolean(leagueId && playerId)
+  const { data: player, isLoading, error, notFound, refetch } = useFootballData<Player>(
+    'getPlayer',
+    { leagueId, playerId },
+    { enabled },
+  )
+  const { data: leagueSummary } = useFootballData<LeagueSummary>('getLeagueSummary', { leagueId }, { enabled })
+  const { data: matches } = useFootballData<Match[]>('getMatches', { leagueId }, { enabled })
+  // Only resolve the club once the player (and therefore its team id) is known.
+  const { data: team } = useFootballData<Team>(
+    'getTeam',
+    { leagueId, teamId: player?.teamId },
+    { enabled: enabled && Boolean(player?.teamId) },
+  )
 
   const playerMatches = useMemo(() => {
     if (!player || !matches) {
@@ -97,6 +100,27 @@ export default function PlayerDetail() {
       (match) => match.homeTeam.id === player.teamId || match.awayTeam.id === player.teamId,
     )
   }, [matches, player])
+
+  if (!enabled || notFound) {
+    return (
+      <PageWrapper>
+        <NotFoundState
+          title={t('playerNotFound')}
+          description={t('playerNotFoundDescription')}
+          backTo={leagueId ? `/${leagueId}` : '/'}
+          backLabel={t(leagueId ? 'backToLeague' : 'goHome')}
+        />
+      </PageWrapper>
+    )
+  }
+
+  if (error && !player) {
+    return (
+      <PageWrapper>
+        <ErrorState onRetry={refetch} />
+      </PageWrapper>
+    )
+  }
 
   if (isLoading || !player) {
     return (
@@ -204,13 +228,15 @@ export default function PlayerDetail() {
                 </div>
                 <div className="surface-soft rounded-fg-lg p-3">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                    {t('contractAndValue')}
+                    {t('minutesPlayed')}
                   </p>
-                  <p className="mt-2 text-lg font-semibold">
-                    {formatMarketValue(player.marketValueEurCents)}
+                  <p className="mt-2 text-lg font-semibold tabular-nums">
+                    {player.stats.minutes.toLocaleString()}
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {t('contractUntilLabel', { date: player.contractUntil })}
+                    {player.stats.appearances > 0
+                      ? t('minutesPerAppearance', { value: Math.round(player.stats.minutes / player.stats.appearances) })
+                      : t('noMinutesYet')}
                   </p>
                 </div>
               </div>

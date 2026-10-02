@@ -8,9 +8,6 @@ import { LocaleProvider } from '@/contexts/LocaleContext'
 
 import LeagueDashboard from './LeagueDashboard'
 
-vi.mock('embla-carousel-react', () => ({
-  default: () => [vi.fn()],
-}))
 
 vi.mock('@/hooks/useFootballData', () => ({
   useFootballData: vi.fn(),
@@ -49,6 +46,7 @@ describe('LeagueDashboard states', () => {
       error: 'All live sources failed',
       refetch,
       fetchedAt: null,
+      notFound: false,
     })
 
     renderDashboard()
@@ -66,6 +64,7 @@ describe('LeagueDashboard states', () => {
       error: null,
       refetch: vi.fn(),
       fetchedAt: null,
+      notFound: false,
     })
 
     renderDashboard()

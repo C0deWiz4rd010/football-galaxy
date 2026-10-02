@@ -7,6 +7,7 @@ import {
   useState,
 } from 'react'
 
+import { currentSeasonId } from '@/lib/season'
 import { setSourcePreference } from '@/services/config/dataSource'
 
 // The app is live-only: there is no local/fallback data source any more. The
@@ -21,7 +22,8 @@ interface DataSourceContextValue {
   setSeason: (_season: string) => void
 }
 
-const DEFAULT_SEASON = '2025-26'
+// Computed once per page load so the season rolls over automatically.
+const DEFAULT_SEASON = currentSeasonId()
 
 const DataSourceContext = createContext<DataSourceContextValue | undefined>(undefined)
 

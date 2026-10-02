@@ -13,41 +13,38 @@ import { motion } from 'framer-motion'
 
 import { fadeUp, staggerParent } from '@/shared/motion/variants'
 
-type StaggerGridProps<E extends ElementType> = {
+// Motion components must be created once at module level: creating them during
+// render remounts the whole subtree on every re-render (lost input focus,
+// reloaded images, restarted animations).
+const motionElements = {
+  div: motion.div,
+  section: motion.section,
+  article: motion.article,
+  ul: motion.ul,
+  li: motion.li,
+} as const
+
+type StaggerElement = keyof typeof motionElements
+
+type StaggerGridProps<E extends StaggerElement> = {
   as?: E
   children: ReactNode
-} & Omit<ComponentPropsWithoutRef<E>, 'as' | 'children'>
+} & Omit<ComponentPropsWithoutRef<(typeof motionElements)[E]>, 'as' | 'children'>
 
-function StaggerGridRoot<E extends ElementType = 'div'>({
-  as,
-  children,
-  ...rest
-}: StaggerGridProps<E>) {
-  const Component = motion.create(as ?? 'div') as ElementType
+export function StaggerGrid<E extends StaggerElement = 'div'>({ as, children, ...rest }: StaggerGridProps<E>) {
+  const Component: ElementType = motionElements[as ?? 'div']
   return (
-    <Component
-      variants={staggerParent}
-      initial="hidden"
-      animate="show"
-      {...rest}
-    >
+    <Component variants={staggerParent} initial="hidden" animate="show" {...rest}>
       {children}
     </Component>
   )
 }
 
-function StaggerItem<E extends ElementType = 'div'>({
-  as,
-  children,
-  ...rest
-}: StaggerGridProps<E>) {
-  const Component = motion.create(as ?? 'div') as ElementType
+export function StaggerGridItem<E extends StaggerElement = 'div'>({ as, children, ...rest }: StaggerGridProps<E>) {
+  const Component: ElementType = motionElements[as ?? 'div']
   return (
     <Component variants={fadeUp} {...rest}>
       {children}
     </Component>
   )
 }
-
-export const StaggerGrid = StaggerGridRoot
-export const StaggerGridItem = StaggerItem

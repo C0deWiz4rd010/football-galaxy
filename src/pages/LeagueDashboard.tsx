@@ -1,8 +1,7 @@
-﻿import type { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import {
-  AlertCircle,
   ArrowRight,
   Flame,
   Shield,
@@ -22,10 +21,10 @@ import { PageWrapper } from '@/components/layout/PageWrapper'
 import { AssetImage } from '@/components/shared/AssetImage'
 import { DataSourceBadge } from '@/components/shared/DataSourceBadge'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { ErrorState, NotFoundState } from '@/components/shared/StatusStates'
 import { LeagueDashboardSkeleton } from '@/components/shared/LeagueDashboardSkeleton'
 import { StaggerGrid, StaggerGridItem } from '@/components/shared/StaggerGrid'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { useLocale } from '@/contexts/LocaleContext'
 import { useFootballData } from '@/hooks/useFootballData'
 import { getPlayerPhotoSources } from '@/lib/assetSources'
@@ -82,15 +81,23 @@ function SummaryStat({
 
 export default function LeagueDashboard() {
   const { leagueId: routeLeagueId } = useParams()
-  const [searchParams] = useSearchParams()
-  const leagueId = isLeagueId(routeLeagueId) ? routeLeagueId : 'premier-league'
+  const validLeague = isLeagueId(routeLeagueId)
+  const leagueId = validLeague ? routeLeagueId : 'premier-league'
   const { t } = useLocale()
-  const matchday = Number(searchParams.get('matchday') ?? 0) || undefined
   const { data, isLoading, error, refetch, fetchedAt } = useFootballData<LeagueSummary>(
     'getLeagueSummary',
-    { leagueId, matchday },
+    { leagueId },
+    { enabled: validLeague },
   )
   const league = data?.league ?? getLeague(leagueId)
+
+  if (!validLeague) {
+    return (
+      <PageWrapper>
+        <NotFoundState />
+      </PageWrapper>
+    )
+  }
 
   if (isLoading && !data) {
     return (
@@ -103,14 +110,7 @@ export default function LeagueDashboard() {
   if (error && !data) {
     return (
       <PageWrapper>
-        <div className="stat-card flex items-start gap-3 rounded-fg-lg p-fg-6 shadow-fg-2">
-          <AlertCircle className="mt-0.5 h-5 w-5 text-destructive" />
-          <div className="flex-1 space-y-fg-2">
-            <h2 className="text-base font-semibold tracking-tight">{t('couldNotLoadLeague')}</h2>
-            <p className="text-sm text-muted-foreground">{error}</p>
-          </div>
-          <Button onClick={refetch}>{t('retry')}</Button>
-        </div>
+        <ErrorState title={t('couldNotLoadLeague')} description={error} onRetry={refetch} />
       </PageWrapper>
     )
   }

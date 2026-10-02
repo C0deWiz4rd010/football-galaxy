@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { toast } from '@/components/ui/toast'
 import { useDataSource } from '@/contexts/DataSourceContext'
 import { readCache, writeCache } from '@/services/cache/persistentCache'
+import { isNotFoundError } from '@/services/errors'
 import * as liveService from '@/services/footballData'
 import type { FootballQueryName, FootballQueryParams } from '@/services/types'
 
@@ -23,12 +25,14 @@ const dataCache = new Map<string, CacheEntry<unknown>>()
 export function useFootballData<T>(
   queryFn: FootballQueryName,
   params: FootballQueryParams = {},
+  { enabled = true }: { enabled?: boolean } = {},
 ) {
   const { source, season } = useDataSource()
   const [data, setData] = useState<T | null>(null)
   const [fetchedAt, setFetchedAt] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [notFound, setNotFound] = useState(false)
   const [tick, setTick] = useState(0)
   const mounted = useRef(true)
   const requestId = useRef(0)
@@ -56,6 +60,9 @@ export function useFootballData<T>(
     const service = liveService
     const currentRequestId = ++requestId.current
 
+    // Disabled queries stay in their initial loading state until enabled.
+    if (!enabled) return
+
     const isCurrent = () => mounted.current && requestId.current === currentRequestId
 
     const load = async () => {
@@ -77,6 +84,7 @@ export function useFootballData<T>(
           setFetchedAt(seed.fetchedAt)
           setIsLoading(false)
           setError(null)
+          setNotFound(false)
         }
         // Fresh enough — no upstream call needed.
         if (Date.now() - seed.fetchedAt < TTL_MS) return
@@ -87,6 +95,7 @@ export function useFootballData<T>(
         setFetchedAt(null)
         setIsLoading(true)
         setError(null)
+        setNotFound(false)
       }
 
       try {
@@ -103,15 +112,18 @@ export function useFootballData<T>(
       } catch (caught) {
         const message = caught instanceof Error ? caught.message : 'Could not load football data.'
 
+        // A missing entity is a terminal, expected outcome: no toast.
+        if (isCurrent() && !seed && isNotFoundError(caught)) {
+          setNotFound(true)
+          setError(message)
+          return
+        }
+
         // A failed *revalidation* keeps the stale data on screen; only surface a
         // hard error (and toast) when we have nothing to show.
         if (isCurrent() && !seed) {
           setError(message)
-          window.dispatchEvent(
-            new CustomEvent('football-toast', {
-              detail: { title: 'Fetch failed', description: message },
-            }),
-          )
+          toast({ titleKey: 'loadFailedTitle', description: message })
         }
       } finally {
         if (isCurrent()) {
@@ -121,7 +133,7 @@ export function useFootballData<T>(
     }
 
     void load()
-  }, [cacheKey, paramsKey, queryFn, source, stableParams, tick])
+  }, [cacheKey, enabled, paramsKey, queryFn, source, stableParams, tick])
 
-  return { data, isLoading, error, refetch, fetchedAt }
+  return { data, isLoading, error, notFound, refetch, fetchedAt }
 }

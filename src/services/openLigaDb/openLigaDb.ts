@@ -13,6 +13,7 @@
 import { z } from 'zod'
 
 import { leagues } from '@/lib/leagues'
+import { parseSeasonStartYear, seasonStartYear as currentSeasonStartYear } from '@/lib/season'
 import { createTeamCrest, normalizeImageSrc } from '@/lib/visualAssets'
 import { fetchLiveJson } from '@/services/net/liveClient'
 
@@ -24,12 +25,7 @@ const BUNDESLIGA_SHORTCUT = 'bl1'
 
 /** OpenLigaDB seasons are keyed by their starting year (e.g. 2025 → 2025/26). */
 function seasonStartYear(season: string | undefined): number {
-  if (season) {
-    const match = /^(\d{4})/.exec(season.trim())
-    if (match) return Number(match[1])
-  }
-  const now = new Date()
-  return now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1
+  return parseSeasonStartYear(season) ?? currentSeasonStartYear()
 }
 
 function bundesligaConfig() {

@@ -1,4 +1,4 @@
-import { Suspense, lazy, useCallback, useMemo, useState } from 'react'
+import { Suspense, useMemo, useState } from 'react'
 
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -8,11 +8,9 @@ import {
   Outlet,
   createBrowserRouter,
   useLocation,
-  useSearchParams,
 } from 'react-router-dom'
 
 import { Header } from '@/components/layout/Header'
-import { MatchdaySwiper } from '@/components/layout/MatchdaySwiper'
 import { MobileTabBar } from '@/components/layout/MobileTabBar'
 import { ProxyHealthBanner } from '@/components/layout/ProxyHealthBanner'
 import { Sidebar } from '@/components/layout/Sidebar'
@@ -21,41 +19,43 @@ import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { Toaster } from '@/components/ui/toast'
 import { useLocale } from '@/contexts/LocaleContext'
-import { getLeague, isLeagueId, leagues } from '@/lib/leagues'
+import { getLeague, leagues } from '@/lib/leagues'
+import { lazyWithReload } from '@/lib/lazyWithReload'
 import { pageMotion } from '@/shared/motion/tokens'
 
-const ComparePage = lazy(() => import('@/pages/Compare'))
-const CoachDetailPage = lazy(() => import('@/pages/CoachDetail'))
-const LeagueDashboardPage = lazy(() => import('@/pages/LeagueDashboard'))
-const LiveScoresPage = lazy(() => import('@/pages/LiveScoresPage'))
-const PlayerDetailPage = lazy(() => import('@/pages/PlayerDetail'))
-const PlayersExplorerPage = lazy(() => import('@/pages/PlayersExplorer'))
-const SettingsPage = lazy(() => import('@/pages/Settings'))
-const TeamDetailPage = lazy(() => import('@/pages/TeamDetail'))
-const TeamsExplorerPage = lazy(() => import('@/pages/TeamsExplorer'))
-const WorldCupOverviewPage = lazy(() =>
+const ComparePage = lazyWithReload(() => import('@/pages/Compare'))
+const CoachDetailPage = lazyWithReload(() => import('@/pages/CoachDetail'))
+const LeagueDashboardPage = lazyWithReload(() => import('@/pages/LeagueDashboard'))
+const LiveScoresPage = lazyWithReload(() => import('@/pages/LiveScoresPage'))
+const PlayerDetailPage = lazyWithReload(() => import('@/pages/PlayerDetail'))
+const PlayersExplorerPage = lazyWithReload(() => import('@/pages/PlayersExplorer'))
+const SettingsPage = lazyWithReload(() => import('@/pages/Settings'))
+const TeamDetailPage = lazyWithReload(() => import('@/pages/TeamDetail'))
+const TeamsExplorerPage = lazyWithReload(() => import('@/pages/TeamsExplorer'))
+const WorldCupOverviewPage = lazyWithReload(() =>
   import('@/pages/world-cup/WorldCupPages').then((m) => ({ default: m.WorldCupOverviewPage })),
 )
-const WorldCupMatchesPage = lazy(() =>
+const WorldCupMatchesPage = lazyWithReload(() =>
   import('@/pages/world-cup/WorldCupPages').then((m) => ({ default: m.WorldCupMatchesPage })),
 )
-const WorldCupGroupsPage = lazy(() =>
+const WorldCupGroupsPage = lazyWithReload(() =>
   import('@/pages/world-cup/WorldCupPages').then((m) => ({ default: m.WorldCupGroupsPage })),
 )
-const WorldCupBracketPage = lazy(() =>
+const WorldCupBracketPage = lazyWithReload(() =>
   import('@/pages/world-cup/WorldCupPages').then((m) => ({ default: m.WorldCupBracketPage })),
 )
-const WorldCupTeamsPage = lazy(() =>
+const WorldCupTeamsPage = lazyWithReload(() =>
   import('@/pages/world-cup/WorldCupPages').then((m) => ({ default: m.WorldCupTeamsPage })),
 )
-const WorldCupMatchDetailPage = lazy(() =>
+const WorldCupMatchDetailPage = lazyWithReload(() =>
   import('@/pages/world-cup/WorldCupPages').then((m) => ({ default: m.WorldCupMatchDetailPage })),
 )
-const WorldCupTeamDetailPage = lazy(() =>
+const WorldCupTeamDetailPage = lazyWithReload(() =>
   import('@/pages/world-cup/WorldCupPages').then((m) => ({ default: m.WorldCupTeamDetailPage })),
 )
 
-const GalaxyMapPageLazy = lazy(() =>
+const NotFoundPage = lazyWithReload(() => import('@/pages/NotFound'))
+const GalaxyMapPageLazy = lazyWithReload(() =>
   import('@/features/galaxy-map/GalaxyMapPage').then((m) => ({ default: m.GalaxyMapPage })),
 )
 
@@ -71,7 +71,6 @@ function getLayoutTitle(pathname: string, t: (key: string) => string) {
     return {
       title: t('galaxyMap'),
       subtitle: t('subtitleExplore'),
-      showSwiper: false,
       leagueId: undefined,
     }
   }
@@ -80,7 +79,6 @@ function getLayoutTitle(pathname: string, t: (key: string) => string) {
     return {
       title: t('liveScores'),
       subtitle: t('liveScoresSubtitle'),
-      showSwiper: false,
       leagueId: undefined,
     }
   }
@@ -89,7 +87,6 @@ function getLayoutTitle(pathname: string, t: (key: string) => string) {
     return {
       title: 'World Cup 2026',
       subtitle: 'Football Galaxy / Tournament command center',
-      showSwiper: false,
       leagueId: undefined,
     }
   }
@@ -98,7 +95,6 @@ function getLayoutTitle(pathname: string, t: (key: string) => string) {
     return {
       title: t('playersExplorer'),
       subtitle: t('subtitlePlayers'),
-      showSwiper: false,
       leagueId: undefined,
     }
   }
@@ -107,7 +103,6 @@ function getLayoutTitle(pathname: string, t: (key: string) => string) {
     return {
       title: t('teamsExplorer'),
       subtitle: t('subtitleTeams'),
-      showSwiper: false,
       leagueId: undefined,
     }
   }
@@ -116,7 +111,6 @@ function getLayoutTitle(pathname: string, t: (key: string) => string) {
     return {
       title: t('comparePlayers'),
       subtitle: t('subtitleCompare'),
-      showSwiper: false,
       leagueId: undefined,
     }
   }
@@ -125,7 +119,6 @@ function getLayoutTitle(pathname: string, t: (key: string) => string) {
     return {
       title: t('settings'),
       subtitle: t('settingsSubtitle'),
-      showSwiper: false,
       leagueId: undefined,
     }
   }
@@ -137,7 +130,6 @@ function getLayoutTitle(pathname: string, t: (key: string) => string) {
       return {
         title: t('coachDetailTitle'),
         subtitle: `Football Galaxy / ${league.name}`,
-        showSwiper: false,
         leagueId: league.id,
       }
     }
@@ -145,7 +137,6 @@ function getLayoutTitle(pathname: string, t: (key: string) => string) {
     return {
       title: t('teamDetailTitle'),
       subtitle: `Football Galaxy / ${league.name}`,
-      showSwiper: false,
       leagueId: league.id,
     }
   }
@@ -154,7 +145,6 @@ function getLayoutTitle(pathname: string, t: (key: string) => string) {
     return {
       title: t('playerDetailTitle'),
       subtitle: `Football Galaxy / ${league.name}`,
-      showSwiper: false,
       leagueId: league.id,
     }
   }
@@ -162,7 +152,6 @@ function getLayoutTitle(pathname: string, t: (key: string) => string) {
   return {
     title: league.name,
     subtitle: `Football Galaxy / ${league.name}`,
-    showSwiper: isLeagueId(leagueId),
     leagueId: league.id,
   }
 }
@@ -170,26 +159,9 @@ function getLayoutTitle(pathname: string, t: (key: string) => string) {
 function AppLayout() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [searchParams, setSearchParams] = useSearchParams()
   const location = useLocation()
   const { t } = useLocale()
   const layout = useMemo(() => getLayoutTitle(location.pathname, t), [location.pathname, t])
-
-  const matchday = Number(searchParams.get('matchday') ?? 0)
-
-  const handleMatchdaySelect = useCallback(
-    (value: number) => {
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev)
-          next.set('matchday', String(value))
-          return next
-        },
-        { replace: true },
-      )
-    },
-    [setSearchParams],
-  )
 
   return (
     <>
@@ -200,13 +172,6 @@ function AppLayout() {
         onSearch={() => setSearchOpen(true)}
         onMenu={() => setMobileMenuOpen((value) => !value)}
       />
-      {layout.showSwiper && layout.leagueId ? (
-        <MatchdaySwiper
-          leagueId={layout.leagueId}
-          matchday={matchday}
-          onSelect={handleMatchdaySelect}
-        />
-      ) : null}
       {mobileMenuOpen ? (
         <div
           className="fixed inset-0 z-50 bg-black/40 md:hidden"
@@ -374,6 +339,10 @@ export const router = createBrowserRouter([
       {
         path: ':leagueId/player/:playerId',
         element: <PlayerDetailPage />,
+      },
+      {
+        path: '*',
+        element: <NotFoundPage />,
       },
     ],
   },

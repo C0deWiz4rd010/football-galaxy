@@ -202,11 +202,7 @@ function mapPlayer(raw: FdPlayer, team: Team, stats: { goals: number; assists: n
     nationality,
     flag: createFlag('england'),
     age: ageFromDob(raw.dateOfBirth),
-    heightCm: 180,
-    weightKg: 75,
     photo: createPlayerAvatar(initialsFromName(name), team.primaryColor ?? '#0f766e'),
-    marketValueEurCents: 0,
-    contractUntil: '',
     stats: {
       appearances: stats.appearances,
       goals: stats.goals,

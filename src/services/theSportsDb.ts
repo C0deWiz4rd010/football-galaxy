@@ -1,7 +1,11 @@
 import { mockData } from '@/data/mock'
 import { leagues } from '@/lib/leagues'
+import { currentMatchdayFromTable, currentSeasonId, seasonInfo, toTheSportsDbSeason } from '@/lib/season'
 import { createFlag, createPlayerAvatar, createTeamCrest } from '@/lib/visualAssets'
 import { fetchLiveJson } from '@/services/net/liveClient'
+import { createPromiseCache } from '@/services/net/promiseCache'
+
+import { NotFoundError } from './errors'
 
 import type { Assist, FootballQueryParams, LeagueId, LeagueSummary, Match, Player, ResultCode, Scorer, Squad, Standing, Team } from './types'
 
@@ -27,9 +31,11 @@ interface LiveLeagueData {
   currentMatchday: number
 }
 
-const leagueCache = new Map<LeagueId, Promise<LiveLeagueData>>()
-const squadCache = new Map<string, Promise<Squad>>()
-const espnSquadCache = new Map<string, Promise<Squad>>()
+// League tables change during matchdays; rosters rarely. TTLs stay below the
+// query layer's stale time so a revalidation actually reaches upstream.
+const leagueCache = createPromiseCache<LeagueId, LiveLeagueData>(5 * 60_000)
+const squadCache = createPromiseCache<string, Squad>(30 * 60_000)
+const espnSquadCache = createPromiseCache<string, Squad>(30 * 60_000)
 const wikidataImageCache = new Map<string, Promise<string | undefined>>()
 
 function leagueOrDefault(leagueId?: LeagueId) {
@@ -169,17 +175,6 @@ function normalizeHexColor(color: string | undefined, fallback: string) {
   }
 
   return color.startsWith('#') ? color : `#${color}`
-}
-
-function syntheticManager(index: number) {
-  const firstNames = ['Marco', 'Julian', 'Mikel', 'Roberto', 'Thomas', 'Enzo', 'Arne', 'Oliver']
-  const lastNames = ['Silva', 'Meyer', 'Costa', 'Romero', 'Bauer', 'Martin', 'Rossi', 'Varela']
-  return `${firstNames[index % firstNames.length]} ${lastNames[(index * 3) % lastNames.length]}`
-}
-
-function syntheticStadium(teamName: string) {
-  const base = teamName.replace(/\b(AFC|FC)\b/g, '').trim()
-  return `${base} Stadium`
 }
 
 function nationalityFlag(nationality: string | undefined) {
@@ -325,13 +320,11 @@ function mapEspnPlayer(
     position,
     nationality,
     flag: compactImage(value(flag, 'href'), nationalityFlag(nationality)) ?? nationalityFlag(nationality),
-    age: numberFromUnknown(record.age) || 24,
-    heightCm: inchesToCm(record.height) ?? 178,
-    weightKg: poundsToKg(record.weight) ?? 74,
+    age: numberFromUnknown(record.age) || undefined,
+    heightCm: inchesToCm(record.height),
+    weightKg: poundsToKg(record.weight),
     photo: photoSources[0] ?? fallbackAvatar,
     photoSources: photoSources.length ? photoSources : undefined,
-    marketValueEurCents: (5_000_000 + (goals + assists) * 1_500_000 + appearances * 250_000) * 100,
-    contractUntil: `${2027 + (index % 4)}-06-30`,
     stats,
   }
 }
@@ -361,58 +354,6 @@ function mapApiTeam(record: ApiRecord, leagueId: LeagueId, fallback: Team, index
     primaryColor: league.color,
     secondaryColor: fallback.secondaryColor,
     squad: fallback.squad,
-  }
-}
-
-function createSyntheticPlayer(team: Team, index: number): Player {
-  const firstNames = ['Luca', 'Noah', 'Theo', 'Milan', 'Elias', 'Jonas', 'Mateo', 'Oscar', 'Hugo', 'Leo']
-  const lastNames = ['Silva', 'Martin', 'Keller', 'Moretti', 'Dubois', 'Costa', 'Hansen', 'Rossi', 'Garcia', 'Bauer']
-  const firstName = firstNames[index % firstNames.length]!
-  const lastName = lastNames[(index * 2) % lastNames.length]!
-  const name = `${firstName} ${lastName}`
-  const position = index === 0 ? 'GK' : index < 6 ? 'DF' : index < 12 ? 'MF' : 'FW'
-  const goalsBase = position === 'FW' ? 7 : position === 'MF' ? 3 : 0
-  const assistsBase = position === 'MF' ? 5 : position === 'FW' ? 3 : 1
-
-  return {
-    id: `${team.id}-player-${index + 1}`,
-    teamId: team.id,
-    leagueId: team.leagueId,
-    name,
-    number: index + 1,
-    position,
-    nationality: 'International',
-    flag: createFlag('england'),
-    age: 20 + (index % 12),
-    heightCm: 174 + (index % 18),
-    weightKg: 68 + (index % 16),
-    photo: createPlayerAvatar(`${firstName[0] ?? 'P'}${lastName[0] ?? ''}`, team.primaryColor ?? '#18181b'),
-    marketValueEurCents: (4_500_000 + index * 650_000) * 100,
-    contractUntil: `${2027 + (index % 4)}-06-30`,
-    stats: {
-      appearances: 12 + (index % 20),
-      goals: Math.max(0, goalsBase + (index % 6) - 1),
-      assists: Math.max(0, assistsBase + (index % 5) - 1),
-      yellowCards: index % 6,
-      redCards: index % 19 === 0 ? 1 : 0,
-      minutes: 720 + index * 85,
-      trend: [0, 1, 2, 1, 3].map((item, trendIndex) => item + ((index + trendIndex) % 3)),
-      attributes: {
-        pace: 58 + ((index * 7) % 36),
-        shooting: 50 + ((index * 5) % 40),
-        passing: 54 + ((index * 4) % 38),
-        dribbling: 55 + ((index * 3) % 39),
-        defending: 44 + ((index * 2) % 42),
-        physical: 56 + (index % 35),
-      },
-    },
-  }
-}
-
-function createSyntheticSquad(team: Team): Squad {
-  return {
-    teamId: team.id,
-    players: Array.from({ length: 22 }, (_, index) => createSyntheticPlayer(team, index)),
   }
 }
 
@@ -469,8 +410,8 @@ function mapEspnTeam(
       ...(fallback?.crestSources ?? []),
       fallback?.crest,
     ].filter((item): item is string => Boolean(item)),
-    manager: value(sportsDbRecord ?? {}, 'strManager') ?? fallback?.manager ?? syntheticManager(index),
-    stadium: value(sportsDbRecord ?? {}, 'strStadium') ?? fallback?.stadium ?? syntheticStadium(name),
+    manager: value(sportsDbRecord ?? {}, 'strManager') ?? fallback?.manager,
+    stadium: value(sportsDbRecord ?? {}, 'strStadium') ?? fallback?.stadium,
     capacity: numberValue(sportsDbRecord ?? {}, 'intStadiumCapacity') ?? fallback?.capacity,
     primaryColor: normalizeHexColor(value(record, 'color'), league.color),
     secondaryColor: normalizeHexColor(value(record, 'alternateColor'), fallback?.secondaryColor ?? '#0f172a'),
@@ -521,8 +462,9 @@ function mapEspnScoreboardMatch(record: ApiRecord, leagueId: LeagueId, teamsById
   return {
     id: value(record, 'id') ?? `${homeTeam.id}-${awayTeam.id}-${value(record, 'date')}`,
     leagueId,
-    season: estimateCurrentSeasonLabel(),
-    matchday: numberValue(record, 'week') ?? currentMatchdayFromMatches([]),
+    season: currentSeasonId(),
+    // 0 = round unknown; the scoreboard feed rarely carries one.
+    matchday: numberValue(record, 'week') ?? 0,
     utcDate: value(record, 'date') ?? new Date().toISOString(),
     status:
       statusType === 'STATUS_SCHEDULED'
@@ -532,8 +474,9 @@ function mapEspnScoreboardMatch(record: ApiRecord, leagueId: LeagueId, teamsById
           : 'FINISHED',
     homeTeam,
     awayTeam,
-    homeScore: numberValue(homeRecord ?? {}, 'score'),
-    awayScore: numberValue(awayRecord ?? {}, 'score'),
+    // ESPN reports 0-0 for fixtures that have not kicked off yet.
+    homeScore: statusType === 'STATUS_SCHEDULED' ? undefined : numberValue(homeRecord ?? {}, 'score'),
+    awayScore: statusType === 'STATUS_SCHEDULED' ? undefined : numberValue(awayRecord ?? {}, 'score'),
     venue: value(record.venue as ApiRecord, 'displayName'),
     events: details.map((detail, index) => ({
       id: `${value(record, 'id') ?? 'match'}-event-${index}`,
@@ -578,8 +521,8 @@ function mapMatch(record: ApiRecord, leagueId: LeagueId, teamsById: Map<string, 
   return {
     id: value(record, 'idEvent') ?? `${homeTeam.id}-${awayTeam.id}-${date}`,
     leagueId,
-    season: estimateCurrentSeasonLabel(),
-    matchday: numberValue(record, 'intRound') ?? 38,
+    season: currentSeasonId(),
+    matchday: numberValue(record, 'intRound') ?? 0,
     utcDate: date,
     status: homeScore === undefined || awayScore === undefined ? 'SCHEDULED' : 'FINISHED',
     homeTeam,
@@ -591,42 +534,8 @@ function mapMatch(record: ApiRecord, leagueId: LeagueId, teamsById: Map<string, 
   }
 }
 
-function estimateCurrentSeasonLabel(date = new Date()) {
-  const year = date.getUTCFullYear()
-  const month = date.getUTCMonth() + 1
-  const startYear = month >= 7 ? year : year - 1
-  return `${startYear}-${startYear + 1}`
-}
-
-function currentMatchdayFromMatches(matches: Match[]) {
-  const rounds = matches
-    .map((match) => match.matchday)
-    .filter((round) => Number.isFinite(round) && round > 0)
-
-  if (!rounds.length) {
-    return 38
-  }
-
-  const scheduled = matches
-    .filter((match) => match.status === 'SCHEDULED')
-    .map((match) => match.matchday)
-    .filter((round) => round > 0)
-    .sort((a, b) => a - b)
-
-  if (scheduled[0]) {
-    return scheduled[0]
-  }
-
-  return Math.max(...rounds)
-}
-
 async function loadLeague(leagueId: LeagueId): Promise<LiveLeagueData> {
-  const cached = leagueCache.get(leagueId)
-  if (cached) {
-    return cached
-  }
-
-  const promise = (async () => {
+  return leagueCache.get(leagueId, async () => {
     const league = leagues.find((item) => item.id === leagueId)!
     const fallback = mockData[leagueId]
     const espnLeagueSlug = espnLeagueSlugByLeagueId[leagueId]
@@ -682,7 +591,7 @@ async function loadLeague(leagueId: LeagueId): Promise<LiveLeagueData> {
           .sort((a, b) => a.position - b.position)
       : fallback.standings.map((standing, index) => ({ ...standing, team: teams[index] ?? standing.team }))
 
-    const season = estimateCurrentSeasonLabel()
+    const season = toTheSportsDbSeason(currentSeasonId())
     const eventPayload = await getJson(`${apiBase}/eventsseason.php?id=${league.theSportsDbLeagueId}&s=${season}`).catch((): ApiRecord => ({}))
     const eventRecords = Array.isArray(eventPayload.events) ? (eventPayload.events as ApiRecord[]) : []
     const seasonMatches = eventRecords.map((event) => mapMatch(event, leagueId, teamsByName)).filter((match): match is Match => Boolean(match))
@@ -710,23 +619,17 @@ async function loadLeague(leagueId: LeagueId): Promise<LiveLeagueData> {
       ? [...liveMatches, ...recentSeasonMatches.filter((match) => !liveMatches.some((liveMatch) => liveMatch.id === match.id))]
       : recentSeasonMatches
 
+    const resolvedStandings = standingsWithForm.some((standing) => standing.played > 0) ? standingsWithForm : fallback.standings.map((standing, index) => ({ ...standing, team: teams[index] ?? standing.team }))
     return {
       leagueLogo,
       teams,
-      standings: standingsWithForm.some((standing) => standing.played > 0) ? standingsWithForm : fallback.standings.map((standing, index) => ({ ...standing, team: teams[index] ?? standing.team })),
+      standings: resolvedStandings,
       matches: mergedMatches.length
         ? mergedMatches
         : fallback.recentMatches.map((match) => ({ ...match, homeTeam: teams.find((team) => normalizeTeamName(team.name) === normalizeTeamName(match.homeTeam.name)) ?? match.homeTeam, awayTeam: teams.find((team) => normalizeTeamName(team.name) === normalizeTeamName(match.awayTeam.name)) ?? match.awayTeam })),
-      currentMatchday: currentMatchdayFromMatches(liveMatches.length ? liveMatches : seasonMatches),
+      currentMatchday: currentMatchdayFromTable(resolvedStandings, liveMatches.length ? liveMatches : seasonMatches),
     }
-  })()
-
-  const cachedPromise = promise.catch((error) => {
-    leagueCache.delete(leagueId)
-    throw error
   })
-  leagueCache.set(leagueId, cachedPromise)
-  return cachedPromise
 }
 
 function mapApiPlayer(record: ApiRecord, team: Team, index: number): Player {
@@ -735,8 +638,20 @@ function mapApiPlayer(record: ApiRecord, team: Team, index: number): Player {
   const nationality = value(record, 'strNationality') ?? value(record, 'strBirthLocation') ?? 'England'
   const position = normalizePosition(value(record, 'strPosition'))
   const shirtNumber = numberValue(record, 'strNumber') ?? index + 1
-  const goalsBase = position === 'FW' ? 8 : position === 'MF' ? 4 : 1
-  const assistsBase = position === 'MF' ? 7 : position === 'FW' ? 4 : 2
+  // TheSportsDB's free roster endpoint carries no season statistics, so stats
+  // stay at zero instead of being invented.
+  const stats: Player['stats'] = {
+    appearances: 0,
+    goals: 0,
+    assists: 0,
+    yellowCards: 0,
+    redCards: 0,
+    minutes: 0,
+    trend: [0, 0, 0, 0, 0],
+    attributes: { pace: 0, shooting: 0, passing: 0, dribbling: 0, defending: 0, physical: 0 },
+  }
+  stats.attributes = derivePlayerAttributes(position, stats)
+  const born = value(record, 'dateBorn')
 
   return {
     id: value(record, 'idPlayer') ?? `${team.id}-api-player-${index}`,
@@ -747,35 +662,29 @@ function mapApiPlayer(record: ApiRecord, team: Team, index: number): Player {
     position,
     nationality,
     flag: nationalityFlag(nationality),
-    age: 24 + (index % 10),
-    heightCm: numberValue(record, 'strHeight') ?? 176 + (index % 16),
-    weightKg: numberValue(record, 'strWeight') ?? 70 + (index % 18),
+    age: born ? ageFromDate(born) : undefined,
+    heightCm: numberValue(record, 'strHeight'),
+    weightKg: numberValue(record, 'strWeight'),
     photo: compactImage(value(record, 'strCutout'), value(record, 'strThumb'), value(record, 'strRender')) ?? createPlayerAvatar(`${firstName[0] ?? 'P'}${lastName[0] ?? ''}`, team.primaryColor ?? '#18181b'),
     photoSources: [
       value(record, 'strCutout'),
       value(record, 'strThumb'),
       value(record, 'strRender'),
     ].filter((item): item is string => Boolean(item)),
-    marketValueEurCents: (5_000_000 + index * 750_000) * 100,
-    contractUntil: `${2027 + (index % 4)}-06-30`,
-    stats: {
-      appearances: 14 + (index % 20),
-      goals: Math.max(0, goalsBase + (index % 8) - 2),
-      assists: Math.max(0, assistsBase + (index % 7) - 2),
-      yellowCards: index % 7,
-      redCards: index % 18 === 0 ? 1 : 0,
-      minutes: 780 + index * 87,
-      trend: [0, 1, 2, 1, 3].map((value, trendIndex) => value + ((index + trendIndex) % 3)),
-      attributes: {
-        pace: 58 + ((index * 7) % 38),
-        shooting: 52 + ((index * 5) % 42),
-        passing: 56 + ((index * 4) % 40),
-        dribbling: 54 + ((index * 3) % 42),
-        defending: 45 + ((index * 2) % 45),
-        physical: 55 + (index % 40),
-      },
-    },
+    stats,
   }
+}
+
+function ageFromDate(isoDate: string): number | undefined {
+  const born = new Date(isoDate)
+  if (Number.isNaN(born.getTime())) return undefined
+  const now = new Date()
+  let age = now.getUTCFullYear() - born.getUTCFullYear()
+  const beforeBirthday =
+    now.getUTCMonth() < born.getUTCMonth() ||
+    (now.getUTCMonth() === born.getUTCMonth() && now.getUTCDate() < born.getUTCDate())
+  if (beforeBirthday) age -= 1
+  return age > 0 ? age : undefined
 }
 
 async function loadEspnSquad(team: Team): Promise<Squad> {
@@ -783,13 +692,8 @@ async function loadEspnSquad(team: Team): Promise<Squad> {
     throw new Error('Team has no ESPN id for roster lookup.')
   }
 
-  const cacheKey = `${team.leagueId}:${team.espnId}`
-  const cached = espnSquadCache.get(cacheKey)
-  if (cached) {
-    return cached
-  }
-
-  const promise = (async () => {
+  const espnId = team.espnId
+  return espnSquadCache.get(`${team.leagueId}:${espnId}`, async () => {
     const leagueSlug = espnLeagueSlugByLeagueId[team.leagueId]
     const rosterPayload = await getJson(`${espnSiteApiBase}/${leagueSlug}/teams/${team.espnId}/roster`)
     const athletes = Array.isArray(rosterPayload.athletes)
@@ -811,14 +715,7 @@ async function loadEspnSquad(team: Team): Promise<Squad> {
         ),
       ),
     }
-  })()
-
-  const cachedPromise = promise.catch((error) => {
-    espnSquadCache.delete(cacheKey)
-    throw error
   })
-  espnSquadCache.set(cacheKey, cachedPromise)
-  return cachedPromise
 }
 
 export async function getStandings(params: FootballQueryParams = {}): Promise<Standing[]> {
@@ -833,28 +730,22 @@ export async function getMatches(params: FootballQueryParams = {}): Promise<Matc
 export async function getTeam(params: FootballQueryParams = {}): Promise<Team> {
   const leagueId = leagueOrDefault(params.leagueId)
   const teams = (await loadLeague(leagueId)).teams
-  return teams.find((team) => team.id === params.teamId) ?? teams[0]!
+  const team = teams.find((item) => item.id === params.teamId)
+  if (!team) {
+    throw new NotFoundError(`Team "${params.teamId ?? ''}" not found in ${leagueId}.`)
+  }
+  return team
 }
 
 export async function getSquad(params: FootballQueryParams = {}): Promise<Squad> {
   const team = await getTeam(params)
-  const cached = squadCache.get(team.id)
-  if (cached) {
-    return cached
-  }
-
   try {
-    const promise = loadEspnSquad(team).then(async (squad) => ({
-      ...squad,
-      players: await hydratePlayerImages(squad.players, 8),
-    }))
-
-    const cachedPromise = promise.catch((error) => {
-      squadCache.delete(team.id)
-      throw error
-    })
-    squadCache.set(team.id, cachedPromise)
-    return await cachedPromise
+    return await squadCache.get(team.id, () =>
+      loadEspnSquad(team).then(async (squad) => ({
+        ...squad,
+        players: await hydratePlayerImages(squad.players, 8),
+      })),
+    )
   } catch {
     // Fall through to TheSportsDB and local snapshots without caching the
     // fallback; a later retry should be able to recover once ESPN/proxy works.
@@ -862,15 +753,15 @@ export async function getSquad(params: FootballQueryParams = {}): Promise<Squad>
 
   try {
     if (!team.theSportsDbId) {
-      return { teamId: team.id, players: team.squad ?? createSyntheticSquad(team).players }
+      return { teamId: team.id, players: team.squad ?? [] }
     }
 
     const payload = await getJson(`${apiBase}/lookup_all_players.php?id=${team.theSportsDbId}`)
     const records = Array.isArray(payload.player) ? (payload.player as ApiRecord[]) : []
     const players = records.map((player, index) => mapApiPlayer(player, team, index)).slice(0, 28)
-    return { teamId: team.id, players: players.length ? players : team.squad ?? createSyntheticSquad(team).players }
+    return { teamId: team.id, players: players.length ? players : team.squad ?? [] }
   } catch {
-    return { teamId: team.id, players: team.squad ?? createSyntheticSquad(team).players }
+    return { teamId: team.id, players: team.squad ?? [] }
   }
 }
 
@@ -914,27 +805,22 @@ export async function getTopAssists(params: FootballQueryParams = {}): Promise<A
 
 export async function getPlayer(params: FootballQueryParams = {}): Promise<Player> {
   const leagueId = leagueOrDefault(params.leagueId)
-  try {
-    const teams = (await loadLeague(leagueId)).teams
-    for (const team of teams) {
-      try {
-        const squad = await loadEspnSquad(team)
-        const player = squad.players.find((item) => item.id === params.playerId)
-        if (player) {
-          return hydratePlayerImage(player)
-        }
-      } catch {
-        const squad = await getSquad({ leagueId, teamId: team.id })
-        const player = squad.players.find((item) => item.id === params.playerId)
-        if (player) {
-          return hydratePlayerImage(player)
-        }
-      }
-    }
-  } catch {
-    // Fall through to local fallback.
+  const teams = (await loadLeague(leagueId)).teams
+  // Rosters are cached and fetched through the shared client's concurrency
+  // limit, so loading them in parallel is much faster than walking teams one
+  // by one and costs no extra upstream calls once the league was viewed.
+  const squads = await Promise.allSettled(
+    teams.map((team) => loadEspnSquad(team).catch(() => getSquad({ leagueId, teamId: team.id }))),
+  )
+  for (const result of squads) {
+    if (result.status !== 'fulfilled') continue
+    const player = result.value.players.find((item) => item.id === params.playerId)
+    if (player) return hydratePlayerImage(player)
   }
-  return mockData[leagueId].teams.flatMap((team) => team.squad ?? []).find((player) => player.id === params.playerId) ?? mockData[leagueId].teams[0]!.squad![0]!
+  if (squads.every((result) => result.status === 'rejected')) {
+    throw new Error('Squad data is unavailable right now.')
+  }
+  throw new NotFoundError(`Player "${params.playerId ?? ''}" not found in ${leagueId}.`)
 }
 
 export async function getLeagueSummary(params: FootballQueryParams = {}): Promise<LeagueSummary> {
@@ -944,10 +830,7 @@ export async function getLeagueSummary(params: FootballQueryParams = {}): Promis
   return {
     league,
     season: {
-      id: estimateCurrentSeasonLabel(),
-      label: estimateCurrentSeasonLabel().replace('-', '/'),
-      startDate: `${estimateCurrentSeasonLabel().slice(0, 4)}-08-01T00:00:00Z`,
-      endDate: `${Number(estimateCurrentSeasonLabel().slice(0, 4)) + 1}-05-31T23:59:59Z`,
+      ...seasonInfo(currentSeasonId()),
       currentMatchday: data.currentMatchday,
     },
     standings: data.standings,

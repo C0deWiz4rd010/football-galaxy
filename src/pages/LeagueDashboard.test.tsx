@@ -10,9 +10,6 @@ import type { LeagueSummary } from '@/services/types'
 
 import LeagueDashboard from './LeagueDashboard'
 
-vi.mock('embla-carousel-react', () => ({
-  default: () => [vi.fn()],
-}))
 
 vi.mock('@/hooks/useFootballData', () => ({
   useFootballData: vi.fn(),
@@ -48,6 +45,7 @@ describe('LeagueDashboard', () => {
       error: null,
       refetch: vi.fn(),
       fetchedAt: null,
+      notFound: false,
     })
   })
 

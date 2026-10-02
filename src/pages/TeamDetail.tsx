@@ -1,17 +1,15 @@
-﻿import { useMemo } from 'react'
+import { useMemo } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { ArrowLeft, Heart, Shield, Sparkles, Users, Zap } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-
-import { FormLineChart } from '@/components/team/FormLineChart'
-import { TeamRadarChart } from '@/components/team/RadarChart'
+import { TeamMatchGoalsChart, TeamPointsTrendChart, TeamProfileRadar } from '@/components/team/TeamCharts'
 import { ResultsTimeline } from '@/components/team/ResultsTimeline'
 import { SquadTable } from '@/components/team/SquadTable'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { AssetImage } from '@/components/shared/AssetImage'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { ErrorState, NotFoundState } from '@/components/shared/StatusStates'
 import { StaggerGrid, StaggerGridItem } from '@/components/shared/StaggerGrid'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -22,8 +20,8 @@ import { useFootballData } from '@/hooks/useFootballData'
 import { FormBadge } from '@/components/shared/FormBadge'
 import { getCrestSources, getPlayerPhotoSources } from '@/lib/assetSources'
 import { getFormScore } from '@/lib/player-ratings'
-import { formatMarketValue } from '@/lib/utils'
 import { createPlayerAvatar, createTeamCrest, initialsFromName } from '@/lib/visualAssets'
+import { isLeagueId } from '@/lib/leagues'
 import type { Match, Squad, Standing, Team } from '@/services/types'
 
 function TeamMetric({
@@ -48,21 +46,18 @@ function TeamMetric({
 export default function TeamDetail() {
   const { t } = useLocale()
   const navigate = useNavigate()
-  const { leagueId, teamId } = useParams()
-  const { data: team, isLoading } = useFootballData<Team>('getTeam', {
-    leagueId: leagueId as never,
-    teamId,
-  })
-  const { data: squad } = useFootballData<Squad>('getSquad', {
-    leagueId: leagueId as never,
-    teamId,
-  })
-  const { data: matches } = useFootballData<Match[]>('getMatches', {
-    leagueId: leagueId as never,
-  })
-  const { data: standings } = useFootballData<Standing[]>('getStandings', {
-    leagueId: leagueId as never,
-  })
+  const params = useParams()
+  const leagueId = isLeagueId(params.leagueId) ? params.leagueId : undefined
+  const teamId = params.teamId
+  const enabled = Boolean(leagueId && teamId)
+  const { data: team, isLoading, error, notFound, refetch } = useFootballData<Team>(
+    'getTeam',
+    { leagueId, teamId },
+    { enabled },
+  )
+  const { data: squad } = useFootballData<Squad>('getSquad', { leagueId, teamId }, { enabled })
+  const { data: matches } = useFootballData<Match[]>('getMatches', { leagueId }, { enabled })
+  const { data: standings } = useFootballData<Standing[]>('getStandings', { leagueId }, { enabled })
   const favorites = useFavorites()
   const teamMatches = useMemo(
     () =>
@@ -74,6 +69,27 @@ export default function TeamDetail() {
     [matches, team],
   )
 
+  if (!enabled || notFound) {
+    return (
+      <PageWrapper>
+        <NotFoundState
+          title={t('teamNotFound')}
+          description={t('teamNotFoundDescription')}
+          backTo={leagueId ? `/${leagueId}` : '/'}
+          backLabel={t(leagueId ? 'backToLeague' : 'goHome')}
+        />
+      </PageWrapper>
+    )
+  }
+
+  if (error && !team) {
+    return (
+      <PageWrapper>
+        <ErrorState onRetry={refetch} />
+      </PageWrapper>
+    )
+  }
+
   if (isLoading || !team) {
     return (
       <PageWrapper>
@@ -84,23 +100,14 @@ export default function TeamDetail() {
 
   const players = squad?.players ?? team.squad ?? []
   const standing = standings?.find((item) => item.team.id === team.id)
-  const squadValue = players.reduce(
-    (sum, player) => sum + player.marketValueEurCents,
-    0,
-  )
-  const averageAge =
-    players.length > 0
-      ? (players.reduce((sum, player) => sum + player.age, 0) / players.length).toFixed(1)
-      : '0.0'
+  const ages = players.map((player) => player.age).filter((age): age is number => typeof age === 'number')
+  const averageAge = ages.length > 0 ? (ages.reduce((sum, age) => sum + age, 0) / ages.length).toFixed(1) : '-'
   const topRatedPlayer = players
     .slice()
     .sort(
       (left, right) =>
         getFormScore(right).score - getFormScore(left).score,
     )[0]
-  const chartData = ['0-15', '16-30', '31-45+', '46-60', '61-75', '76-90+'].map(
-    (slot, index) => ({ slot, goals: 3 + index * 2, conceded: 1 + (index % 3) + index }),
-  )
 
   return (
     <PageWrapper>
@@ -150,11 +157,9 @@ export default function TeamDetail() {
                       className="font-medium text-white hover:text-white/80"
                     >
                       {team.manager ?? t('coachPending')}
-                    </Link>{' '}
-                    {' / '}
-                    {team.stadium}
-                    {' / '}
-                    {team.capacity?.toLocaleString()} {t('seats')}
+                    </Link>
+                    {team.stadium ? <>{' / '}{team.stadium}</> : null}
+                    {team.capacity ? <>{' / '}{team.capacity.toLocaleString()} {t('seats')}</> : null}
                   </p>
                 </div>
                 <motion.div whileTap={{ scale: 1.14 }}>
@@ -186,9 +191,13 @@ export default function TeamDetail() {
                   helper={t('averageAgeLabel', { age: averageAge })}
                 />
                 <TeamMetric
-                  label={t('squadValue')}
-                  value={formatMarketValue(squadValue)}
-                  helper={t('blendedEstimate')}
+                  label={t('goalsPerGame')}
+                  value={standing && standing.played > 0 ? (standing.goalsFor / standing.played).toFixed(2) : '-'}
+                  helper={
+                    standing && standing.played > 0
+                      ? t('pointsPerGameLabel', { value: (standing.points / standing.played).toFixed(2) })
+                      : t('waitingForData')
+                  }
                 />
                 <TeamMetric
                   label={t('goalDifference')}
@@ -294,7 +303,7 @@ export default function TeamDetail() {
                 </div>
                 <div className="surface-soft rounded-fg-lg p-4">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t('homeGround')}</p>
-                  <p className="mt-2 text-lg font-semibold">{team.stadium}</p>
+                  <p className="mt-2 text-lg font-semibold">{team.stadium ?? '-'}</p>
                 </div>
                 <div className="surface-soft rounded-fg-lg p-4">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t('momentum')}</p>
@@ -314,20 +323,12 @@ export default function TeamDetail() {
             <section className="stat-card">
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('shotMapProxy')}</p>
-                  <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('scoringWindows')}</h2>
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('recentForm')}</p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('goalsPerMatchTitle')}</h2>
                 </div>
                 <Shield className="h-5 w-5 text-muted-foreground" />
               </div>
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={chartData}>
-                  <XAxis dataKey="slot" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="goals" fill="hsl(var(--primary))" animationDuration={600} />
-                  <Bar dataKey="conceded" fill="hsl(var(--destructive))" animationDuration={600} />
-                </BarChart>
-              </ResponsiveContainer>
+              <TeamMatchGoalsChart matches={matches ?? []} team={team} limit={6} />
             </section>
           </TabsContent>
 
@@ -342,25 +343,17 @@ export default function TeamDetail() {
           <TabsContent value="statistics" className="grid gap-4">
             <div className="stat-card">
               <div className="mb-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('shapeProfile')}</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('leagueProfile')}</p>
                 <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('teamRadar')}</h2>
               </div>
-              <TeamRadarChart />
+              <TeamProfileRadar standing={standing} standings={standings ?? []} />
             </div>
             <div className="stat-card">
               <div className="mb-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('goalTimeline')}</p>
-                <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('gameStatePressure')}</h2>
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('seasonProgress')}</p>
+                <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('goalsPerMatchTitle')}</h2>
               </div>
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={chartData}>
-                  <XAxis dataKey="slot" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="goals" fill="hsl(var(--primary))" animationDuration={600} />
-                  <Bar dataKey="conceded" fill="#f87171" animationDuration={600} />
-                </BarChart>
-              </ResponsiveContainer>
+              <TeamMatchGoalsChart matches={matches ?? []} team={team} />
             </div>
           </TabsContent>
 
@@ -369,7 +362,7 @@ export default function TeamDetail() {
               <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('trendLine')}</p>
               <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('recentForm')}</h2>
             </div>
-            <FormLineChart />
+            <TeamPointsTrendChart matches={matches ?? []} team={team} />
           </TabsContent>
         </Tabs>
         </StaggerGridItem>

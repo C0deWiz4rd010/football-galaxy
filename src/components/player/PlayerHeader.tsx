@@ -2,11 +2,13 @@ import { Link } from 'react-router-dom'
 
 import { Badge } from '@/components/ui/badge'
 import { AssetImage } from '@/components/shared/AssetImage'
+import { useLocale } from '@/contexts/LocaleContext'
 import { getCrestSources, getPlayerPhotoSources } from '@/lib/assetSources'
 import { createPlayerAvatar, createTeamCrest, initialsFromName } from '@/lib/visualAssets'
 import type { Player, Team } from '@/services/types'
 
 export function PlayerHeader({ player, team, action, backButton }: { player: Player; team?: Team; action?: React.ReactNode; backButton?: React.ReactNode }) {
+  const { t } = useLocale()
   const playerFallback = createPlayerAvatar(initialsFromName(player.name), team?.primaryColor ?? '#0f766e')
   return (
     <section className="stat-card relative p-4">
@@ -23,7 +25,16 @@ export function PlayerHeader({ player, team, action, backButton }: { player: Pla
           <h1 className="mt-2 text-2xl font-semibold tracking-tight">{player.name}</h1>
           <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             <img src={player.flag} alt={`${player.nationality} flag`} className="h-4 w-6 rounded-sm object-cover" loading="lazy" />
-            <span>{player.nationality} | {player.age} years | {player.heightCm} cm | {player.weightKg} kg</span>
+            <span>
+              {[
+                player.nationality,
+                player.age ? t('ageYears', { age: player.age }) : null,
+                player.heightCm ? `${player.heightCm} cm` : null,
+                player.weightKg ? `${player.weightKg} kg` : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </span>
           </p>
           {team ? (
             <Link

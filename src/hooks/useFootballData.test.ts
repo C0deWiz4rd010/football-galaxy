@@ -15,6 +15,7 @@ vi.mock('@/services/footballData', () => ({
 }))
 
 import { readCache } from '@/services/cache/persistentCache'
+import { NotFoundError } from '@/services/errors'
 import * as liveService from '@/services/footballData'
 
 import { useFootballData } from './useFootballData'
@@ -77,5 +78,31 @@ describe('useFootballData', () => {
     ).toBe(true)
 
     dispatchSpy.mockRestore()
+  })
+
+  it('reports a missing entity as notFound without a toast', async () => {
+    mockedReadCache.mockReturnValue(null)
+    mockedGetStandings.mockRejectedValue(new NotFoundError('gone'))
+    const toastSpy = vi.fn()
+    window.addEventListener('football-toast', toastSpy)
+
+    const { result } = renderHook(() =>
+      useFootballData('getStandings', { leagueId: 'serie-a' }),
+    )
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(result.current.notFound).toBe(true)
+    expect(toastSpy).not.toHaveBeenCalled()
+    window.removeEventListener('football-toast', toastSpy)
+  })
+
+  it('does not fetch while disabled', async () => {
+    mockedReadCache.mockReturnValue(null)
+    const { result } = renderHook(() =>
+      useFootballData('getStandings', { leagueId: 'ligue-1' }, { enabled: false }),
+    )
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(mockedGetStandings).not.toHaveBeenCalled()
+    expect(result.current.isLoading).toBe(true)
   })
 })

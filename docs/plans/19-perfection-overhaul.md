@@ -172,3 +172,20 @@ Zielbreiten testen: 360, 390, 768, 1024, 1280, 1440, 1920 + Landscape-Phone.
 - Logo-Originale in `assets/` bleiben als Quellmaterial (App-Icons in Phase 9).
 
 **Baseline vor Optimierung:** Coverage 25,6 % Lines · Bundle: `vendor` 491 KB (157 KB gz), `echarts` 833 KB (247 KB gz), `motion` 110 KB, `index` 133 KB, 5 Mock-Chunks à ~85 KB werden beim Start vorgeladen.
+
+### Phase 1 – erledigt (2026-10-02)
+- **A** `StaggerGrid`: Motion-Komponenten statisch auf Modulebene (kein Remount/Fokusverlust mehr).
+- **B** Saison: `src/lib/season.ts` als einzige Quelle (`2026-27`), genutzt von DataSource, football-data.org, OpenLigaDB, TheSportsDB/ESPN.
+- **C** `MatchdaySwiper` entfernt (mobil-only, ohne Funktion, verursachte Doppel-Load) → echte Spieltag-Ansicht kommt in Phase 4. `embla-carousel-react` entfernt. Spieltag wird jetzt aus der Tabelle abgeleitet (`currentMatchdayFromTable`) statt Fallback 38.
+- **D** `theSportsDb.ts`: Promise-Caches mit TTL (`createPromiseCache`, Liga 5 min, Kader 30 min).
+- **E** Team/Spieler/Trainer: `NotFoundError` → `NotFoundState`, Fehler → `ErrorState` mit Retry; `getTeam` im Spielerprofil erst mit bekannter `teamId` (`enabled`-Option); alle `as never`-Casts ersetzt durch `isLeagueId`.
+- **F** Keine erfundenen Daten mehr in Team/Spieler: kein `teams[0]`-/Mock-Spieler-Fallback, keine synthetischen Kader/Trainer/Stadien, keine erfundenen Marktwerte/Verträge/Alter/Statistiken (Felder jetzt optional). Fake-Charts ersetzt durch echte: Liga-Radar aus Tabelle, Tore pro Spiel, Punkteverlauf, Spieler pro 90 Min. Ergebnis-Zeitleiste zeigt ungespielte Partien nicht mehr als Remis.
+- **G** Toast: mehrere Toasts, Dedupe, Timer werden aufgeräumt, `aria-live`, Varianten, übersetzbare Titel, mobil über der Tab-Bar.
+- **H** 404-Route + ungültige Liga-IDs → `NotFoundState`; `lazyWithReload` lädt nach einem Deploy einmalig neu, wenn alte Chunks fehlen.
+- Node-Proxy liest jetzt `PROXY_PORT` (nicht `PORT`), damit er nicht mit Vite kollidiert.
+
+**Neu entdeckt, eingeplant für Phase 2:**
+- `loadLeague` mischt weiterhin Mock-Daten ein (Tabelle/Spiele als Fallback, `avgPossession`, Team-Basisdaten, `team.squad`) → mit Phase 2K/L entfernen.
+- Spiele-Historie fehlt weitgehend (ESPN-Scoreboard liefert nur ~11 Spiele im aktuellen Fenster, TheSportsDB `eventsseason` liefert mit Free-Key nichts) → ESPN-Team-Spielplan (`/teams/{id}/schedule`) als Quelle für komplette Saison-Ergebnisse.
+- Persistenter Cache überlebt Code-Änderungen → Cache-Buster mit App-Version im Query-Persister.
+- Ein Liga-Summary kostet ~45 Upstream-Calls (20 Kader + Wikidata-Bilder) → Kader/Bilder lazy erst auf Team-/Spielerseiten.

@@ -34,7 +34,7 @@ function deriveTraits(player: Player): string[] {
   else if (assists >= 6) traits.push('Provider')
 
   if (minutes / apps >= 80) traits.push('Workhorse')
-  if (player.age <= 21 && goals + assists >= 6) traits.push('Rising Star')
+  if (player.age !== undefined && player.age <= 21 && goals + assists >= 6) traits.push('Rising Star')
   if (player.position === 'DF' && yellowCards + redCards * 2 <= 3) traits.push('Composed Defender')
   if (player.position === 'GK' && appearances >= 10) traits.push('Reliable Keeper')
 

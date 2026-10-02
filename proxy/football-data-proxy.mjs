@@ -1,6 +1,8 @@
 import { createServer } from 'node:http'
 
-const PORT = Number(process.env.PORT ?? 8787)
+// PROXY_PORT (not the generic PORT) so dev tooling that exports PORT for Vite
+// cannot make both servers fight over the same port.
+const PORT = Number(process.env.PROXY_PORT ?? 8787)
 const FOOTBALL_DATA_API_KEY = process.env.FOOTBALL_DATA_API_KEY?.trim() ?? ''
 const API_FOOTBALL_KEY = process.env.API_FOOTBALL_KEY?.trim() ?? ''
 

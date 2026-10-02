@@ -5,24 +5,53 @@ import { Briefcase, Building2, Trophy } from 'lucide-react'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { BackButton } from '@/components/shared/BackButton'
 import { SkeletonCard } from '@/components/shared/SkeletonCard'
+import { ErrorState, NotFoundState } from '@/components/shared/StatusStates'
 import { Badge } from '@/components/ui/badge'
 import { useLocale } from '@/contexts/LocaleContext'
 import { useFootballData } from '@/hooks/useFootballData'
+import { isLeagueId } from '@/lib/leagues'
 import type { LeagueSummary, Team } from '@/services/types'
 
 export default function CoachDetail() {
   const { t } = useLocale()
-  const { leagueId, teamId } = useParams()
-  const { data: team, isLoading } = useFootballData<Team>('getTeam', {
-    leagueId: leagueId as never,
-    teamId,
-  })
-  const { data: leagueSummary } = useFootballData<LeagueSummary>('getLeagueSummary', {
-    leagueId: leagueId as never,
-  })
+  const params = useParams()
+  const leagueId = isLeagueId(params.leagueId) ? params.leagueId : undefined
+  const teamId = params.teamId
+  const enabled = Boolean(leagueId && teamId)
+  const { data: team, isLoading, error, notFound, refetch } = useFootballData<Team>(
+    'getTeam',
+    { leagueId, teamId },
+    { enabled },
+  )
+  const { data: leagueSummary } = useFootballData<LeagueSummary>('getLeagueSummary', { leagueId }, { enabled })
+
+  if (!enabled || notFound) {
+    return (
+      <PageWrapper>
+        <NotFoundState
+          title={t('teamNotFound')}
+          description={t('teamNotFoundDescription')}
+          backTo={leagueId ? `/${leagueId}` : '/'}
+          backLabel={t(leagueId ? 'backToLeague' : 'goHome')}
+        />
+      </PageWrapper>
+    )
+  }
+
+  if (error && !team) {
+    return (
+      <PageWrapper>
+        <ErrorState onRetry={refetch} />
+      </PageWrapper>
+    )
+  }
 
   if (isLoading || !team) {
-    return <SkeletonCard />
+    return (
+      <PageWrapper>
+        <SkeletonCard />
+      </PageWrapper>
+    )
   }
 
   const standing = leagueSummary?.standings.find((item) => item.team.id === team.id)

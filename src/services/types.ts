@@ -75,9 +75,10 @@ export interface Player {
   position: 'GK' | 'DF' | 'MF' | 'FW'
   nationality: string
   flag: string
-  age: number
-  heightCm: number
-  weightKg: number
+  /** Bio fields are optional: never invent them when the source omits them. */
+  age?: number
+  heightCm?: number
+  weightKg?: number
   photo: string
   /**
    * Optional ordered list of additional photo URLs to attempt before falling
@@ -85,8 +86,9 @@ export interface Player {
    * so a single broken upstream URL never breaks the UI.
    */
   photoSources?: string[]
-  marketValueEurCents: number
-  contractUntil: string
+  /** No free source provides market values or contracts; only set when known. */
+  marketValueEurCents?: number
+  contractUntil?: string
   stats: PlayerStats
 }
 
