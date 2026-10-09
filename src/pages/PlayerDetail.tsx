@@ -37,7 +37,7 @@ function FavoriteHeartButton({ player }: { player: Player }) {
       aria-pressed={isFavorite}
       aria-label={isFavorite ? t('unfollowPlayer') : t('followPlayer')}
       title={isFavorite ? t('unfollowPlayer') : t('followPlayer')}
-      className={`group inline-flex h-10 w-10 items-center justify-center rounded-full border transition ${
+      className={`group inline-flex h-11 w-11 items-center justify-center rounded-full border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
         isFavorite
           ? 'border-danger/40 bg-danger/10 text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.35)]'
           : 'border-border/60 bg-background/40 text-muted-foreground hover:text-rose-400 hover:border-danger/40'
@@ -239,7 +239,7 @@ export default function PlayerDetail() {
                 {team ? (
                   <Link
                     to={`/${team.leagueId}/team/${team.id}`}
-                    className="inline-flex items-center gap-2 font-medium text-foreground hover:text-primary"
+                    className="inline-flex min-h-10 items-center gap-2 font-medium text-foreground hover:text-primary"
                   >
                     {t('openFullTeamContext')}
                     <ArrowRight className="h-4 w-4" />

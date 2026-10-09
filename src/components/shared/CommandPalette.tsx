@@ -11,6 +11,7 @@ import { MIN_SEARCH_LENGTH, useFootballSearch } from '@/hooks/queries/search'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
 import { getLeague, leagues } from '@/lib/leagues'
+import { exploreNav, toolsNav, worldCupNav } from '@/app/navigation'
 import { createPlayerAvatar, createTeamCrest, initialsFromName } from '@/lib/visualAssets'
 
 export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
@@ -38,14 +39,11 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
   )
 
   const navigation = useMemo(
-    () => [
-      { to: '/live', label: t('liveScores') },
-      { to: '/players', label: t('playersExplorer') },
-      { to: '/teams', label: t('teamsExplorer') },
-      { to: '/compare', label: t('comparePlayers') },
-      { to: '/world-cup-2026', label: t('worldCup2026') },
-      { to: '/settings', label: t('settings') },
-    ],
+    () =>
+      [...exploreNav, ...worldCupNav, ...toolsNav].map((item) => ({
+        to: item.to,
+        label: item.to.startsWith('/world-cup-2026') ? `${t('worldCup2026')} · ${t(item.labelKey)}` : t(item.labelKey),
+      })),
     [t],
   )
 
@@ -64,7 +62,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
         if (!next) setQuery('')
       }}
     >
-      <DialogContent className="overflow-hidden border-border/70 bg-background p-0">
+      <DialogContent className="top-[max(1rem,8dvh)] translate-y-0 overflow-hidden border-border/70 bg-background p-0 sm:top-1/2 sm:-translate-y-1/2">
         <div className="sr-only">
           <DialogTitle>{t('commandTitle')}</DialogTitle>
           <DialogDescription>{t('commandDescription')}</DialogDescription>

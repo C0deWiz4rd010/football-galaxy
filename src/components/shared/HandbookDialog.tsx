@@ -45,7 +45,8 @@ function Tip({ tipLabel, children }: { tipLabel: string; children: React.ReactNo
   )
 }
 
-export function HandbookDialog() {
+/** Controlled when `open`/`onOpenChange` are passed (mobile menu); otherwise owns its trigger. */
+export function HandbookDialog({ open, onOpenChange, showTrigger = true }: { open?: boolean; onOpenChange?: (open: boolean) => void; showTrigger?: boolean } = {}) {
   const { t } = useLocale()
   const sections = useMemo(
     () => [
@@ -181,12 +182,14 @@ export function HandbookDialog() {
   const active = sections.find((section) => section.id === activeId) ?? fallback
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label={t('openHandbook')} title={t('handbook')}>
-          <BookOpen className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {showTrigger ? (
+        <DialogTrigger asChild>
+          <Button variant="ghost" size="icon" aria-label={t('openHandbook')} title={t('handbook')}>
+            <BookOpen className="h-5 w-5" aria-hidden />
+          </Button>
+        </DialogTrigger>
+      ) : null}
       <DialogContent className="grid max-w-4xl gap-0 overflow-hidden p-0 sm:grid-cols-[200px_minmax(0,1fr)]">
         <DialogTitle className="sr-only">{t('handbookTitle')}</DialogTitle>
         <nav className="border-b border-border bg-muted/30 p-3 sm:border-b-0 sm:border-r">
@@ -217,7 +220,7 @@ export function HandbookDialog() {
             })}
           </ul>
         </nav>
-        <article className="max-h-[70dvh] overflow-y-auto p-6">{active.render()}</article>
+        <article className="max-h-[60dvh] overflow-y-auto p-5 sm:max-h-[70dvh] sm:p-6">{active.render()}</article>
       </DialogContent>
     </Dialog>
   )

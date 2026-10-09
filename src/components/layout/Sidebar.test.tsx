@@ -23,9 +23,9 @@ describe('Sidebar', () => {
   it('keeps World Cup 2026 in its own navigation group', () => {
     renderSidebar()
 
-    expect(screen.getByText('WM 2026')).toBeTruthy()
-    expect(screen.getByRole('link', { name: /world cup 2026/i }).getAttribute('href')).toBe('/world-cup-2026')
-    expect(screen.getByRole('link', { name: /matches/i }).getAttribute('href')).toBe('/world-cup-2026/matches')
+    expect(screen.getAllByText('WM 2026').length).toBeGreaterThan(1)
+    expect(screen.getByRole('link', { name: /wm 2026/i }).getAttribute('href')).toBe('/world-cup-2026')
+    expect(screen.getByRole('link', { name: /^spiele$/i }).getAttribute('href')).toBe('/world-cup-2026/matches')
     expect(screen.getByText('Ligen')).toBeTruthy()
     expect(screen.getByRole('link', { name: /premier league/i }).getAttribute('href')).toBe('/premier-league')
   })

@@ -2,8 +2,6 @@ import { Suspense, useMemo, useState } from 'react'
 
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-  Link,
-  NavLink,
   Navigate,
   Outlet,
   createBrowserRouter,
@@ -11,15 +9,17 @@ import {
 } from 'react-router-dom'
 
 import { Header } from '@/components/layout/Header'
+import { MobileNavSheet } from '@/components/layout/MobileNavSheet'
 import { MobileTabBar } from '@/components/layout/MobileTabBar'
 import { ProxyHealthBanner } from '@/components/layout/ProxyHealthBanner'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { CommandPalette } from '@/components/shared/CommandPalette'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
+import { HandbookDialog } from '@/components/shared/HandbookDialog'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { Toaster } from '@/components/ui/toast'
 import { useLocale } from '@/contexts/LocaleContext'
-import { getLeague, leagues } from '@/lib/leagues'
+import { getLeague } from '@/lib/leagues'
 import { lazyWithReload } from '@/lib/lazyWithReload'
 import { pageMotion } from '@/shared/motion/tokens'
 
@@ -85,8 +85,8 @@ function getLayoutTitle(pathname: string, t: (key: string) => string) {
 
   if (segments[0] === 'world-cup-2026') {
     return {
-      title: 'World Cup 2026',
-      subtitle: 'Football Galaxy / Tournament command center',
+      title: t('worldCup2026'),
+      subtitle: t('worldCupSubtitle'),
       leagueId: undefined,
     }
   }
@@ -159,86 +159,26 @@ function getLayoutTitle(pathname: string, t: (key: string) => string) {
 function AppLayout() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [handbookOpen, setHandbookOpen] = useState(false)
   const location = useLocation()
   const { t } = useLocale()
   const layout = useMemo(() => getLayoutTitle(location.pathname, t), [location.pathname, t])
 
   return (
     <>
+      <a
+        href="#main"
+        className="sr-only z-toast rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground focus:not-sr-only focus:fixed focus:left-3 focus:top-3"
+      >
+        {t('skipToContent')}
+      </a>
       <Sidebar />
       <Header
         title={layout.title}
         subtitle={layout.subtitle}
         onSearch={() => setSearchOpen(true)}
-        onMenu={() => setMobileMenuOpen((value) => !value)}
       />
-      {mobileMenuOpen ? (
-        <div
-          className="fixed inset-0 z-modal bg-black/40 md:hidden"
-          onClick={() => setMobileMenuOpen(false)}
-        >
-          <div
-            className="absolute inset-x-4 top-20 rounded-xl border border-border/55 bg-background/95 p-4 shadow-fg-4 backdrop-blur"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <nav className="space-y-2">
-              <Link
-                to="/live"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-md border border-live/30 bg-live/10 px-4 py-3 text-sm font-medium text-live"
-              >
-                {t('liveScores')}
-              </Link>
-              <Link
-                to="/players"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-md border border-border/55 px-4 py-3 text-sm font-medium"
-              >
-                {t('playersExplorer')}
-              </Link>
-              <Link
-                to="/teams"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-md border border-border/55 px-4 py-3 text-sm font-medium"
-              >
-                {t('teamsExplorer')}
-              </Link>
-              <Link
-                to="/world-cup-2026"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-md border border-warning/30 bg-warning/10 px-4 py-3 text-sm font-medium text-warning-fg"
-              >
-                World Cup 2026
-              </Link>
-              {leagues.map((item) => (
-                <NavLink
-                  key={item.id}
-                  to={`/${item.id}`}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block rounded-md border border-border/55 px-4 py-3 text-sm font-medium"
-                >
-                  {item.name}
-                </NavLink>
-              ))}
-              <Link
-                to="/compare"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-md border border-border/55 px-4 py-3 text-sm font-medium"
-              >
-                {t('comparePlayers')}
-              </Link>
-              <Link
-                to="/settings"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-md border border-border/55 px-4 py-3 text-sm font-medium"
-              >
-                {t('settings')}
-              </Link>
-            </nav>
-          </div>
-        </div>
-      ) : null}
-      <main className="mx-auto max-w-shell px-4 pb-[calc(var(--fg-tabbar-clearance)+1rem)] pt-5 md:ml-shell md:px-6 md:pb-12 lg:px-8">
+      <main id="main" tabIndex={-1} className="outline-none mx-auto max-w-shell px-4 pb-[calc(var(--fg-tabbar-clearance)+1rem)] pt-5 md:ml-shell md:px-6 md:pb-12 lg:px-8">
         <ErrorBoundary key={location.pathname} title={t('routeErrorTitle')}>
           <Suspense fallback={<LoadingGrid />}>
             <AnimatePresence mode="wait" initial={false}>
@@ -255,7 +195,9 @@ function AppLayout() {
           </Suspense>
         </ErrorBoundary>
       </main>
-      <MobileTabBar />
+      <MobileTabBar onSearch={() => setSearchOpen(true)} onMenu={() => setMobileMenuOpen(true)} menuOpen={mobileMenuOpen} />
+      <MobileNavSheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen} onOpenHandbook={() => setHandbookOpen(true)} />
+      <HandbookDialog open={handbookOpen} onOpenChange={setHandbookOpen} showTrigger={false} />
       <CommandPalette open={searchOpen} onOpenChange={setSearchOpen} />
       <ProxyHealthBanner />
       <Toaster />

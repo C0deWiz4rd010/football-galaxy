@@ -219,7 +219,7 @@ function CompareHeroCard({ player, team }: { player: Player; team?: Team }) {
       ) : null}
       <Link
         to={`/${player.leagueId}/player/${player.id}`}
-        className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary"
+        className="mt-4 inline-flex min-h-10 items-center gap-2 text-sm font-medium text-foreground hover:text-primary"
       >
         {t('openProfile')}
         <ArrowRight className="h-4 w-4" aria-hidden />

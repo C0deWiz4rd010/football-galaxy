@@ -1,62 +1,67 @@
-import { RadioTower, Trophy } from 'lucide-react'
-import { NavLink } from 'react-router-dom'
-import { AssetImage } from '@/components/shared/AssetImage'
-import { useLocale } from '@/contexts/LocaleContext'
-import { useLeagueLogos } from '@/hooks/useLeagueLogos'
-import { leagues } from '@/lib/leagues'
-import { cn } from '@/lib/utils'
-import { createLeagueLogo } from '@/lib/visualAssets'
+import { useEffect } from 'react'
 
-export function MobileTabBar() {
+import { Menu, RadioTower, Search, Trophy } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
+
+import { readLastLeague, rememberLeague } from '@/app/navigation'
+import { useLocale } from '@/contexts/LocaleContext'
+import { getLeague, isLeagueId } from '@/lib/leagues'
+import { cn } from '@/lib/utils'
+
+const tabClass = (isActive: boolean, activeTone = 'text-foreground') =>
+  cn(
+    'relative flex min-w-0 flex-col items-center justify-center gap-0.5 rounded-lg text-2xs font-medium transition-colors duration-fg-fast',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+    isActive ? cn('bg-foreground/8', activeTone) : 'text-muted-foreground hover:text-foreground',
+  )
+
+function TabButton({ label, icon, onClick, pressed }: { label: string; icon: ReactNode; onClick: () => void; pressed?: boolean }) {
+  return (
+    <button type="button" onClick={onClick} aria-expanded={pressed} className={tabClass(Boolean(pressed))}>
+      {icon}
+      <span className="max-w-full truncate">{label}</span>
+    </button>
+  )
+}
+
+/**
+ * Bottom navigation on phones: five targets (league, live, World Cup, search,
+ * menu). The league tab follows the league the user is in or last visited;
+ * every other destination lives in the menu sheet.
+ */
+export function MobileTabBar({ onSearch, onMenu, menuOpen }: { onSearch: () => void; onMenu: () => void; menuOpen: boolean }) {
   const { t } = useLocale()
-  const leagueLogos = useLeagueLogos()
+  const { pathname } = useLocation()
+  const routeLeague = pathname.split('/')[1]
+  const currentLeague = isLeagueId(routeLeague) ? routeLeague : undefined
+
+  useEffect(() => {
+    if (currentLeague) rememberLeague(currentLeague)
+  }, [currentLeague])
+
+  const league = getLeague(currentLeague ?? readLastLeague() ?? undefined)
 
   return (
     <nav
       data-mobile-nav
-      className="surface-panel fixed bottom-[calc(var(--fg-shell-gutter)+env(safe-area-inset-bottom,0px))] left-shell-gutter right-shell-gutter z-nav grid h-tabbar grid-cols-7 rounded-xl px-1 md:hidden"
-      style={{ bottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+      aria-label={t('mobileNavigation')}
+      className="surface-panel fixed bottom-[calc(var(--fg-shell-gutter)+env(safe-area-inset-bottom,0px))] left-shell-gutter right-shell-gutter z-nav grid h-tabbar grid-cols-5 gap-1 rounded-xl p-1 md:hidden"
     >
-      <NavLink
-        to="/world-cup-2026"
-        className={({ isActive }) =>
-          cn(
-            'flex flex-col items-center justify-center rounded-lg text-2xs text-muted-foreground transition duration-150',
-            isActive && 'bg-warning/10 font-semibold text-warning-fg',
-          )
-        }
-      >
-        <Trophy className="h-4 w-4 text-warning-fg" />
-        <span>WM</span>
+      <NavLink to={`/${league.id}`} className={({ isActive }) => tabClass(isActive || Boolean(currentLeague))}>
+        <img src={league.logo} alt="" width={20} height={20} decoding="async" className="h-5 w-5 rounded-xs bg-white/90 object-contain p-px" />
+        <span className="max-w-full truncate">{league.abbreviation}</span>
       </NavLink>
-      {leagues.map((league) => (
-        <NavLink
-          key={league.id}
-          to={`/${league.id}`}
-          className={({ isActive }) =>
-            cn(
-              'flex flex-col items-center justify-center rounded-lg text-2xs text-muted-foreground transition duration-150',
-              isActive && 'bg-primary/10 font-semibold',
-            )
-          }
-          style={({ isActive }) => ({ color: isActive ? league.color : undefined })}
-        >
-          <AssetImage src={leagueLogos[league.id] ?? league.logo} fallbackSrc={createLeagueLogo(league.abbreviation, league.color, league.name)} alt={league.name} className="h-5 w-5 rounded bg-white/90 object-contain p-[1px]" loading="lazy" />
-          <span className="mt-0.5">{league.abbreviation}</span>
-        </NavLink>
-      ))}
-      <NavLink
-        to="/live"
-        className={({ isActive }) =>
-          cn(
-            'flex flex-col items-center justify-center rounded-lg text-2xs text-muted-foreground transition duration-150',
-            isActive && 'bg-live/10 font-semibold text-live',
-          )
-        }
-      >
-        <RadioTower className="h-4 w-4 text-live" />
+      <NavLink to="/live" className={({ isActive }) => tabClass(isActive, 'text-live')}>
+        <RadioTower className="h-5 w-5" aria-hidden />
         <span>{t('live')}</span>
       </NavLink>
+      <NavLink to="/world-cup-2026" className={({ isActive }) => tabClass(isActive, 'text-warning-fg')}>
+        <Trophy className="h-5 w-5" aria-hidden />
+        <span>{t('worldCupShort')}</span>
+      </NavLink>
+      <TabButton label={t('search')} icon={<Search className="h-5 w-5" aria-hidden />} onClick={onSearch} />
+      <TabButton label={t('more')} icon={<Menu className="h-5 w-5" aria-hidden />} onClick={onMenu} pressed={menuOpen} />
     </nav>
   )
 }

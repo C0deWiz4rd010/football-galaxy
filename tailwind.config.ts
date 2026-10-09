@@ -57,6 +57,7 @@ const config = {
         info: { DEFAULT: 'hsl(var(--info))', fg: 'hsl(var(--info-fg))' },
         danger: { DEFAULT: 'hsl(var(--destructive))', fg: 'hsl(var(--danger-fg))' },
         live: 'hsl(var(--live))',
+        result: { win: 'hsl(var(--result-win))', draw: 'hsl(var(--result-draw))', loss: 'hsl(var(--result-loss))' },
         zone: { ucl: 'hsl(var(--zone-ucl))', rel: 'hsl(var(--zone-rel))' },
       },
       // The one radius scale (see tokens.css).

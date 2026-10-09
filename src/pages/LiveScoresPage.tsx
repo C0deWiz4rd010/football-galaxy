@@ -36,7 +36,7 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={cn(
-        'shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition',
+        'inline-flex min-h-10 shrink-0 items-center rounded-full border px-4 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         active
           ? 'border-primary/50 bg-primary/12 text-foreground'
           : 'border-border/60 bg-background/40 text-muted-foreground hover:text-foreground',

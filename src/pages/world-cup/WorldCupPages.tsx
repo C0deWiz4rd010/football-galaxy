@@ -18,7 +18,6 @@ import { isNotFoundError } from '@/services/errors'
 import {
   MatchMetaGrid,
   TeamScore,
-  WorldCupBracketBoard,
   WorldCupBracketPreview,
   WorldCupDataStatus,
   WorldCupEmptyState,
@@ -49,6 +48,7 @@ import {
   filterWorldCupFixtures,
   groupWorldCupStandings,
 } from '@/features/world-cup/utils'
+import { WorldCupBracketBoard } from '@/features/world-cup/BracketBoard'
 import { MatchStatsChart } from '@/features/world-cup/charts'
 import { formatDateTime } from '@/lib/utils'
 import type {
@@ -75,6 +75,9 @@ export function WorldCupOverviewPage() {
   const upcomingList = [...data.liveMatches, ...data.upcomingMatches].filter(
     (fixture) => fixture.id !== featuredMatch?.id,
   )
+  // Finished tournament: show the latest results instead of an empty schedule.
+  const scheduleMode = upcomingList.length ? 'upcoming' : 'recent'
+  const scheduleList = upcomingList.length ? upcomingList : data.recentMatches.filter((fixture) => fixture.id !== featuredMatch?.id)
 
   return (
     <WorldCupShell>
@@ -90,7 +93,7 @@ export function WorldCupOverviewPage() {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1.15fr_0.95fr_0.9fr]">
         <WorldCupFeatureMatch fixture={featuredMatch} />
-        <WorldCupUpcomingCard fixtures={upcomingList} />
+        <WorldCupUpcomingCard fixtures={scheduleList} mode={scheduleMode} />
         <WorldCupTournamentStatus
           endsAt={data.tournament.endsAt}
           hostCitiesCount={data.tournament.hostCities.length}
@@ -332,7 +335,7 @@ export function WorldCupMatchDetailPage() {
   return (
     <WorldCupShell>
       <WorldCupPageTitle
-        description={`${data.round} · ${data.city ?? 'Host city pending'} · ${formatDateTime(data.utcDate)}`}
+        description={[data.round, data.city, formatDateTime(data.utcDate)].filter(Boolean).join(' · ')}
         icon={<Goal className="size-5" />}
         quality={data.quality}
         title={`${data.homeTeam.name} vs ${data.awayTeam.name}`}

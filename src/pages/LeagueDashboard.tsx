@@ -14,6 +14,7 @@ import {
 import { FormTableCard } from '@/components/league/FormTableCard'
 import { LeagueTable } from '@/components/league/LeagueTable'
 import { MatchOfTheDay } from '@/components/league/MatchOfTheDay'
+import { MatchweekCard } from '@/components/league/MatchweekCard'
 import { TeamStatsCard } from '@/components/league/TeamStatsCard'
 import { TopAssistsCard } from '@/components/league/TopAssistsCard'
 import { TopScorersCard } from '@/components/league/TopScorersCard'
@@ -69,17 +70,17 @@ function SummaryStat({
   tone: keyof typeof statTone
 }) {
   return (
-    <div className="surface-soft flex items-center gap-3 rounded-lg p-3">
-      <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-md', statTone[tone].icon)}>
-        {icon}
+    <div className="surface-soft min-w-0 rounded-lg p-3">
+      <div className="flex min-w-0 items-center gap-2">
+        <span aria-hidden className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-sm [&_svg]:h-3.5 [&_svg]:w-3.5', statTone[tone].icon)}>
+          {icon}
+        </span>
+        <p className="truncate text-2xs uppercase tracking-eyebrow text-muted-foreground">{label}</p>
       </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">{label}</p>
-        <p className="mt-0.5 truncate text-sm font-semibold leading-tight">{team}</p>
+      <div className="mt-2 flex items-end justify-between gap-2">
+        <p className="min-w-0 truncate text-sm font-semibold leading-tight">{team}</p>
+        <p className={cn('shrink-0 font-mono text-lg font-bold leading-none tabular-nums', statTone[tone].text)}>{stat}</p>
       </div>
-      <p className={cn('shrink-0 font-mono text-lg font-bold tabular-nums', statTone[tone].text)}>
-        {stat}
-      </p>
     </div>
   )
 }
@@ -206,7 +207,7 @@ export default function LeagueDashboard() {
             </div>
           </div>
 
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-4 grid grid-cols-2 gap-2 xl:grid-cols-4">
             <SummaryStat
               label={t('leader')}
               team={leader ? leader.team.shortName : t('noStandings')}
@@ -288,7 +289,7 @@ export default function LeagueDashboard() {
                   </div>
                   <Link
                     to={`/${spotlightPlayer.leagueId}/player/${spotlightPlayer.id}`}
-                    className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary"
+                    className="mt-3 inline-flex min-h-10 items-center gap-2 text-sm font-medium text-foreground hover:text-primary"
                   >
                     {t('openDetails')}
                     <ArrowRight className="h-4 w-4" />
@@ -320,6 +321,10 @@ export default function LeagueDashboard() {
               </p>
             </div>
           </aside>
+        </StaggerGridItem>
+
+        <StaggerGridItem>
+          <MatchweekCard matches={seasonMatches} />
         </StaggerGridItem>
 
         <StaggerGridItem className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(280px,0.8fr)]">

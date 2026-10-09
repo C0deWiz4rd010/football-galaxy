@@ -235,3 +235,19 @@ Zielbreiten testen: 360, 390, 768, 1024, 1280, 1440, 1920 + Landscape-Phone.
 - WM-Gruppentabelle läuft in schmalen Karten horizontal über (Phase 4H).
 - Team-Spotlight wählt teils Torhüter ohne Output (Form-Score-Gewichtung) → Phase 10 prüfen.
 - Bilder blenden per Opacity ein (auch LCP-Bilder) → Phase 5E.
+
+### Phase 4 – erledigt (2026-10-09)
+- **Navigation aus einer Quelle** (`src/app/navigation.ts`): Sidebar, Mobile-Menü, Tab-Bar und Befehlspalette rendern dieselben Einträge (vorher 4 Kopien, WM-Unterseiten nur englisch).
+- **A** Mobile-Menü als Radix-Bottom-Sheet (`MobileNavSheet`): Fokusfalle, Escape, Scroll-Lock, `max-h-[88dvh]` mit eigenem Scroll, aktive Zustände, Ligen-Raster, Galaxy-Link, Theme/Sprache/Handbuch, Favoriten.
+- **B** Tab-Bar: 5 statt 7 Ziele (aktuelle/letzte Liga, Live, WM, Suche, Mehr), Safe-Area, übersetzt, kontraststarker Aktiv-Zustand.
+- **C** Header: auf dem Handy nur der Seitentitel (Aktionen in Tab-Bar/Sheet); Tablet ohne Sprachschalter/Suchtext; Kürzel je OS (⌘K / Strg K), Safe-Area oben; kein Hamburger-Duplikat.
+- **D** Sidebar: eigener Scrollbereich (kein Abschneiden auf kleinen Höhen), Favoriten als `FavoritesList` mit 36-px-Entfernen-Buttons, sichtbar bei Fokus und auf Touch-Geräten.
+- **E** `LeagueTable`: nur eine Variante pro Viewport (`useMediaQuery`); Desktop-Zeilen sind echte Links (Stretched Link), keine verschachtelten Buttons, md blendet S/U/N/Tore aus; Handy-Liste mit Zonenbalken, Favorit, Form; keine `layout`-Animationen. Form-Chips mit Buchstaben (S/U/N bzw. W/D/L) und einer zusammenfassenden Beschreibung statt Farbpunkten mit Tooltip pro Punkt.
+- **F** `SquadTable`: Zeilen verlinken aufs Profil, beschriftete Suche (`useDeferredValue`), `aria-sort`, Caption, übersetzt, Tablet blendet Nebenspalten aus.
+- **G** Galaxy-Karte: Regionen als Chips (Handy) bzw. Liste (lg), flexibles Knoten-Raster, Detail als Bottom-Sheet bzw. Sticky-Panel ab 1280 px, kein doppeltes Padding, Theme-Farben.
+- **H** WM: K.-o.-Baum mit Runden-Tabs < 1440 px statt 960-px-Scroller, Sieger hervorgehoben, Spiele verlinkt; Gruppentabellen mit `table-fixed` (kein Überlauf), Caption/`scope`, Qualifikation nicht nur per Farbe; redundantes Punkte-Diagramm pro Gruppe entfernt. Archiv: „Letzte Ergebnisse“ statt leerer „Upcoming“-Liste, kein „Group TBD“/„Host city pending“, „FT“ statt Rohstatus.
+- **I** Dialoge: max. 90dvh mit Scroll, fast volle Breite auf Handys, 44-px-Schließen, übersetztes Label; Befehlspalette oben auf Handys (Tastatur); Handbuch steuerbar.
+- **J** Vergleichen ist eine Inline-Aktion statt schwebendem Button über dem Inhalt.
+- **K** Touch-Ziele ≥ 40 px (Live-Filter, Tabs, Spielplan-Links, Einzel-Links, Favorit 44 px); `dvh` überall.
+- **Neu: Spielplan & Ergebnisse** (`MatchweekCard`, `src/lib/matchweeks.ts`) ersetzt den entfernten MatchdaySwiper: Runden als Zeit-Cluster der echten Vereinsspielpläne (die Feeds liefern keine Spieltagsnummern), mit Datum beschriftet, blätterbar, nach Tagen gruppiert (+Test).
+- Geprüft: kein horizontaler Überlauf auf 14 Routen bei 375 px; Tablet 768 px und Desktop 1440 px visuell.

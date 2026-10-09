@@ -1,7 +1,7 @@
-import { Bar, BarChart, CartesianGrid, Cell, LabelList, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 import { axisTick, chartColors, chartPalette, legendStyle, tooltipProps } from '@/components/charts/chartTheme'
-import type { WorldCupGroupStanding, WorldCupMatchStatistic, WorldCupSquadPlayer } from '@/services/worldCup/types'
+import type { WorldCupMatchStatistic, WorldCupSquadPlayer } from '@/services/worldCup/types'
 
 function toNumber(value: string | number): number {
   if (typeof value === 'number') return value
@@ -70,41 +70,6 @@ export function MatchStatsChart({
           <Legend {...legendProps} verticalAlign="top" />
           <Bar name={homeName} dataKey="home" fill={chartColors.primary} radius={[0, 4, 4, 0]} maxBarSize={12} />
           <Bar name={awayName} dataKey="away" fill={chartColors.secondary} radius={[0, 4, 4, 0]} maxBarSize={12} />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  )
-}
-
-const hintColor = {
-  'top-two': chartColors.secondary,
-  'best-third-watch': chartColors.warning,
-  pending: chartColors.muted,
-} as const
-
-/** Group points as a colour-coded horizontal bar chart by qualification zone. */
-export function GroupPointsChart({ rows }: { rows: WorldCupGroupStanding[] }) {
-  const data = rows.map((row) => ({
-    name: row.team.placeholder ? 'Pending' : row.team.code || row.team.name,
-    points: row.points,
-    hint: row.qualificationHint,
-  }))
-
-  if (!data.length) return null
-
-  return (
-    <div role="img" aria-label="Group points by qualification zone">
-      <ResponsiveContainer width="100%" height={Math.max(120, data.length * 30 + 24)}>
-        <BarChart data={data} layout="vertical" margin={{ left: 0, right: 28 }}>
-          <XAxis type="number" allowDecimals={false} hide />
-          <YAxis type="category" dataKey="name" tick={categoryTick} width={52} axisLine={false} tickLine={false} />
-          <Tooltip {...tooltipProps} />
-          <Bar name="Points" dataKey="points" radius={[0, 5, 5, 0]} maxBarSize={16}>
-            {data.map((row) => (
-              <Cell key={row.name} fill={hintColor[row.hint]} />
-            ))}
-            <LabelList dataKey="points" position="right" fill={chartColors.foreground} fontSize={12} fontWeight={700} />
-          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>

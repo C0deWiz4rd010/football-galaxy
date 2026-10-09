@@ -45,7 +45,7 @@ export function PlayerHeader({ player, team, action, backButton }: { player: Pla
           {team ? (
             <Link
               to={`/${team.leagueId}/team/${team.id}`}
-              className="mt-2 inline-flex items-center gap-2 text-sm font-medium hover:text-primary"
+              className="mt-2 inline-flex min-h-10 items-center gap-2 text-sm font-medium hover:text-primary"
             >
               <AssetImage src={team.crest} fallbackSrc={[...getCrestSources(team), createTeamCrest(team.shortName, team.primaryColor, team.secondaryColor, 0)]} alt={team.name} className="h-8 w-8 rounded object-cover" loading="lazy" />
               <span>{team.name}</span>

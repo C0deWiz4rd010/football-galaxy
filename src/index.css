@@ -47,6 +47,11 @@
     --info-fg: 212 85% 36%;
     --danger-fg: 350 75% 38%;
 
+    /* Result chips (same in both modes; white/black text >= 4.5:1). */
+    --result-win: 152 68% 28%;
+    --result-draw: 42 96% 56%;
+    --result-loss: 355 72% 44%;
+
     /* Table zones: Champions League places and relegation. */
     --zone-ucl: 217 91% 58%;
     --zone-rel: 0 80% 58%;

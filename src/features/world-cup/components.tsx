@@ -33,7 +33,7 @@ import type {
   WorldCupSquadPlayer,
   WorldCupTeam,
 } from '@/services/worldCup/types'
-import { GroupPointsChart, MatchStatePulse, SquadPositionChart } from './charts'
+import { MatchStatePulse, SquadPositionChart } from './charts'
 import { defaultWorldCupFilters, uniqueOptions, uniqueTeamOptions } from './utils'
 
 const worldCupNavItems = [
@@ -165,7 +165,7 @@ export function WorldCupPageTitle({
       </div>
       <div className="flex shrink-0 items-center gap-3">
         {quality ? <WorldCupQualityBadge quality={quality} /> : null}
-        <Link to="/world-cup-2026" className="inline-flex items-center gap-2 text-sm font-medium text-primary">
+        <Link to="/world-cup-2026" className="inline-flex min-h-10 items-center gap-2 text-sm font-medium text-primary">
           World Cup hub
           <ChevronRight className="size-4" />
         </Link>
@@ -188,7 +188,7 @@ export function WorldCupSectionNav() {
             end={item.to === '/world-cup-2026'}
             className={({ isActive }) =>
               cn(
-                'min-w-max rounded-md px-2.5 py-2 text-xs font-medium text-muted-foreground transition hover:bg-foreground/8 hover:text-foreground sm:px-3.5 sm:text-sm',
+                'inline-flex min-h-10 min-w-max items-center rounded-md px-3 text-sm font-medium text-muted-foreground transition hover:bg-foreground/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-3.5',
                 isActive &&
                   'bg-amber-300 text-amber-950 shadow-fg-2 hover:bg-amber-300 hover:text-amber-950',
               )
@@ -279,13 +279,13 @@ export function WorldCupHero({
             <Badge variant="soft" className="gap-1.5 border-success/50 bg-success/12 text-success-fg">
               <span className="relative flex size-2">
                 <span className="absolute inline-flex size-full animate-ping rounded-full bg-success/70" />
-                <span className="relative inline-flex size-2 rounded-full bg-emerald-300" />
+                <span className="relative inline-flex size-2 rounded-full bg-success" />
               </span>
               {liveCount} live {liveCount === 1 ? 'match' : 'matches'}
             </Badge>
           ) : (
             <Badge variant="outline" className="gap-1.5">
-              <span className="size-2 rounded-full bg-sky-300" />
+              <span className="size-2 rounded-full bg-info" />
               No live matches
             </Badge>
           )}
@@ -355,7 +355,7 @@ export function WorldCupTournamentStatus({
           variant={phase.active ? 'soft' : 'outline'}
           className={cn('gap-1.5', phase.active && 'border-success/50 bg-success/12 text-success-fg')}
         >
-          <span className={cn('size-1.5 rounded-full', phase.active ? 'bg-emerald-300' : 'bg-sky-300')} />
+          <span className={cn('size-1.5 rounded-full', phase.active ? 'bg-success' : 'bg-info')} />
           {phase.label}
         </Badge>
       </div>
@@ -453,7 +453,7 @@ export function WorldCupFeatureMatch({ fixture }: { fixture?: WorldCupFixture })
           <span
             className={cn(
               'size-2 rounded-full',
-              isLive ? 'bg-emerald-300 shadow-[0_0_18px_rgba(52,211,153,0.65)]' : 'bg-sky-300',
+              isLive ? 'bg-success shadow-[0_0_14px_hsl(var(--success)/0.6)]' : 'bg-info',
             )}
           />
           <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">
@@ -461,7 +461,7 @@ export function WorldCupFeatureMatch({ fixture }: { fixture?: WorldCupFixture })
           </p>
         </div>
         <Badge variant={isLive ? 'soft' : 'outline'} className={isLive ? 'bg-success/15 text-success-fg' : undefined}>
-          {isLive ? `${fixture.elapsed ?? 0}'` : fixture.status}
+          {isLive ? `${fixture.elapsed ?? 0}'` : isFinished ? 'FT' : formatDate(fixture.utcDate)}
         </Badge>
       </div>
       <p className="relative mt-1 truncate text-sm font-medium text-muted-foreground">{fixture.round}</p>
@@ -472,7 +472,7 @@ export function WorldCupFeatureMatch({ fixture }: { fixture?: WorldCupFixture })
           <p className="font-mono text-4xl font-bold tabular-nums">
             {fixture.homeScore ?? '-'}:{fixture.awayScore ?? '-'}
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">{fixture.city ?? 'Host city pending'}</p>
+          {fixture.city ? <p className="mt-1 text-xs text-muted-foreground">{fixture.city}</p> : null}
         </div>
         <FeaturedTeam team={fixture.awayTeam} align="right" />
       </div>
@@ -480,11 +480,11 @@ export function WorldCupFeatureMatch({ fixture }: { fixture?: WorldCupFixture })
       <div className="relative mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-3 text-sm">
         <div className="flex flex-wrap items-center gap-3 text-muted-foreground">
           <span>{formatDateTime(fixture.utcDate)}</span>
-          <span>{fixture.venue ?? 'Venue pending'}</span>
+          {fixture.venue ? <span>{fixture.venue}</span> : null}
         </div>
         <Link
           to={`/world-cup-2026/match/${fixture.apiFootballId ?? fixture.id}`}
-          className="inline-flex items-center gap-2 font-medium text-primary"
+          className="inline-flex min-h-10 items-center gap-2 font-medium text-primary"
         >
           {isLive ? 'View live match center' : 'Open match center'}
           <ChevronRight className="size-4" />
@@ -500,19 +500,20 @@ function FeaturedTeam({ align, team }: { align: 'left' | 'right'; team: WorldCup
       <TeamFlag team={team} className="h-10 w-14" />
       <div className="min-w-0">
         <p className="truncate text-lg font-semibold">{team.placeholder ? 'Qualifier pending' : team.name}</p>
-        <p className="text-xs text-muted-foreground">Group {team.group ?? 'TBD'}</p>
+        {team.group ? <p className="text-xs text-muted-foreground">Group {team.group}</p> : null}
       </div>
     </div>
   )
 }
 
-export function WorldCupUpcomingCard({ fixtures }: { fixtures: WorldCupFixture[] }) {
+/** Next matches; once the tournament is over (archive) the latest results instead. */
+export function WorldCupUpcomingCard({ fixtures, mode = 'upcoming' }: { fixtures: WorldCupFixture[]; mode?: 'upcoming' | 'recent' }) {
   return (
     <section className="stat-card flex h-full flex-col rounded-xl p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">Schedule scan</p>
-          <h2 className="text-base font-semibold tracking-tight">Upcoming matches</h2>
+          <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">{mode === 'recent' ? 'Archive' : 'Schedule scan'}</p>
+          <h2 className="text-base font-semibold tracking-tight">{mode === 'recent' ? 'Latest results' : 'Upcoming matches'}</h2>
         </div>
         <Link to="/world-cup-2026/matches" className="inline-flex items-center gap-1 text-sm font-medium text-primary">
           View all
@@ -565,6 +566,7 @@ function TeamRowLine({ team, score }: { team: WorldCupTeam; score?: number }) {
 
 export function WorldCupMatchCard({ fixture, compact = false }: { fixture: WorldCupFixture; compact?: boolean }) {
   const isLive = fixture.status === 'LIVE'
+  const isFinished = fixture.status === 'FINISHED'
 
   return (
     <Link
@@ -574,7 +576,7 @@ export function WorldCupMatchCard({ fixture, compact = false }: { fixture: World
       <div className="flex items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant={isLive ? 'soft' : 'outline'} className={isLive ? 'bg-success/15 text-success-fg' : undefined}>
-            {isLive ? `${fixture.elapsed ?? 0}'` : fixture.status}
+            {isLive ? `${fixture.elapsed ?? 0}'` : isFinished ? 'FT' : formatDate(fixture.utcDate)}
           </Badge>
           <span className="truncate text-2xs uppercase tracking-eyebrow text-muted-foreground">{fixture.round}</span>
         </div>
@@ -585,65 +587,78 @@ export function WorldCupMatchCard({ fixture, compact = false }: { fixture: World
         <TeamRowLine team={fixture.awayTeam} score={fixture.awayScore} />
       </div>
       <p className="mt-2 truncate text-xs text-muted-foreground">
-        {fixture.city ?? 'Host city pending'} · {formatDateTime(fixture.utcDate)}
+        {[fixture.city, formatDateTime(fixture.utcDate)].filter(Boolean).join(' · ')}
       </p>
     </Link>
   )
 }
 
+const hintLabel = { 'top-two': 'Top 2', 'best-third-watch': '3rd place', pending: '' } as const
+
+/**
+ * One group's table. Fixed layout so long names truncate instead of pushing
+ * the card wider than its grid column; whole rows are links.
+ */
 export function WorldCupGroupTable({ group, rows }: { group: string; rows: WorldCupGroupStanding[] }) {
   return (
-    <div className="stat-card overflow-hidden rounded-lg">
-      <div className="flex items-center justify-between border-b border-border/60 px-3 py-2.5">
+    <div className="stat-card overflow-hidden rounded-lg p-0">
+      <div className="flex items-center justify-between gap-2 border-b border-border/60 px-3 py-2.5">
         <h2 className="text-sm font-semibold">Group {group}</h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Badge variant="outline" className="border-info/30 text-info-fg">Top 2</Badge>
-          <Badge variant="outline" className="border-warning/30 text-warning-fg">3rd watch</Badge>
+          <Badge variant="outline" className="border-warning/30 text-warning-fg">3rd</Badge>
         </div>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="text-2xs uppercase tracking-eyebrow text-muted-foreground">
-            <tr className="border-b border-border/60">
-              <th className="px-3 py-2 text-left">Team</th>
-              <th className="px-2 py-2 text-right">P</th>
-              <th className="px-2 py-2 text-right">GD</th>
-              <th className="px-3 py-2 text-right">Pts</th>
+      <table className="w-full table-fixed text-sm">
+        <caption className="sr-only">Group {group} standings</caption>
+        <colgroup>
+          <col />
+          <col className="w-9" />
+          <col className="w-11" />
+          <col className="w-12" />
+        </colgroup>
+        <thead className="text-2xs uppercase tracking-eyebrow text-muted-foreground">
+          <tr className="border-b border-border/60">
+            <th scope="col" className="px-3 py-2 text-left font-medium">Team</th>
+            <th scope="col" className="px-1 py-2 text-right font-medium"><abbr title="Played">P</abbr></th>
+            <th scope="col" className="px-1 py-2 text-right font-medium"><abbr title="Goal difference">GD</abbr></th>
+            <th scope="col" className="px-3 py-2 text-right font-medium"><abbr title="Points">Pts</abbr></th>
+          </tr>
+        </thead>
+        <tbody className="tabular-nums">
+          {rows.map((row) => (
+            <tr
+              key={row.id}
+              className={cn(
+                'relative border-b border-border/60 transition-colors last:border-0 focus-within:bg-foreground/5 hover:bg-foreground/5',
+                row.qualificationHint === 'top-two' && 'bg-info/5',
+                row.qualificationHint === 'best-third-watch' && 'bg-warning/5',
+              )}
+            >
+              <td className="px-3 py-2">
+                <Link
+                  to={`/world-cup-2026/team/${row.team.id}`}
+                  className="flex min-w-0 items-center gap-2 after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
+                >
+                  <span className="w-4 shrink-0 font-mono text-xs text-muted-foreground">{row.rank}</span>
+                  <TeamFlag team={row.team} className="h-4 w-6" />
+                  <span className="truncate">{row.team.placeholder ? 'Qualifier pending' : row.team.name}</span>
+                  {row.qualificationHint !== 'pending' ? (
+                    <span
+                      aria-hidden
+                      className={cn('size-1.5 shrink-0 rounded-full', row.qualificationHint === 'top-two' ? 'bg-info' : 'bg-warning')}
+                    />
+                  ) : null}
+                  {hintLabel[row.qualificationHint] ? <span className="sr-only">({hintLabel[row.qualificationHint]})</span> : null}
+                </Link>
+              </td>
+              <td className="px-1 py-2 text-right font-mono">{row.played}</td>
+              <td className="px-1 py-2 text-right font-mono">{row.goalDifference > 0 ? `+${row.goalDifference}` : row.goalDifference}</td>
+              <td className="px-3 py-2 text-right font-mono font-bold">{row.points}</td>
             </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr
-                key={row.id}
-                className={cn(
-                  'border-b border-border/60 last:border-0',
-                  row.qualificationHint === 'top-two' && 'bg-info/5',
-                  row.qualificationHint === 'best-third-watch' && 'bg-warning/5',
-                )}
-              >
-                <td className="px-3 py-2">
-                  <Link to={`/world-cup-2026/team/${row.team.id}`} className="flex items-center gap-2 hover:text-primary">
-                    <span className="w-4 shrink-0 font-mono text-xs text-muted-foreground">{row.rank}</span>
-                    <TeamFlag team={row.team} className="h-4 w-6" />
-                    <span className="truncate">{row.team.placeholder ? 'Qualifier pending' : row.team.name}</span>
-                    {row.qualificationHint === 'top-two' ? <span className="size-1.5 rounded-full bg-sky-300" /> : null}
-                    {row.qualificationHint === 'best-third-watch' ? <span className="size-1.5 rounded-full bg-amber-300" /> : null}
-                  </Link>
-                </td>
-                <td className="px-2 py-2 text-right font-mono">{row.played}</td>
-                <td className="px-2 py-2 text-right font-mono">{row.goalDifference}</td>
-                <td className="px-3 py-2 text-right font-mono font-bold">{row.points}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {rows.length ? (
-        <div className="border-t border-border/60 px-3 pb-3 pt-2">
-          <p className="mb-1 text-2xs uppercase tracking-eyebrow text-muted-foreground">Points</p>
-          <GroupPointsChart rows={rows} />
-        </div>
-      ) : null}
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
@@ -682,9 +697,9 @@ export function WorldCupGroupsPreview({ grouped }: { grouped: Record<string, Wor
                       className={cn(
                         'size-1.5 rounded-full',
                         row.qualificationHint === 'top-two'
-                          ? 'bg-sky-300'
+                          ? 'bg-info'
                           : row.qualificationHint === 'best-third-watch'
-                            ? 'bg-amber-300'
+                            ? 'bg-warning'
                             : 'bg-foreground/20',
                       )}
                     />
@@ -703,61 +718,6 @@ export function WorldCupGroupsPreview({ grouped }: { grouped: Record<string, Wor
         </p>
       )}
     </section>
-  )
-}
-
-export function WorldCupBracketBoard({ rounds }: { rounds: WorldCupBracketRound[] }) {
-  if (!rounds.length) {
-    return (
-      <div className="rounded-xl border border-dashed border-border/60 bg-background/25 p-6 text-center">
-        <div className="mx-auto flex size-11 items-center justify-center rounded-md bg-foreground/10 text-warning-fg">
-          <Trophy className="size-5" />
-        </div>
-        <h2 className="mt-3 text-base font-semibold">The knockout bracket forms after the group stage</h2>
-        <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-          Once the group stage ends, the Round of 32 and every later round will populate here directly from the live feed.
-        </p>
-      </div>
-    )
-  }
-
-  const placeholderMatches = rounds.reduce((total, round) => total + round.matches.filter((match) => match.placeholder).length, 0)
-  const confirmedMatches = rounds.reduce((total, round) => total + round.matches.filter((match) => !match.placeholder).length, 0)
-
-  return (
-    <div className="rounded-xl border border-border/45 bg-background/25 p-2">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-3 px-1 text-xs text-muted-foreground">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline">{rounds.length} rounds</Badge>
-          <Badge variant="outline" className="border-warning/30 text-warning-fg">{placeholderMatches} to be decided</Badge>
-          <Badge variant="outline" className="border-success/30 text-success-fg">{confirmedMatches} confirmed</Badge>
-        </div>
-        <span>Swipe horizontally on small screens</span>
-      </div>
-      <div className="overflow-x-auto pb-2">
-        <div className="grid min-w-[960px] gap-4 xl:grid-cols-5">
-          {rounds.map((round) => (
-            <div key={round.id} className="stat-card rounded-xl p-3">
-              <h2 className="text-sm font-semibold">{round.label}</h2>
-              <div className="mt-3 flex flex-col gap-3">
-                {round.matches.map((match) => (
-                  <div key={match.id} className="surface-soft rounded-md p-2 text-xs">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="truncate font-medium">{match.label}</p>
-                      {match.placeholder ? <Badge variant="outline">TBD</Badge> : null}
-                    </div>
-                    <div className="mt-2 grid gap-1">
-                      <BracketTeamLine team={match.homeTeam} score={match.homeScore} placeholder={match.placeholder} />
-                      <BracketTeamLine team={match.awayTeam} score={match.awayScore} placeholder={match.placeholder} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
   )
 }
 

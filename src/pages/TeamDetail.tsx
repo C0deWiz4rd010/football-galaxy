@@ -241,7 +241,7 @@ export default function TeamDetail() {
                   </div>
                   <Link
                     to={`/${topRatedPlayer.leagueId}/player/${topRatedPlayer.id}`}
-                    className="inline-flex items-center gap-2 text-sm font-medium text-white hover:text-white/80"
+                    className="inline-flex min-h-10 items-center gap-2 text-sm font-medium text-white hover:text-white/80"
                   >
                     {t('openPlayerProfile')}
                     <Zap className="h-4 w-4" />
