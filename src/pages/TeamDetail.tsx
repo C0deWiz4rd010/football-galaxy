@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { Heart, Shield, Sparkles, Users, Zap } from 'lucide-react'
-import { motion } from 'framer-motion'
 import { TeamMatchGoalsChart, TeamPointsTrendChart, TeamProfileRadar } from '@/components/team/TeamCharts'
 import { ResultsTimeline } from '@/components/team/ResultsTimeline'
 import { SquadTable } from '@/components/team/SquadTable'
@@ -117,8 +116,10 @@ export default function TeamDetail() {
                     ),
                   ]}
                   alt={team.name}
-                  className="h-20 w-20 rounded-lg object-cover ring-1 ring-white/20"
-                  loading="lazy"
+                  width={80}
+                  height={80}
+                  priority
+                  className="h-20 w-20 rounded-lg object-contain ring-1 ring-white/20"
                 />
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -140,7 +141,7 @@ export default function TeamDetail() {
                       .flatMap((item, index) => (index ? [<span key={`sep-${index}`} aria-hidden> · </span>, item] : [item]))}
                   </p>
                 </div>
-                <motion.div whileTap={{ scale: 1.14 }}>
+                <div className="fg-press">
                   <Button
                     variant="secondary"
                     onClick={() => favorites.toggleTeam({ id: team.id, leagueId: team.leagueId, name: team.name, image: team.crest })}
@@ -154,7 +155,7 @@ export default function TeamDetail() {
                     />
                     {t('follow')}
                   </Button>
-                </motion.div>
+                </div>
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4">

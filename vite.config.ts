@@ -1,7 +1,28 @@
 import react from '@vitejs/plugin-react'
 import { fileURLToPath, URL } from 'node:url'
 import { readFileSync } from 'node:fs'
+import type { Plugin } from 'vite'
 import { defineConfig } from 'vitest/config'
+
+/** Preloads the Latin Inter file so text does not swap fonts after first paint. */
+function preloadMainFont(): Plugin {
+  let base = '/'
+  return {
+    name: 'fg-preload-main-font',
+    apply: 'build',
+    configResolved(config) {
+      base = config.base
+    },
+    transformIndexHtml: {
+      order: 'post',
+      handler(_html, ctx) {
+        const font = Object.values(ctx.bundle ?? {}).find((file) => file.fileName.includes('inter-latin-wght-normal'))
+        if (!font) return []
+        return [{ tag: 'link', injectTo: 'head', attrs: { rel: 'preload', as: 'font', type: 'font/woff2', crossorigin: '', href: base + font.fileName } }]
+      },
+    },
+  }
+}
 
 const pkg = JSON.parse(readFileSync(fileURLToPath(new URL('./package.json', import.meta.url)), 'utf-8'))
 
@@ -13,25 +34,24 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
-  plugins: [react()],
+  plugins: [react(), preloadMainFont()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
   build: {
-    chunkSizeWarningLimit: 700,
     rollupOptions: {
       output: {
+        // Only the React core is pinned to one long-cached chunk; everything
+        // else is split by the import graph, so libraries load with the first
+        // page that needs them (charts, tables, Zod, cmdk stay off the shell).
         manualChunks(id) {
           if (!id.includes('node_modules')) return undefined
-          if (id.includes('react-router')) return 'router'
-          if (id.includes('framer-motion')) return 'motion'
-          if (id.includes('recharts') || id.includes('d3-')) return 'charts'
-          if (id.includes('@radix-ui')) return 'radix'
-          if (id.includes('lucide-react')) return 'icons'
-          if (id.includes('cmdk')) return 'cmdk'
-          return 'vendor'
+          // ANALYZE=1 npm run build: one chunk per package to see what weighs what.
+          if (process.env.ANALYZE) return 'pkg-' + (/node_modules[\\/]((?:@[^\\/]+[\\/])?[^\\/]+)/.exec(id)?.[1] ?? 'other').replace(/[@\\/]/g, '_')
+          if (/node_modules[\\/](react|react-dom|scheduler|react-router|react-router-dom|@remix-run)[\\/]/.test(id)) return 'react'
+          return undefined
         },
       },
     },

@@ -1,84 +1,57 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
+
 import { normalizeImageSrc } from '@/lib/visualAssets'
-import { cn } from '@/lib/utils'
 
 type AssetImageProps = Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'src'> & {
   src?: string
   /**
-   * One or more fallback image sources. They are tried left-to-right when the
-   * preceding source fails to load. The final entry should always be a known-good
-   * SVG/data-URI so the UI never shows a broken-image icon.
+   * One or more fallback image sources, tried left to right when the
+   * preceding one fails. The last entry should be a known-good SVG data URI
+   * so the UI never shows a broken-image icon.
    */
   fallbackSrc: string | Array<string | undefined>
+  /** Above-the-fold hero image: load eagerly with high fetch priority. */
+  priority?: boolean
 }
 
 function buildSourceChain(src: string | undefined, fallback: string | Array<string | undefined>) {
   const chain: string[] = []
-  const push = (value: string | undefined) => {
+  for (const value of [src, ...(Array.isArray(fallback) ? fallback : [fallback])]) {
     const normalized = normalizeImageSrc(value)
-    if (normalized && !chain.includes(normalized)) {
-      chain.push(normalized)
-    }
+    if (normalized && !chain.includes(normalized)) chain.push(normalized)
   }
-
-  push(src)
-  if (Array.isArray(fallback)) {
-    fallback.forEach(push)
-  } else {
-    push(fallback)
-  }
-
   return chain
 }
 
-function AssetImageElement({
-  sources,
-  alt,
-  className,
-  ...props
-}: Omit<AssetImageProps, 'src' | 'fallbackSrc'> & { sources: string[] }) {
+function AssetImageElement({ sources, ...props }: Omit<AssetImageProps, 'src' | 'fallbackSrc' | 'priority'> & { sources: string[] }) {
   const [index, setIndex] = useState(0)
-  const [loaded, setLoaded] = useState(false)
-  const currentSrc = sources[index] ?? sources[sources.length - 1]
-
-  // SVG data-URIs render instantly — skip the fade-in to avoid flicker.
-  const skipFade = currentSrc?.startsWith('data:image/svg+xml') ?? false
-
   return (
     <img
       {...props}
-      alt={alt}
-      src={currentSrc}
-      className={cn(
-        'transition-opacity duration-300',
-        !loaded && !skipFade ? 'opacity-0' : 'opacity-100',
-        className,
-      )}
-      onLoad={() => setLoaded(true)}
-      onError={() => {
-        setLoaded(false)
-        setIndex((current) => (current < sources.length - 1 ? current + 1 : current))
-      }}
+      src={sources[index] ?? sources[sources.length - 1]}
+      onError={() => setIndex((current) => (current < sources.length - 1 ? current + 1 : current))}
     />
   )
 }
 
-export function AssetImage({ src, fallbackSrc, alt, className, ...props }: AssetImageProps) {
-  const sources = useMemo(() => buildSourceChain(src, fallbackSrc), [src, fallbackSrc])
-
-  // Re-mount when the source chain changes so we restart from index 0.
-  const chainKey = sources.join('|')
-
-  if (sources.length === 0) {
-    return <img {...props} alt={alt} src="" className={className} />
-  }
+/**
+ * Remote image with a fallback chain. No fade-in: images paint as soon as
+ * they decode (an opacity transition delays LCP and hides images when
+ * animations are paused).
+ */
+export function AssetImage({ src, fallbackSrc, className, priority = false, loading, ...props }: AssetImageProps) {
+  const sources = buildSourceChain(src, fallbackSrc)
+  if (sources.length === 0) return null
 
   return (
     <AssetImageElement
-      key={chainKey}
+      // Restart from the first source whenever the chain changes.
+      key={sources.join('|')}
       {...props}
-      alt={alt}
       sources={sources}
+      loading={priority ? 'eager' : (loading ?? 'lazy')}
+      fetchPriority={priority ? 'high' : undefined}
+      decoding={priority ? 'sync' : 'async'}
       className={className}
     />
   )

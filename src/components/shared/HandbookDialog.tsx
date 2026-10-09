@@ -21,10 +21,8 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { useLocale } from '@/contexts/LocaleContext'
 import { cn } from '@/lib/utils'
 
@@ -45,8 +43,8 @@ function Tip({ tipLabel, children }: { tipLabel: string; children: React.ReactNo
   )
 }
 
-/** Controlled when `open`/`onOpenChange` are passed (mobile menu); otherwise owns its trigger. */
-export function HandbookDialog({ open, onOpenChange, showTrigger = true }: { open?: boolean; onOpenChange?: (open: boolean) => void; showTrigger?: boolean } = {}) {
+/** In-app manual; opened from the header or the mobile menu (lazy-loaded). */
+export default function HandbookDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { t } = useLocale()
   const sections = useMemo(
     () => [
@@ -183,13 +181,6 @@ export function HandbookDialog({ open, onOpenChange, showTrigger = true }: { ope
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {showTrigger ? (
-        <DialogTrigger asChild>
-          <Button variant="ghost" size="icon" aria-label={t('openHandbook')} title={t('handbook')}>
-            <BookOpen className="h-5 w-5" aria-hidden />
-          </Button>
-        </DialogTrigger>
-      ) : null}
       <DialogContent className="grid max-w-4xl gap-0 overflow-hidden p-0 sm:grid-cols-[200px_minmax(0,1fr)]">
         <DialogTitle className="sr-only">{t('handbookTitle')}</DialogTitle>
         <nav className="border-b border-border bg-muted/30 p-3 sm:border-b-0 sm:border-r">

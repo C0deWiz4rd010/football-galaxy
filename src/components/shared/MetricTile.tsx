@@ -27,7 +27,7 @@ export function MetricTile({
     <div
       className={cn(
         'min-w-0 rounded-lg p-3',
-        onMedia ? 'border border-white/15 bg-black/20 backdrop-blur-sm' : 'surface-soft',
+        onMedia ? 'border border-white/15 bg-black/25' : 'surface-soft',
         className,
       )}
     >

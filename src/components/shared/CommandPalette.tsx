@@ -9,12 +9,11 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { useLocale } from '@/contexts/LocaleContext'
 import { MIN_SEARCH_LENGTH, useFootballSearch } from '@/hooks/queries/search'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
-import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
 import { getLeague, leagues } from '@/lib/leagues'
 import { exploreNav, toolsNav, worldCupNav } from '@/app/navigation'
 import { createPlayerAvatar, createTeamCrest, initialsFromName } from '@/lib/visualAssets'
 
-export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+export default function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const navigate = useNavigate()
   const { t } = useLocale()
   const [query, setQuery] = useState('')
@@ -22,12 +21,6 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
   const search = useFootballSearch(open ? debouncedQuery : '')
   const normalized = query.trim().toLowerCase()
 
-  useKeyboardShortcut(['k'], (event) => {
-    if (event.metaKey || event.ctrlKey) {
-      event.preventDefault()
-      onOpenChange(!open)
-    }
-  })
 
   const go = useCallback(
     (to: string) => {

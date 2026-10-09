@@ -1,7 +1,6 @@
 import { memo, useState } from 'react'
 
 import * as DialogPrimitive from '@radix-ui/react-dialog'
-import { motion } from 'framer-motion'
 import { ChevronRight, Lock, Sparkles, Star, Trophy, Swords, Users, X, Zap } from 'lucide-react'
 
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -58,10 +57,9 @@ function NodeCard({
   const isLocked = level === 0 && !upgradeable
 
   return (
-    <motion.button
+    <button
       type="button"
       onClick={() => onSelect(node)}
-      whileTap={{ scale: 0.98 }}
       aria-haspopup="dialog"
       className={cn(
         'interactive-card relative flex min-h-32 flex-col gap-2 rounded-lg border p-3 text-left',
@@ -105,7 +103,7 @@ function NodeCard({
       {isMaxed && (
         <p className="mt-auto text-xs font-semibold text-warning-fg">★ Max Level</p>
       )}
-    </motion.button>
+    </button>
   )
 }
 

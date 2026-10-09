@@ -1,3 +1,4 @@
+@import "./shared/styles/fonts.css";
 @import "./shared/styles/tokens.css";
 
 @tailwind base;
@@ -275,7 +276,8 @@
       linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
       var(--surface-elevated);
     box-shadow: var(--shadow-card);
-    backdrop-filter: blur(18px);
+    /* No backdrop-filter: cards are near-opaque, and dozens of blur layers
+     * make scrolling janky on phones. Blur stays on floating chrome only. */
     transition:
       box-shadow var(--fg-duration-base) var(--fg-ease-enter),
       border-color var(--fg-duration-fast) var(--fg-ease-soft),
@@ -308,6 +310,48 @@
   .interactive-card:focus-visible {
     outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;
+  }
+
+  /* Entrance motion in plain CSS (no JS animation library on the critical
+   * path). Fill mode "backwards" only applies the start frame during the delay, so
+   * nothing (e.g. a transform breaking sticky children) lingers afterwards. */
+  @keyframes fg-rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+
+  @keyframes fg-fade {
+    from {
+      opacity: 0;
+    }
+  }
+
+  .fg-page {
+    animation: fg-fade var(--fg-duration-fast) var(--fg-ease-enter) backwards;
+  }
+
+  .fg-stagger > * {
+    animation: fg-rise var(--fg-duration-base) var(--fg-ease-enter) backwards;
+  }
+
+  .fg-stagger > :nth-child(2) { animation-delay: 40ms; }
+  .fg-stagger > :nth-child(3) { animation-delay: 80ms; }
+  .fg-stagger > :nth-child(4) { animation-delay: 120ms; }
+  .fg-stagger > :nth-child(5) { animation-delay: 160ms; }
+  .fg-stagger > :nth-child(n + 6) { animation-delay: 200ms; }
+
+  .fg-reveal {
+    animation: fg-rise var(--fg-duration-base) var(--fg-ease-enter) backwards;
+  }
+
+  .fg-press {
+    transition: transform var(--fg-duration-instant) var(--fg-ease-standard);
+  }
+
+  .fg-press:active {
+    transform: scale(0.96);
   }
 
   /* Image loading shimmer — shown behind AssetImage while src loads */

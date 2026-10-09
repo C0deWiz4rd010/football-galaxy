@@ -251,3 +251,14 @@ Zielbreiten testen: 360, 390, 768, 1024, 1280, 1440, 1920 + Landscape-Phone.
 - **K** Touch-Ziele ≥ 40 px (Live-Filter, Tabs, Spielplan-Links, Einzel-Links, Favorit 44 px); `dvh` überall.
 - **Neu: Spielplan & Ergebnisse** (`MatchweekCard`, `src/lib/matchweeks.ts`) ersetzt den entfernten MatchdaySwiper: Runden als Zeit-Cluster der echten Vereinsspielpläne (die Feeds liefern keine Spieltagsnummern), mit Datum beschriftet, blätterbar, nach Tagen gruppiert (+Test).
 - Geprüft: kein horizontaler Überlauf auf 14 Routen bei 375 px; Tablet 768 px und Desktop 1440 px visuell.
+
+### Phase 5 – erledigt (2026-10-09)
+**Start-Last (JS+CSS, gzip, was `index.html` lädt/vorlädt): 273 KB → 133 KB.**
+- **A** Befehlspalette, Handbuch und Mobile-Menü laden erst beim ersten Öffnen (`useLazyDialog`); ⌘K/Strg K lebt im Shell. Galaxy-Provider nur noch auf `/galaxy` (`GalaxyRoute`). Zod, cmdk und Radix-Dialog sind damit aus dem Start-Bundle.
+- **B** **framer-motion entfernt** (−36 KB gzip): Seitenwechsel, Stagger, Aufklappen und Tap-Feedback als CSS (`.fg-page`, `.fg-stagger`, `.fg-reveal`, `.fg-press`); kein `AnimatePresence mode="wait"` mehr, das Navigationen verzögerte. Reduced-Motion greift über die globale Regel.
+- **C** `manualChunks` auf den React-Kern reduziert, Rest nach Import-Graph → Recharts-Abhängigkeiten (lodash, decimal.js …) und `@tanstack/table` nicht mehr im vorgeladenen `vendor`. `ANALYZE=1 npm run build` erzeugt einen Chunk pro Paket zur Analyse. Warnlimit wieder Standard.
+- **D** Schrift: `@fontsource-variable/inter`, nur Latin + Latin-Ext, eine Datei für alle Gewichte (48 KB), per Build-Plugin vorgeladen; vorher 4 statische Gewichte × 7 Zeichensätze.
+- **E** Bilder: kein Opacity-Fade mehr (verzögerte LCP), `decoding="async"`/`loading="lazy"` als Standard, `priority` (eager + `fetchpriority="high"`) für Team-Wappen, Spielerfoto und Liga-Logo im Hero; feste `width/height` gegen Layout-Sprünge.
+- **F** `backdrop-filter` von allen Karten entfernt (Dutzende Blur-Ebenen ruckelten beim Scrollen auf Handys), nur noch auf Header/Sidebar/Tab-Bar. date-fns durch `Intl` ersetzt (−7 KB, Datum/Relativzeit jetzt in der UI-Sprache).
+- **G** Prefetch bei Hover/Fokus auf interne Links: Seiten-Chunk + Haupt-Query (Liga, Team, Spieler) – Datenlayer selbst wird dafür lazy nachgeladen.
+- **Suche:** ESPN ordnet Spieler oft ihrer Nationalmannschaft zu (Haaland → `uefa.nations`) und fiel durch den Top-5-Filter; die Suche ergänzt jetzt Treffer aus den geladenen Liga-Spielerpools und Teams (+Test) und funktioniert offline mit diesen.

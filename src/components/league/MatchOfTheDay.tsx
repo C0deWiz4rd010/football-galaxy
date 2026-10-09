@@ -1,6 +1,5 @@
 import { useState } from 'react'
 
-import { AnimatePresence, motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 
 import { AssetImage } from '@/components/shared/AssetImage'
@@ -101,15 +100,8 @@ export function MatchOfTheDay({ match }: { match?: Match }) {
       <Button variant="outline" className="mt-4 w-full" onClick={() => setOpen((value) => !value)}>
         {open ? t('hideEvents') : t('viewEvents')}
       </Button>
-      <AnimatePresence initial={false}>
-        {open ? (
-          <motion.ol
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.24 }}
-            className="mt-4 space-y-2 overflow-hidden"
-          >
+      {open ? (
+          <ol className="fg-reveal mt-4 space-y-2">
             {match.events.length > 0 ? (
               match.events.map((event) => (
                 <li key={event.id} className="surface-soft rounded-md px-3 py-2 text-sm">
@@ -131,9 +123,8 @@ export function MatchOfTheDay({ match }: { match?: Match }) {
                 {t('noEventTimeline')}
               </li>
             )}
-          </motion.ol>
+          </ol>
         ) : null}
-      </AnimatePresence>
     </section>
   )
 }

@@ -31,7 +31,7 @@ const chipClass = (active: boolean) =>
  * lock). Holds every destination the five-item tab bar has no room for, plus
  * theme, language and the handbook.
  */
-export function MobileNavSheet({
+export default function MobileNavSheet({
   open,
   onOpenChange,
   onOpenHandbook,

@@ -1,8 +1,7 @@
-import { Moon, Search, Settings, Sun } from 'lucide-react'
+import { BookOpen, Moon, Search, Settings, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Link } from 'react-router-dom'
 
-import { HandbookDialog } from '@/components/shared/HandbookDialog'
 import { LanguageToggle } from '@/components/shared/LanguageToggle'
 import { Button } from '@/components/ui/button'
 import { useLocale } from '@/contexts/LocaleContext'
@@ -11,6 +10,7 @@ interface HeaderProps {
   title: string
   subtitle: string
   onSearch: () => void
+  onHandbook: () => void
 }
 
 const isApple = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/i.test(navigator.userAgent)
@@ -19,7 +19,7 @@ const isApple = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/i.test
  * Top bar. On phones it only names the page: search, menu, theme and language
  * live in the tab bar and its menu sheet, so the bar never crowds.
  */
-export function Header({ title, subtitle, onSearch }: HeaderProps) {
+export function Header({ title, subtitle, onSearch, onHandbook }: HeaderProps) {
   const { resolvedTheme, setTheme } = useTheme()
   const { t } = useLocale()
 
@@ -33,7 +33,9 @@ export function Header({ title, subtitle, onSearch }: HeaderProps) {
         <div className="hidden lg:block">
           <LanguageToggle />
         </div>
-        <HandbookDialog />
+        <Button variant="ghost" size="icon" aria-label={t('openHandbook')} title={t('handbook')} onClick={onHandbook}>
+          <BookOpen className="h-5 w-5" aria-hidden />
+        </Button>
         <Button
           variant="ghost"
           size="icon"

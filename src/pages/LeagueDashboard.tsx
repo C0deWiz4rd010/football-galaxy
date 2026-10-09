@@ -178,8 +178,10 @@ export default function LeagueDashboard() {
                 src={league.logo}
                 fallbackSrc={createLeagueLogo(league.abbreviation, league.color, league.name)}
                 alt={`${league.name} logo`}
+                width={56}
+                height={56}
+                priority
                 className="h-14 w-14 rounded-lg bg-white/90 object-contain p-2 ring-1 ring-border"
-                loading="lazy"
               />
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">

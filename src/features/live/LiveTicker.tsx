@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion'
 import { CircleDot, MapPin } from 'lucide-react'
 
 import { AssetImage } from '@/components/shared/AssetImage'
@@ -115,8 +114,7 @@ export function LiveMatchCard({ match }: { match: LiveMatch }) {
   )
 
   return (
-    <motion.article
-      layout
+    <article
       className="stat-card flex flex-col gap-3 rounded-lg p-fg-4 shadow-fg-1"
     >
       <div className="flex items-center justify-between gap-2">
@@ -143,7 +141,7 @@ export function LiveMatchCard({ match }: { match: LiveMatch }) {
           <span className="truncate">{match.venue}</span>
         </div>
       ) : null}
-    </motion.article>
+    </article>
   )
 }
 

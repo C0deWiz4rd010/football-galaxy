@@ -66,8 +66,8 @@
    * docs/design-system.md §5. */
 
   /* ----------------------------------------------------------------- Motion
-   * The only motion scale. `src/shared/motion/tokens.ts` mirrors these values
-   * for Framer Motion and Tailwind exposes them as `duration-fg-*` /
+   * The only motion scale, used by the CSS animations in index.css; Tailwind
+   * exposes it as `duration-fg-*` /
    * `ease-fg-*`. Instant ≈ feedback, base ≈ UI state, hero ≈ page entrance.
    */
   --fg-duration-instant: 120ms;

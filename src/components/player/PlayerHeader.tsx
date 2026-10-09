@@ -15,7 +15,7 @@ export function PlayerHeader({ player, team, action, backButton }: { player: Pla
     <section className="stat-card relative p-4">
       {backButton ? <div className="mb-3">{backButton}</div> : null}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-      <AssetImage src={player.photo} fallbackSrc={[...getPlayerPhotoSources(player), playerFallback]} alt={player.name} className="h-24 w-24 rounded-lg object-cover ring-2" style={{ '--tw-ring-color': team?.primaryColor ?? 'hsl(var(--primary))' } as React.CSSProperties} loading="lazy" />
+      <AssetImage src={player.photo} fallbackSrc={[...getPlayerPhotoSources(player), playerFallback]} alt={player.name} width={96} height={96} priority className="h-24 w-24 rounded-lg object-cover ring-2" style={{ "--tw-ring-color": team?.primaryColor ?? "hsl(var(--primary))" } as React.CSSProperties} />
         <div className="flex-1">
           <div className="flex items-center gap-2">
             {player.number ? (
