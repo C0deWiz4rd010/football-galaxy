@@ -899,13 +899,13 @@ export function WorldCupTeamFilters({
   return (
     <div className="stat-card rounded-xl p-3">
       <div className="grid gap-2 md:grid-cols-[minmax(220px,1fr)_220px]">
-        <label className="flex items-center gap-2 rounded-md border border-border/70 bg-background/40 px-3 py-2 text-sm">
+        <label className="flex min-h-11 items-center gap-2 rounded-md border border-border/70 bg-background/40 px-3 text-sm focus-within:ring-2 focus-within:ring-ring">
           <Search className="size-4 text-muted-foreground" />
           <input
             value={search}
             onChange={(event) => onSearchChange(event.target.value)}
             placeholder="Search country, code, group"
-            className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground sm:text-sm"
           />
         </label>
         <SelectFilter label="Group" value={group} values={['all', ...groups]} onChange={onGroupChange} />
@@ -1043,13 +1043,13 @@ export function WorldCupMatchFilters({
         </div>
       </div>
       <div className="grid gap-2 lg:grid-cols-[minmax(220px,1.2fr)_repeat(3,minmax(130px,1fr))]">
-        <label className="flex items-center gap-2 rounded-md border border-border/70 bg-background/40 px-3 py-2 text-sm">
+        <label className="flex min-h-11 items-center gap-2 rounded-md border border-border/70 bg-background/40 px-3 text-sm focus-within:ring-2 focus-within:ring-ring">
           <Search className="size-4 text-muted-foreground" />
           <input
             value={filters.search}
             onChange={(event) => onChange({ ...filters, search: event.target.value })}
             placeholder="Search team, round, city"
-            className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground sm:text-sm"
           />
         </label>
         <SelectFilter label="Group" value={filters.group} values={['all', ...groups]} onChange={(group) => onChange({ ...filters, group })} />
@@ -1114,7 +1114,7 @@ function SelectFilter({
   values: string[]
 }) {
   return (
-    <label className="flex items-center gap-2 rounded-md border border-border/70 bg-background/40 px-3 py-2 text-xs text-muted-foreground">
+    <label className="flex min-h-11 items-center gap-2 rounded-md border border-border/70 bg-background/40 px-3 text-xs text-muted-foreground focus-within:ring-2 focus-within:ring-ring">
       <span>{label}</span>
       <select
         value={value}

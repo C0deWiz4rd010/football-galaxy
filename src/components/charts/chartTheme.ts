@@ -4,6 +4,8 @@
  */
 import type { CSSProperties } from 'react'
 
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+
 export const chartColors = {
   primary: 'hsl(var(--primary))',
   /** Second series next to `primary`; distinct hue in every palette. */
@@ -42,3 +44,9 @@ export const tooltipProps = {
   itemStyle: { padding: 0 },
   cursor: { fill: 'hsl(var(--muted) / 0.5)' },
 } as const
+
+/** Recharts draws its own animations; honour the OS "reduce motion" setting. */
+export function useChartMotion() {
+  const reduced = useMediaQuery('(prefers-reduced-motion: reduce)')
+  return { isAnimationActive: !reduced, animationDuration: 500 } as const
+}

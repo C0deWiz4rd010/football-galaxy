@@ -1,9 +1,10 @@
-import { Suspense, useEffect, useMemo } from 'react'
+import { Suspense, useEffect, useMemo, useRef } from 'react'
 
 import { useQueryClient } from '@tanstack/react-query'
 
 import {
   Navigate,
+  ScrollRestoration,
   Outlet,
   createBrowserRouter,
   useLocation,
@@ -176,6 +177,18 @@ function AppLayout() {
   const layout = useMemo(() => getLayoutTitle(location.pathname, t), [location.pathname, t])
   usePrefetchOnIntent()
 
+  // After client-side navigation, move focus to the new page so keyboard and
+  // screen-reader users start at its content (not on the link they left).
+  const mainRef = useRef<HTMLElement>(null)
+  const isFirstRoute = useRef(true)
+  useEffect(() => {
+    if (isFirstRoute.current) {
+      isFirstRoute.current = false
+      return
+    }
+    mainRef.current?.focus({ preventScroll: true })
+  }, [location.pathname])
+
   useKeyboardShortcut(['k'], (event) => {
     if (event.metaKey || event.ctrlKey) {
       event.preventDefault()
@@ -198,7 +211,7 @@ function AppLayout() {
         onSearch={() => search.setOpen(true)}
         onHandbook={() => handbook.setOpen(true)}
       />
-      <main id="main" tabIndex={-1} className="outline-none mx-auto max-w-shell px-4 pb-[calc(var(--fg-tabbar-clearance)+1rem)] pt-5 md:ml-shell md:px-6 md:pb-12 lg:px-8">
+      <main ref={mainRef} id="main" tabIndex={-1} className="outline-none mx-auto max-w-shell px-4 pb-[calc(var(--fg-tabbar-clearance)+1rem)] pt-5 md:ml-shell md:px-6 md:pb-12 lg:px-8">
         <ErrorBoundary key={location.pathname} title={t('routeErrorTitle')}>
           <Suspense fallback={<LoadingGrid />}>
             {/* Keyed so each route fades in; no exit animation holding navigation back. */}
@@ -216,6 +229,8 @@ function AppLayout() {
       </Suspense>
       <ProxyHealthBanner />
       <Toaster />
+      {/* Top of the page on new navigations, previous position on back/forward. */}
+      <ScrollRestoration />
     </>
   )
 }

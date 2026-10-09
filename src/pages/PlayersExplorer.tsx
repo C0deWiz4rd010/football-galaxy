@@ -111,7 +111,7 @@ export default function PlayersExplorer() {
                   setQuery(event.target.value)
                   setVisible(PAGE_SIZE)
                 }}
-                className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                className="w-full bg-transparent text-base outline-none placeholder:text-muted-foreground sm:text-sm"
                 placeholder={t('searchPlayersPlaceholder')}
               />
             </label>

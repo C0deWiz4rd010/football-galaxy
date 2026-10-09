@@ -38,7 +38,7 @@ const ScorersItem = memo(function ScorersItem({
               item.team.primaryColor,
             ),
           ]}
-          alt={item.player.name}
+          alt=""
           className="h-11 w-11 rounded-full object-cover"
           loading="lazy"
         />
@@ -112,7 +112,7 @@ export function TopScorersCard({
                       item.team.primaryColor,
                     ),
                   ]}
-                  alt={item.player.name}
+                  alt=""
                   className="h-8 w-8 shrink-0 rounded-full object-cover"
                   loading="lazy"
                 />

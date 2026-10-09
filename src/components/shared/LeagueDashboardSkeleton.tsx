@@ -1,25 +1,47 @@
+import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useLocale } from '@/contexts/LocaleContext'
+import type { League } from '@/services/types'
 
 /**
- * Layout-matched skeleton for `LeagueDashboard`. Showing roughly the same
- * structure as the real content reduces perceived load time vs. four generic
- * placeholder cards because the viewer's eye lands on the right spots.
+ * Layout-matched skeleton for `LeagueDashboard`. The league header is static
+ * data, so it renders for real right away (it is the page's LCP element);
+ * only the live sections below are placeholders.
  */
-export function LeagueDashboardSkeleton() {
+export function LeagueDashboardSkeleton({ league }: { league?: League }) {
+  const { t } = useLocale()
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-busy="true">
+      <span role="status" className="sr-only">
+        {t('loading')}
+      </span>
       <section className="stat-card overflow-hidden p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-14 w-14 rounded-lg" />
-            <div className="space-y-2">
-              <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">
-                Liga-Dashboard wird geladen
-              </p>
-              <Skeleton className="h-6 w-48" />
-              <Skeleton className="h-3 w-40" />
+          {league ? (
+            <div className="flex min-w-0 items-center gap-3">
+              <img
+                src={league.logo}
+                alt={`${league.name} logo`}
+                width={56}
+                height={56}
+                fetchPriority="high"
+                className="h-14 w-14 rounded-lg bg-white/90 object-contain p-2 ring-1 ring-border"
+              />
+              <div className="min-w-0">
+                <Badge variant="outline">{league.country}</Badge>
+                <h1 className="mt-1 text-2xl font-semibold tracking-tight">{league.name}</h1>
+                <p className="mt-1 text-sm text-muted-foreground">{t('tableFirstSubtitle')}</p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-14 w-14 rounded-lg" />
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-3 w-40" />
+              </div>
+            </div>
+          )}
           <Skeleton className="h-8 w-48 rounded-full" />
         </div>
         <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
@@ -34,9 +56,7 @@ export function LeagueDashboardSkeleton() {
         <div className="stat-card space-y-3 p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">
-                Primäre Liga-Ansicht
-              </p>
+              <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('primaryLeagueView')}</p>
               <Skeleton className="mt-2 h-6 w-40" />
             </div>
             <Skeleton className="h-4 w-56" />

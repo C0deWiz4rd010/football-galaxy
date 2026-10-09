@@ -224,6 +224,13 @@
       linear-gradient(180deg, rgba(8, 17, 28, 1), rgba(8, 15, 25, 1));
   }
 
+  /* Visible keyboard focus everywhere by default; components may refine it
+   * with focus-visible:ring utilities. */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
   h1,
   h2,
   h3 {

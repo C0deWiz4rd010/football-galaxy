@@ -361,7 +361,7 @@ export function GalaxyMapPage() {
 
         {/* Node detail: sticky side panel on wide screens, bottom sheet below. */}
         {isWide ? (
-          <aside className="sticky top-header-offset max-h-[calc(100dvh-var(--fg-header-offset)-1rem)] self-start overflow-y-auto rounded-lg border border-border/60 bg-card p-5 shadow-fg-3">
+          <aside aria-label="Node details" className="sticky top-header-offset max-h-[calc(100dvh-var(--fg-header-offset)-1rem)] self-start overflow-y-auto rounded-lg border border-border/60 bg-card p-5 shadow-fg-3">
             {detail ?? <p className="text-sm text-muted-foreground">Select a node to see its levels and rewards.</p>}
           </aside>
         ) : (

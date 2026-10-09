@@ -19,6 +19,7 @@ export function Sidebar() {
 
   return (
     <aside
+      aria-label={t('navigation')}
       data-sidebar
       className="surface-panel fixed left-shell-gutter top-shell-gutter z-nav hidden h-[calc(100dvh-2*var(--fg-shell-gutter))] w-sidebar overflow-hidden rounded-2xl md:flex md:flex-col"
     >

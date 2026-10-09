@@ -14,7 +14,7 @@ import { currentMatchdayFromTable, currentSeasonId, seasonInfo } from '@/lib/sea
 import { createTeamCrest } from '@/lib/visualAssets'
 import { LiveHttpError, fetchLiveJson } from '@/services/net/liveClient'
 import { createPromiseCache } from '@/services/net/promiseCache'
-import { findTeamMeta, getTeamMetaIndex, type TeamMetaIndex } from '@/services/thesportsdb/teams'
+import { emptyTeamMetaIndex, findTeamMeta, getTeamMetaIndex, type TeamMetaIndex } from '@/services/thesportsdb/teams'
 import { withWikidataPortrait } from '@/services/wikidata'
 
 import { NotFoundError } from '../errors'
@@ -58,6 +58,17 @@ interface LeagueCore {
 const coreCache = createPromiseCache<LeagueId, LeagueCore>(2 * 60_000)
 const scheduleCache = createPromiseCache<string, Match[]>(10 * 60_000)
 const rosterCache = createPromiseCache<string, Squad>(30 * 60_000)
+
+/**
+ * Stadium/coach metadata is a nice-to-have on the dashboard: don't hold the
+ * table back for slow sources. Team pages wait for it (see getTeam).
+ */
+const META_WAIT_MS = 800
+
+function metaWithin(league: ReturnType<typeof leagueConfig>, ms: number): Promise<TeamMetaIndex> {
+  const index = getTeamMetaIndex(league).catch(emptyTeamMetaIndex)
+  return Promise.race([index, new Promise<TeamMetaIndex>((resolve) => setTimeout(() => resolve(emptyTeamMetaIndex()), ms))])
+}
 
 function leagueConfig(leagueId: LeagueId) {
   return leagues.find((league) => league.id === leagueId)!
@@ -172,7 +183,7 @@ async function loadCore(leagueId: LeagueId): Promise<LeagueCore> {
       fetchLiveJson<unknown>(`${WEB}/${slug}/standings`),
       fetchLiveJson<unknown>(`${SITE}/${slug}/scoreboard`).catch(() => ({})),
       fetchLiveJson<unknown>(`${SITE}/${slug}/statistics`).catch(() => ({})),
-      getTeamMetaIndex(league).catch((): TeamMetaIndex => ({ byEspnId: new Map(), byName: new Map() })),
+      metaWithin(league, META_WAIT_MS),
     ])
 
     const metaFor = (team: EspnTeam) =>
@@ -326,7 +337,18 @@ export async function getStandings(leagueId: LeagueId): Promise<Standing[]> {
 }
 
 export async function getTeam(leagueId: LeagueId, teamId: string | undefined): Promise<Team> {
-  return findTeam(await loadCore(leagueId), leagueId, teamId)
+  const team = findTeam(await loadCore(leagueId), leagueId, teamId)
+  // The core may have been built before the metadata arrived: fill the gaps.
+  const meta = findTeamMeta(await getTeamMetaIndex(leagueConfig(leagueId)).catch(emptyTeamMetaIndex), team.espnId ?? team.id, [team.name, team.shortName])
+  if (!meta) return team
+  return {
+    ...team,
+    theSportsDbId: team.theSportsDbId ?? meta.theSportsDbId,
+    manager: team.manager ?? meta.manager,
+    stadium: team.stadium ?? meta.stadium,
+    capacity: team.capacity ?? meta.capacity,
+    crestSources: meta.badge && !team.crestSources?.includes(meta.badge) ? [...(team.crestSources ?? []), meta.badge] : team.crestSources,
+  }
 }
 
 export async function getTeamMatches(leagueId: LeagueId, teamId: string | undefined): Promise<Match[]> {

@@ -59,7 +59,7 @@ export function MatchOfTheDay({ match }: { match?: Match }) {
                 0,
               ),
             ]}
-            alt={match.homeTeam.name}
+            alt=""
             className="mx-auto h-16 w-16 rounded-lg object-cover transition group-hover:scale-[1.02]"
             loading="lazy"
           />
@@ -80,7 +80,7 @@ export function MatchOfTheDay({ match }: { match?: Match }) {
                 1,
               ),
             ]}
-            alt={match.awayTeam.name}
+            alt=""
             className="mx-auto h-16 w-16 rounded-lg object-cover transition group-hover:scale-[1.02]"
             loading="lazy"
           />

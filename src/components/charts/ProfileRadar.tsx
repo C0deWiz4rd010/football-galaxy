@@ -1,6 +1,6 @@
 import { Legend, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip } from 'recharts'
 
-import { axisTick, chartColors, legendStyle, tooltipProps } from './chartTheme'
+import { axisTick, chartColors, legendStyle, tooltipProps, useChartMotion } from './chartTheme'
 
 export interface RadarSeries {
   key: string
@@ -30,6 +30,7 @@ export function ProfileRadar({
   height?: number
   valueSuffix?: string
 }) {
+  const chartMotion = useChartMotion()
   return (
     <ResponsiveContainer width="100%" height={height}>
       <RadarChart data={data} outerRadius="70%">
@@ -39,7 +40,7 @@ export function ProfileRadar({
         <Tooltip {...tooltipProps} formatter={(value) => `${String(value)}${valueSuffix}`} />
         {series.length > 1 ? <Legend wrapperStyle={legendStyle} iconType="circle" iconSize={8} /> : null}
         {series.map((item) => (
-          <Radar key={item.key} name={item.name} dataKey={item.key} strokeWidth={2} {...toneStyle[item.tone]} />
+          <Radar {...chartMotion} key={item.key} name={item.name} dataKey={item.key} strokeWidth={2} {...toneStyle[item.tone]} />
         ))}
       </RadarChart>
     </ResponsiveContainer>

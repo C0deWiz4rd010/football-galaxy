@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
-import { axisTick, chartColors, legendStyle, tooltipProps } from '@/components/charts/chartTheme'
+import { axisTick, chartColors, legendStyle, tooltipProps, useChartMotion } from '@/components/charts/chartTheme'
 import { ProfileRadar } from '@/components/charts/ProfileRadar'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { useLocale } from '@/contexts/LocaleContext'
@@ -88,6 +88,7 @@ function finishedTeamMatches(matches: Match[], team: Team) {
 /** Goals scored vs conceded in the team's most recent finished matches. */
 export function TeamMatchGoalsChart({ matches, team, limit = 10 }: { matches: Match[]; team: Team; limit?: number }) {
   const { t } = useLocale()
+  const chartMotion = useChartMotion()
   const data = useMemo(
     () =>
       finishedTeamMatches(matches, team)
@@ -112,8 +113,8 @@ export function TeamMatchGoalsChart({ matches, team, limit = 10 }: { matches: Ma
         <YAxis allowDecimals={false} tick={axisTick} />
         <Tooltip {...tooltipProps} />
         <Legend wrapperStyle={legendStyle} iconType="circle" iconSize={8} />
-        <Bar name={t('goalsScored')} dataKey="scored" fill={chartColors.primary} radius={[4, 4, 0, 0]} />
-        <Bar name={t('goalsConceded')} dataKey="conceded" fill={chartColors.negative} radius={[4, 4, 0, 0]} />
+        <Bar {...chartMotion} name={t('goalsScored')} dataKey="scored" fill={chartColors.primary} radius={[4, 4, 0, 0]} />
+        <Bar {...chartMotion} name={t('goalsConceded')} dataKey="conceded" fill={chartColors.negative} radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   )
@@ -122,6 +123,7 @@ export function TeamMatchGoalsChart({ matches, team, limit = 10 }: { matches: Ma
 /** Cumulative points over the season's finished matches. */
 export function TeamPointsTrendChart({ matches, team }: { matches: Match[]; team: Team }) {
   const { t } = useLocale()
+  const chartMotion = useChartMotion()
   const data = useMemo(
     () =>
       finishedTeamMatches(matches, team).reduce<Array<{ game: number; points: number; goals: number; opponent: string }>>(
@@ -153,8 +155,8 @@ export function TeamPointsTrendChart({ matches, team }: { matches: Match[]; team
         <YAxis allowDecimals={false} tick={axisTick} />
         <Tooltip {...tooltipProps} cursor={{ stroke: chartColors.grid }} labelFormatter={(game) => t('matchNumber', { number: String(game) })} />
         <Legend wrapperStyle={legendStyle} iconType="circle" iconSize={8} />
-        <Line name={t('cumulativePoints')} type="monotone" dataKey="points" stroke={chartColors.primary} strokeWidth={2} dot={false} activeDot={{ r: 5 }} />
-        <Line name={t('cumulativeGoals')} type="monotone" dataKey="goals" stroke={chartColors.secondary} strokeWidth={2} dot={false} activeDot={{ r: 5 }} />
+        <Line {...chartMotion} name={t('cumulativePoints')} type="monotone" dataKey="points" stroke={chartColors.primary} strokeWidth={2} dot={false} activeDot={{ r: 5 }} />
+        <Line {...chartMotion} name={t('cumulativeGoals')} type="monotone" dataKey="goals" stroke={chartColors.secondary} strokeWidth={2} dot={false} activeDot={{ r: 5 }} />
       </LineChart>
     </ResponsiveContainer>
   )

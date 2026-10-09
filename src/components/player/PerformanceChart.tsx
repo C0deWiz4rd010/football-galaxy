@@ -1,6 +1,6 @@
 import { Bar, BarChart, CartesianGrid, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
-import { axisTick, chartColors, tooltipProps } from '@/components/charts/chartTheme'
+import { axisTick, chartColors, tooltipProps, useChartMotion } from '@/components/charts/chartTheme'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { useLocale } from '@/contexts/LocaleContext'
 import type { Player } from '@/services/types'
@@ -11,6 +11,7 @@ import type { Player } from '@/services/types'
  */
 export function PerformanceChart({ player }: { player: Player }) {
   const { t } = useLocale()
+  const chartMotion = useChartMotion()
   const { minutes, goals, assists, yellowCards, redCards } = player.stats
   const per90 = (value: number) => (minutes > 0 ? Math.round((value / minutes) * 90 * 100) / 100 : 0)
   const data = [
@@ -33,7 +34,7 @@ export function PerformanceChart({ player }: { player: Player }) {
             <XAxis dataKey="name" tick={axisTick} />
             <YAxis tick={axisTick} />
             <Tooltip {...tooltipProps} />
-            <Bar dataKey="value" name={t('per90Minutes')} fill={chartColors.primary} radius={[4, 4, 0, 0]}>
+            <Bar {...chartMotion} dataKey="value" name={t('per90Minutes')} fill={chartColors.primary} radius={[4, 4, 0, 0]}>
               <LabelList dataKey="value" position="top" className="fill-foreground text-xs" />
             </Bar>
           </BarChart>

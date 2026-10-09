@@ -115,7 +115,7 @@ export default function TeamDetail() {
                       0,
                     ),
                   ]}
-                  alt={team.name}
+                  alt=""
                   width={80}
                   height={80}
                   priority
@@ -214,7 +214,7 @@ export default function TeamDetail() {
                         ...getPlayerPhotoSources(topRatedPlayer),
                         createPlayerAvatar(initialsFromName(topRatedPlayer.name), team.primaryColor),
                       ]}
-                      alt={topRatedPlayer.name}
+                      alt=""
                       className="h-14 w-14 rounded-lg object-cover ring-1 ring-white/15"
                       loading="lazy"
                     />

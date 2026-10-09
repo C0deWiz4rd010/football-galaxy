@@ -1,6 +1,6 @@
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
-import { axisTick, chartColors, chartPalette, legendStyle, tooltipProps } from '@/components/charts/chartTheme'
+import { axisTick, chartColors, chartPalette, legendStyle, tooltipProps, useChartMotion } from '@/components/charts/chartTheme'
 import type { WorldCupMatchStatistic, WorldCupSquadPlayer } from '@/services/worldCup/types'
 
 function toNumber(value: string | number): number {
@@ -47,6 +47,7 @@ export function MatchStatsChart({
   homeName: string
   awayName: string
 }) {
+  const chartMotion = useChartMotion()
   const types = Array.from(new Set(statistics.map((stat) => stat.type)))
   const rows = types
     .flatMap((type) => {
@@ -68,8 +69,8 @@ export function MatchStatsChart({
           <YAxis type="category" dataKey="type" tick={categoryTick} width={110} />
           <Tooltip {...tooltipProps} />
           <Legend {...legendProps} verticalAlign="top" />
-          <Bar name={homeName} dataKey="home" fill={chartColors.primary} radius={[0, 4, 4, 0]} maxBarSize={12} />
-          <Bar name={awayName} dataKey="away" fill={chartColors.secondary} radius={[0, 4, 4, 0]} maxBarSize={12} />
+          <Bar {...chartMotion} name={homeName} dataKey="home" fill={chartColors.primary} radius={[0, 4, 4, 0]} maxBarSize={12} />
+          <Bar {...chartMotion} name={awayName} dataKey="away" fill={chartColors.secondary} radius={[0, 4, 4, 0]} maxBarSize={12} />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -77,13 +78,14 @@ export function MatchStatsChart({
 }
 
 function Donut({ data, label, height }: { data: Array<{ name: string; value: number; color: string }>; label: string; height: number }) {
+  const chartMotion = useChartMotion()
   return (
     <div role="img" aria-label={label}>
       <ResponsiveContainer width="100%" height={height}>
         <PieChart>
           <Tooltip {...tooltipProps} />
           <Legend {...legendProps} />
-          <Pie data={data} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="80%" paddingAngle={2} stroke={chartColors.surface} strokeWidth={2}>
+          <Pie {...chartMotion} data={data} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="80%" paddingAngle={2} stroke={chartColors.surface} strokeWidth={2}>
             {data.map((entry) => (
               <Cell key={entry.name} fill={entry.color} />
             ))}

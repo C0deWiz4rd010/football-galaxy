@@ -12,6 +12,7 @@
 import { z } from 'zod'
 
 import { fetchLiveJson } from '@/services/net/liveClient'
+import { createPromiseCache } from '@/services/net/promiseCache'
 import type { League } from '@/services/types'
 
 const SPORTSDB = 'https://www.thesportsdb.com/api/v1/json/123'
@@ -108,11 +109,20 @@ async function loadFootballData(league: League, index: TeamMetaIndex) {
   }
 }
 
-export async function getTeamMetaIndex(league: League): Promise<TeamMetaIndex> {
-  const index: TeamMetaIndex = { byEspnId: new Map(), byName: new Map() }
-  // Order matters: TheSportsDB first so football-data.org can overwrite it.
-  await loadSportsDb(league, index).catch(() => undefined)
-  await loadFootballData(league, index).catch(() => undefined)
+const metaCache = createPromiseCache<string, TeamMetaIndex>(30 * 60_000)
+
+export const emptyTeamMetaIndex = (): TeamMetaIndex => ({ byEspnId: new Map(), byName: new Map() })
+
+/** Club metadata changes rarely: one load per league every 30 minutes. */
+export function getTeamMetaIndex(league: League): Promise<TeamMetaIndex> {
+  return metaCache.get(league.id, () => loadTeamMetaIndex(league))
+}
+
+async function loadTeamMetaIndex(league: League): Promise<TeamMetaIndex> {
+  const index = emptyTeamMetaIndex()
+  // Both load in parallel; the merge is order-independent: TheSportsDB only
+  // fills gaps (merge keeps existing values), football-data.org overwrites.
+  await Promise.all([loadSportsDb(league, index).catch(() => undefined), loadFootballData(league, index).catch(() => undefined)])
   return index
 }
 

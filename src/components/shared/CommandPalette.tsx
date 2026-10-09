@@ -66,7 +66,7 @@ export default function CommandPalette({ open, onOpenChange }: { open: boolean; 
             <CommandInput
               value={query}
               onValueChange={setQuery}
-              className="w-full bg-transparent px-4 py-4 outline-none"
+              className="w-full bg-transparent px-4 py-4 text-base outline-none sm:text-sm"
               placeholder={t('commandSearchPlaceholder')}
             />
             {isSearching ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-label={t('loading')} /> : null}

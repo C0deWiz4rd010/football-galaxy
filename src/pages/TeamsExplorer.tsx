@@ -80,12 +80,12 @@ export default function TeamsExplorer() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-[minmax(0,240px)_auto]">
-              <label className="surface-soft flex items-center gap-2 rounded-lg px-3 py-3">
+              <label className="surface-soft flex items-center gap-2 rounded-lg px-3 py-3 focus-within:ring-2 focus-within:ring-ring">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                  className="w-full bg-transparent text-base outline-none placeholder:text-muted-foreground sm:text-sm"
                   placeholder={t('searchTeamsPlaceholder')}
                 />
               </label>
@@ -98,7 +98,8 @@ export default function TeamsExplorer() {
                     key={item.key}
                     type="button"
                     onClick={() => setSelectedLeagueId(item.key as LeagueId | 'all')}
-                    className={`app-pill cursor-pointer px-3 py-2 text-sm ${selectedLeagueId === item.key ? 'border-primary bg-primary/10 text-foreground' : 'text-muted-foreground'}`}
+                    aria-pressed={selectedLeagueId === item.key}
+                    className={`app-pill inline-flex min-h-10 cursor-pointer items-center px-4 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${selectedLeagueId === item.key ? 'border-primary bg-primary/10 text-foreground' : 'text-muted-foreground'}`}
                   >
                     {item.label}
                   </button>
@@ -114,7 +115,7 @@ export default function TeamsExplorer() {
               ? t('showingTeamsInLeague', { count: teams.length })
               : t('showingTeamsAll', { count: teams.length })}
           </div>
-          <label className="surface-soft flex items-center gap-2 rounded-lg px-3 py-3 text-sm text-muted-foreground">
+          <label className="surface-soft flex items-center gap-2 rounded-lg px-3 py-3 text-sm text-muted-foreground focus-within:ring-2 focus-within:ring-ring">
             <ArrowUpDown className="h-4 w-4" />
             <span>{t('sortBy')}</span>
             <select
@@ -165,7 +166,7 @@ export default function TeamsExplorer() {
                         0,
                       ),
                     ]}
-                    alt={team.name}
+                    alt=""
                     className="h-14 w-14 rounded-md object-cover"
                     loading="lazy"
                   />

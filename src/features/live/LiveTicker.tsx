@@ -48,7 +48,7 @@ function TeamRow({
       <AssetImage
         src={team.crest}
         fallbackSrc={createTeamCrest(team.abbreviation, team.color ?? '#334155', '#f4f4f5', 0)}
-        alt={team.name}
+        alt=""
         className="size-6 shrink-0 object-contain"
         loading="lazy"
       />

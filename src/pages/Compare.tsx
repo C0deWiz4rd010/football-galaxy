@@ -18,6 +18,7 @@ import { getCrestSources, getPlayerPhotoSources } from '@/lib/assetSources'
 import { getLeague, isLeagueId } from '@/lib/leagues'
 import { buildMetricPools, percentileRank, playerMetrics } from '@/lib/percentiles'
 import { getFormScore } from '@/lib/player-ratings'
+import { cn } from '@/lib/utils'
 import { createPlayerAvatar, createTeamCrest, initialsFromName } from '@/lib/visualAssets'
 import { isNotFoundError } from '@/services/errors'
 import type { SearchHit } from '@/services/espn/search'
@@ -93,6 +94,31 @@ function PlayerPicker({
   const search = useFootballSearch(debounced)
   const results = query.trim().length >= MIN_SEARCH_LENGTH ? (search.data?.players ?? []).slice(0, 8) : []
   const listId = `${label.replace(/\W+/g, '-')}-results`
+  const [active, setActive] = useState(-1)
+  const activeIndex = active < results.length ? active : -1
+
+  const choose = (hit: SearchHit) => {
+    onSelect(hit)
+    setQuery('')
+    setActive(-1)
+  }
+
+  // ARIA combobox: focus stays in the input, arrows move the active option.
+  const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'ArrowDown' && results.length) {
+      event.preventDefault()
+      setActive((activeIndex + 1) % results.length)
+    } else if (event.key === 'ArrowUp' && results.length) {
+      event.preventDefault()
+      setActive(activeIndex <= 0 ? results.length - 1 : activeIndex - 1)
+    } else if (event.key === 'Enter' && activeIndex >= 0) {
+      event.preventDefault()
+      choose(results[activeIndex]!)
+    } else if (event.key === 'Escape') {
+      setQuery('')
+      setActive(-1)
+    }
+  }
 
   return (
     <div className="stat-card">
@@ -107,26 +133,37 @@ function PlayerPicker({
           aria-expanded={results.length > 0}
           aria-controls={listId}
           aria-autocomplete="list"
+          aria-activedescendant={activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined}
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => {
+            setQuery(event.target.value)
+            setActive(-1)
+          }}
+          onKeyDown={onKeyDown}
           placeholder={placeholder}
-          className="h-11 w-full rounded-md border bg-background/70 px-3 pr-9 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          autoComplete="off"
+          className="h-11 w-full rounded-md border bg-background/70 px-3 pr-9 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
         />
         {search.isFetching ? <Loader2 className="absolute right-3 top-3.5 h-4 w-4 animate-spin text-muted-foreground" aria-hidden /> : null}
       </div>
 
       {results.length ? (
-        <ul id={listId} role="listbox" className="mt-3 space-y-1">
-          {results.map((hit) => (
-            <li key={hit.id} role="option" aria-selected={selected?.id === hit.id}>
-              <button
-                type="button"
-                onClick={() => {
-                  onSelect(hit)
-                  setQuery('')
-                }}
-                className="surface-soft flex w-full items-center gap-2 rounded-md p-2 text-left transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
+        <ul id={listId} role="listbox" aria-label={label} className="mt-3 space-y-1">
+          {results.map((hit, index) => (
+            <li
+              key={hit.id}
+              id={`${listId}-${index}`}
+              role="option"
+              aria-selected={index === activeIndex}
+              // mousedown keeps focus in the input; click selects.
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => choose(hit)}
+              onMouseEnter={() => setActive(index)}
+              className={cn(
+                'surface-soft flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-md p-2 text-left transition',
+                index === activeIndex ? 'bg-muted ring-2 ring-ring' : 'hover:bg-muted',
+              )}
+            >
                 <AssetImage
                   src={hit.image ?? ''}
                   fallbackSrc={createPlayerAvatar(initialsFromName(hit.name), getLeague(hit.leagueId).color)}
@@ -135,7 +172,6 @@ function PlayerPicker({
                 />
                 <span className="min-w-0 flex-1 truncate">{hit.name}</span>
                 <span className="shrink-0 truncate text-xs text-muted-foreground">{hit.subtitle ?? getLeague(hit.leagueId).abbreviation}</span>
-              </button>
             </li>
           ))}
         </ul>
@@ -166,7 +202,7 @@ function PlayerPicker({
             type="button"
             onClick={() => onSelect(null)}
             aria-label={t('removeSelection')}
-            className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground"
+            className="flex size-11 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <X className="h-4 w-4" aria-hidden />
           </button>

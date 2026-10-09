@@ -50,10 +50,10 @@ export function Header({ title, subtitle, onSearch, onHandbook }: HeaderProps) {
             <Settings className="h-5 w-5" aria-hidden />
           </Link>
         </Button>
-        <Button variant="outline" size="sm" className="gap-2 px-3" onClick={onSearch} aria-label={t('search')} aria-keyshortcuts={isApple ? 'Meta+K' : 'Control+K'}>
+        <Button variant="outline" size="sm" className="gap-2 px-3" onClick={onSearch} aria-keyshortcuts={isApple ? 'Meta+K' : 'Control+K'}>
           <Search className="h-4 w-4" aria-hidden />
-          <span className="hidden lg:inline">{t('search')}</span>
-          <kbd className="hidden rounded-xs bg-muted px-1.5 py-0.5 font-sans text-2xs text-muted-foreground lg:inline">{isApple ? '⌘K' : t('ctrlShortcut')}</kbd>
+          <span className="sr-only lg:not-sr-only">{t('search')}</span>
+          <kbd aria-hidden className="hidden rounded-xs bg-muted px-1.5 py-0.5 font-sans text-2xs text-muted-foreground lg:inline">{isApple ? '⌘K' : t('ctrlShortcut')}</kbd>
         </Button>
       </div>
     </header>

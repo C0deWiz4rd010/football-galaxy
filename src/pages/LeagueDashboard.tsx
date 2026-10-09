@@ -123,7 +123,7 @@ export default function LeagueDashboard() {
   if (isPending) {
     return (
       <PageWrapper>
-        <LeagueDashboardSkeleton />
+        <LeagueDashboardSkeleton league={league} />
       </PageWrapper>
     )
   }
@@ -265,7 +265,7 @@ export default function LeagueDashboard() {
                       ...getPlayerPhotoSources(spotlightPlayer),
                       createPlayerAvatar(initialsFromName(spotlightPlayer.name), league.color),
                     ]}
-                    alt={spotlightPlayer.name}
+                    alt=""
                     className="h-20 w-20 rounded-lg object-cover ring-1 ring-border"
                     loading="lazy"
                   />
