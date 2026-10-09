@@ -112,10 +112,10 @@ export function WorldCupOverviewPage() {
         <WorldCupTeamSpotlight standing={spotlightStanding} team={data.teams[0]} />
       </div>
 
-      <section className="stat-card rounded-fg-xl p-4">
+      <section className="stat-card rounded-xl p-4">
         <div className="mb-3 flex items-center justify-between gap-3">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">National teams</p>
+            <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">National teams</p>
             <h2 className="text-base font-semibold tracking-tight">In the tournament</h2>
           </div>
           <Badge variant="outline">{data.teams.length}</Badge>
@@ -127,7 +127,7 @@ export function WorldCupOverviewPage() {
             ))}
           </div>
         ) : (
-          <p className="rounded-xl border border-dashed border-border/70 p-4 text-sm text-muted-foreground">
+          <p className="rounded-md border border-dashed border-border/70 p-4 text-sm text-muted-foreground">
             Confirmed national teams will appear here as the live provider publishes the tournament field.
           </p>
         )}
@@ -198,15 +198,15 @@ export function WorldCupGroupsPage() {
         title="World Cup 2026 Groups"
       />
       <WorldCupSectionNav />
-      <section className="stat-card rounded-fg-xl p-4">
+      <section className="stat-card rounded-xl p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Qualification logic</p>
+            <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">Qualification logic</p>
             <h2 className="text-base font-semibold tracking-tight">Top two advance, third-place teams stay under watch</h2>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Badge variant="outline" className="border-sky-300/30 text-sky-100">Top 2 zone</Badge>
-            <Badge variant="outline" className="border-amber-300/30 text-amber-100">Best third-place watch</Badge>
+            <Badge variant="outline" className="border-info/30 text-info-fg">Top 2 zone</Badge>
+            <Badge variant="outline" className="border-warning/30 text-warning-fg">Best third-place watch</Badge>
             <Badge variant="outline">Pending</Badge>
           </div>
         </div>
@@ -338,14 +338,14 @@ export function WorldCupMatchDetailPage() {
         title={`${data.homeTeam.name} vs ${data.awayTeam.name}`}
       />
       <WorldCupSectionNav />
-      <section className="stat-card rounded-fg-xl p-5">
+      <section className="stat-card rounded-xl p-5">
         <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr]">
           <TeamScore team={data.homeTeam} score={data.homeScore} align="left" />
           <div className="flex flex-col items-center justify-center">
             <Badge variant={data.status === 'LIVE' ? 'soft' : 'outline'}>
               {data.status === 'LIVE' ? `${data.elapsed ?? 0}'` : data.status}
             </Badge>
-            <p className="mt-2 font-mono text-4xl font-black">{data.homeScore ?? '-'}:{data.awayScore ?? '-'}</p>
+            <p className="mt-2 font-mono text-4xl font-bold">{data.homeScore ?? '-'}:{data.awayScore ?? '-'}</p>
           </div>
           <TeamScore team={data.awayTeam} score={data.awayScore} align="right" />
         </div>
@@ -387,7 +387,7 @@ export function WorldCupTeamDetailPage() {
         <WorldCupSquadByPosition players={data.squad.players.slice(0, 30)} />
         <aside className="flex flex-col gap-3">
           <WorldCupDataStatus quality={data.squad.quality} />
-          <section className="stat-card rounded-fg-xl p-4">
+          <section className="stat-card rounded-xl p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className="text-base font-semibold">Team fixtures</h2>
               <Badge variant="outline">{data.fixtures.length}</Badge>
@@ -398,7 +398,7 @@ export function WorldCupTeamDetailPage() {
               ))}
             </div>
             {!data.fixtures.length ? (
-              <p className="rounded-xl border border-dashed border-border/70 p-3 text-sm text-muted-foreground">
+              <p className="rounded-md border border-dashed border-border/70 p-3 text-sm text-muted-foreground">
                 Fixtures appear here once this team is linked to provider matches.
               </p>
             ) : null}
@@ -411,19 +411,19 @@ export function WorldCupTeamDetailPage() {
 
 function Timeline({ fixture }: { fixture: WorldCupFixture }) {
   return (
-    <section className="stat-card rounded-fg-xl p-4">
+    <section className="stat-card rounded-xl p-4">
       <h2 className="text-base font-semibold">Timeline</h2>
       <div className="mt-3 flex flex-col gap-2">
         {fixture.events.length ? (
           fixture.events.map((event) => (
-            <div key={event.id} className="surface-soft flex items-center gap-3 rounded-xl p-2.5 text-sm">
+            <div key={event.id} className="surface-soft flex items-center gap-3 rounded-md p-2.5 text-sm">
               <span className="font-mono text-xs text-muted-foreground">{event.minute}'</span>
               <span className="font-medium">{event.detail}</span>
               <span className="text-muted-foreground">{event.playerName ?? event.teamName ?? 'Event'}</span>
             </div>
           ))
         ) : (
-          <p className="rounded-xl border border-dashed border-border/70 p-4 text-sm text-muted-foreground">
+          <p className="rounded-md border border-dashed border-border/70 p-4 text-sm text-muted-foreground">
             No live event timeline is available for this match yet.
           </p>
         )}
@@ -435,7 +435,7 @@ function Timeline({ fixture }: { fixture: WorldCupFixture }) {
 function StatisticsPanel({ fixture }: { fixture: WorldCupFixture }) {
   const statistics = fixture.statistics ?? []
   return (
-    <section className="stat-card rounded-fg-xl p-4">
+    <section className="stat-card rounded-xl p-4">
       <h2 className="text-base font-semibold">Match stats</h2>
       {statistics.length ? (
         <div className="mt-3">
@@ -453,14 +453,14 @@ function StatisticsPanel({ fixture }: { fixture: WorldCupFixture }) {
           statistics.slice(0, 12).map((stat) => (
             <div
               key={`${stat.teamId}-${stat.type}`}
-              className="surface-soft flex items-center justify-between gap-3 rounded-xl p-2 text-sm"
+              className="surface-soft flex items-center justify-between gap-3 rounded-md p-2 text-sm"
             >
               <span className="truncate text-muted-foreground">{stat.teamName} · {stat.type}</span>
               <span className="font-mono font-bold">{stat.value}</span>
             </div>
           ))
         ) : (
-          <p className="rounded-xl border border-dashed border-border/70 p-3 text-sm text-muted-foreground">
+          <p className="rounded-md border border-dashed border-border/70 p-3 text-sm text-muted-foreground">
             Stats appear when the provider returns match statistics.
           </p>
         )}
@@ -471,12 +471,12 @@ function StatisticsPanel({ fixture }: { fixture: WorldCupFixture }) {
 
 function LineupsPanel({ lineups }: { lineups: WorldCupLineup[] }) {
   return (
-    <section className="stat-card rounded-fg-xl p-4">
+    <section className="stat-card rounded-xl p-4">
       <h2 className="text-base font-semibold">Lineups</h2>
       <div className="mt-3 flex flex-col gap-3">
         {lineups.length ? (
           lineups.map((lineup) => (
-            <div key={lineup.teamId} className="surface-soft rounded-xl p-3">
+            <div key={lineup.teamId} className="surface-soft rounded-md p-3">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold">{lineup.teamName}</h3>
                 <Badge variant="outline">{lineup.formation ?? 'Formation pending'}</Badge>
@@ -489,7 +489,7 @@ function LineupsPanel({ lineups }: { lineups: WorldCupLineup[] }) {
             </div>
           ))
         ) : (
-          <p className="rounded-xl border border-dashed border-border/70 p-3 text-sm text-muted-foreground">
+          <p className="rounded-md border border-dashed border-border/70 p-3 text-sm text-muted-foreground">
             Lineups appear close to kickoff when available.
           </p>
         )}

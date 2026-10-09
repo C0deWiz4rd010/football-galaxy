@@ -65,10 +65,10 @@ export default function TeamsExplorer() {
   return (
     <PageWrapper>
       <StaggerGrid className="space-y-5">
-        <StaggerGridItem as="section" className="stat-card rounded-fg-xl p-5 shadow-fg-2 sm:p-6">
+        <StaggerGridItem as="section" className="stat-card rounded-xl p-5 shadow-fg-2 sm:p-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">
                 {t('teamExplorerEyebrow')}
               </p>
               <h1 className="mt-2 text-3xl font-semibold tracking-tight">
@@ -80,7 +80,7 @@ export default function TeamsExplorer() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-[minmax(0,240px)_auto]">
-              <label className="surface-soft flex items-center gap-2 rounded-fg-lg px-3 py-3">
+              <label className="surface-soft flex items-center gap-2 rounded-lg px-3 py-3">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <input
                   value={query}
@@ -109,12 +109,12 @@ export default function TeamsExplorer() {
         </StaggerGridItem>
 
         <StaggerGridItem as="section" className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
-          <div className="surface-soft rounded-fg-lg px-4 py-3 text-sm text-muted-foreground">
+          <div className="surface-soft rounded-lg px-4 py-3 text-sm text-muted-foreground">
             {selectedLeagueId !== 'all'
               ? t('showingTeamsInLeague', { count: teams.length })
               : t('showingTeamsAll', { count: teams.length })}
           </div>
-          <label className="surface-soft flex items-center gap-2 rounded-fg-lg px-3 py-3 text-sm text-muted-foreground">
+          <label className="surface-soft flex items-center gap-2 rounded-lg px-3 py-3 text-sm text-muted-foreground">
             <ArrowUpDown className="h-4 w-4" />
             <span>{t('sortBy')}</span>
             <select
@@ -136,7 +136,7 @@ export default function TeamsExplorer() {
             </div>
           ) : null}
           {isPending && teams.length === 0
-            ? Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-48 rounded-fg-lg" />)
+            ? Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-48 rounded-lg" />)
             : null}
           {!isPending && !isError && teams.length === 0 ? (
             <div className="lg:col-span-2 xl:col-span-3">
@@ -161,12 +161,12 @@ export default function TeamsExplorer() {
                       createTeamCrest(
                         team.shortName,
                         team.primaryColor ?? league.color,
-                        team.secondaryColor ?? '#f8fafc',
+                        team.secondaryColor,
                         0,
                       ),
                     ]}
                     alt={team.name}
-                    className="h-14 w-14 rounded-fg-md object-cover"
+                    className="h-14 w-14 rounded-md object-cover"
                     loading="lazy"
                   />
                   <div className="min-w-0">
@@ -175,11 +175,11 @@ export default function TeamsExplorer() {
                   </div>
                 </div>
                 {standing ? (
-                  <div className="rounded-2xl border border-border/60 bg-background/40 px-3 py-2 text-center">
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                  <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-center">
+                    <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">
                       {t('posShort')}
                     </p>
-                    <p className="text-xl font-black">{standing.position}</p>
+                    <p className="text-xl font-bold">{standing.position}</p>
                   </div>
                 ) : null}
               </div>
@@ -190,20 +190,20 @@ export default function TeamsExplorer() {
               </div>
 
               <div className="mt-auto grid grid-cols-3 gap-2 pt-4">
-                <div className="surface-soft rounded-fg-lg p-3">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                <div className="surface-soft rounded-lg p-3">
+                  <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">
                     {t('points')}
                   </p>
                   <p className="mt-1 font-semibold">{standing?.points ?? '-'}</p>
                 </div>
-                <div className="surface-soft rounded-fg-lg p-3">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                <div className="surface-soft rounded-lg p-3">
+                  <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">
                     {t('goals')}
                   </p>
                   <p className="mt-1 font-semibold">{standing?.goalsFor ?? '-'}</p>
                 </div>
-                <div className="surface-soft rounded-fg-lg p-3">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                <div className="surface-soft rounded-lg p-3">
+                  <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">
                     {t('gdShort')}
                   </p>
                   <p className="mt-1 font-semibold">{standing?.goalDifference ?? '-'}</p>

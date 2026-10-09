@@ -4,7 +4,7 @@ import { NotFoundState } from '@/components/shared/StatusStates'
 export default function NotFound() {
   return (
     <PageWrapper>
-      <NotFoundState />
+      <NotFoundState headingAs="h1" />
     </PageWrapper>
   )
 }

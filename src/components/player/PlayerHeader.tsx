@@ -4,27 +4,33 @@ import { Badge } from '@/components/ui/badge'
 import { AssetImage } from '@/components/shared/AssetImage'
 import { useLocale } from '@/contexts/LocaleContext'
 import { getCrestSources, getPlayerPhotoSources } from '@/lib/assetSources'
+import { readableTextOn } from '@/lib/color'
 import { createPlayerAvatar, createTeamCrest, initialsFromName } from '@/lib/visualAssets'
 import type { Player, Team } from '@/services/types'
 
 export function PlayerHeader({ player, team, action, backButton }: { player: Player; team?: Team; action?: React.ReactNode; backButton?: React.ReactNode }) {
   const { t } = useLocale()
-  const playerFallback = createPlayerAvatar(initialsFromName(player.name), team?.primaryColor ?? '#0f766e')
+  const playerFallback = createPlayerAvatar(initialsFromName(player.name), team?.primaryColor)
   return (
     <section className="stat-card relative p-4">
-      {backButton && (
-        <div className="absolute left-3 top-3 z-10">{backButton}</div>
-      )}
+      {backButton ? <div className="mb-3">{backButton}</div> : null}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-      <AssetImage src={player.photo} fallbackSrc={[...getPlayerPhotoSources(player), playerFallback]} alt={player.name} className="h-24 w-24 rounded-fg-lg object-cover ring-2" style={{ '--tw-ring-color': team?.primaryColor ?? 'hsl(var(--primary))' } as React.CSSProperties} loading="lazy" />
+      <AssetImage src={player.photo} fallbackSrc={[...getPlayerPhotoSources(player), playerFallback]} alt={player.name} className="h-24 w-24 rounded-lg object-cover ring-2" style={{ '--tw-ring-color': team?.primaryColor ?? 'hsl(var(--primary))' } as React.CSSProperties} loading="lazy" />
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <span className="rounded-md px-2.5 py-1 font-mono text-xl font-bold text-white" style={{ backgroundColor: team?.primaryColor ?? '#18181b' }}>{player.number}</span>
+            {player.number ? (
+              <span
+                className="rounded-md px-2.5 py-1 font-mono text-xl font-bold"
+                style={{ backgroundColor: team?.primaryColor ?? '#18181b', color: readableTextOn(team?.primaryColor ?? '#18181b') }}
+              >
+                {player.number}
+              </span>
+            ) : null}
             <Badge>{player.position}</Badge>
           </div>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight">{player.name}</h1>
           <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <img src={player.flag} alt={`${player.nationality} flag`} className="h-4 w-6 rounded-sm object-cover" loading="lazy" />
+            <img src={player.flag} alt={`${player.nationality} flag`} className="h-4 w-6 rounded-xs object-cover" loading="lazy" />
             <span>
               {[
                 player.nationality,
@@ -41,7 +47,7 @@ export function PlayerHeader({ player, team, action, backButton }: { player: Pla
               to={`/${team.leagueId}/team/${team.id}`}
               className="mt-2 inline-flex items-center gap-2 text-sm font-medium hover:text-primary"
             >
-              <AssetImage src={team.crest} fallbackSrc={[...getCrestSources(team), createTeamCrest(team.shortName, team.primaryColor ?? '#0f766e', team.secondaryColor ?? '#f8fafc', 0)]} alt={team.name} className="h-8 w-8 rounded object-cover" loading="lazy" />
+              <AssetImage src={team.crest} fallbackSrc={[...getCrestSources(team), createTeamCrest(team.shortName, team.primaryColor, team.secondaryColor, 0)]} alt={team.name} className="h-8 w-8 rounded object-cover" loading="lazy" />
               <span>{team.name}</span>
             </Link>
           ) : null}

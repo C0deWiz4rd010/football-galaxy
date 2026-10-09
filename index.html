@@ -1,22 +1,31 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Football Galaxy</title>
+    <meta name="color-scheme" content="dark light" />
+    <!-- Applies stored theme, palette and language before the first paint
+         (no light/dark flash, correct lang for screen readers). Keys mirror
+         next-themes ("theme"), PaletteContext and LocaleContext. -->
     <script>
       (function () {
-        try {
-          var p = localStorage.getItem('fg-palette')
-          var valid = ['galaxy', 'midnight', 'aurora', 'stadium', 'crimson', 'mono']
-          document.documentElement.setAttribute(
-            'data-palette',
-            valid.indexOf(p) !== -1 ? p : 'galaxy',
-          )
-        } catch (e) {
-          document.documentElement.setAttribute('data-palette', 'galaxy')
+        var root = document.documentElement
+        var get = function (key) {
+          try {
+            return localStorage.getItem(key)
+          } catch (e) {
+            return null
+          }
         }
+        var theme = get('theme') === 'light' ? 'light' : 'dark'
+        root.classList.add(theme)
+        root.style.colorScheme = theme
+        var palette = get('fg-palette')
+        var palettes = ['galaxy', 'midnight', 'aurora', 'stadium', 'crimson', 'mono']
+        root.setAttribute('data-palette', palettes.indexOf(palette) !== -1 ? palette : 'galaxy')
+        root.lang = get('football-galaxy-locale') === 'en' ? 'en' : 'de'
       })()
     </script>
   </head>

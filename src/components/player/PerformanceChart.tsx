@@ -1,5 +1,6 @@
 import { Bar, BarChart, CartesianGrid, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
+import { axisTick, chartColors, tooltipProps } from '@/components/charts/chartTheme'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { useLocale } from '@/contexts/LocaleContext'
 import type { Player } from '@/services/types'
@@ -22,26 +23,17 @@ export function PerformanceChart({ player }: { player: Player }) {
   return (
     <section className="stat-card">
       <div className="mb-4">
-        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('seasonOutput')}</p>
+        <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('seasonOutput')}</p>
         <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('per90Minutes')}</h2>
       </div>
       {minutes > 0 ? (
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={data} margin={{ top: 16, left: -20, right: 8 }}>
-            <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
-            <XAxis dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
-            <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
-            <Tooltip
-              cursor={{ fill: 'hsl(var(--muted) / 0.4)' }}
-              contentStyle={{
-                background: 'hsl(var(--popover))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: 12,
-                color: 'hsl(var(--popover-foreground))',
-                fontSize: 12,
-              }}
-            />
-            <Bar dataKey="value" name={t('per90Minutes')} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]}>
+            <CartesianGrid vertical={false} stroke={chartColors.grid} />
+            <XAxis dataKey="name" tick={axisTick} />
+            <YAxis tick={axisTick} />
+            <Tooltip {...tooltipProps} />
+            <Bar dataKey="value" name={t('per90Minutes')} fill={chartColors.primary} radius={[4, 4, 0, 0]}>
               <LabelList dataKey="value" position="top" className="fill-foreground text-xs" />
             </Bar>
           </BarChart>

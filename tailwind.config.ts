@@ -9,6 +9,7 @@ const config = {
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', '"Cascadia Mono"', 'Menlo', 'Consolas', 'monospace'],
       },
       colors: {
         border: 'hsl(var(--border))',
@@ -49,24 +50,51 @@ const config = {
         ll: '#003f8f',
         sa: '#009246',
         l1: '#091c3e',
-        success: 'hsl(var(--success))',
-        warning: 'hsl(var(--warning))',
-        info: 'hsl(var(--info))',
+        // Status hues for fills/borders; `*-fg` is the readable text tone
+        // on light and dark surfaces (≥ 4.5:1 against card/background).
+        success: { DEFAULT: 'hsl(var(--success))', fg: 'hsl(var(--success-fg))' },
+        warning: { DEFAULT: 'hsl(var(--warning))', fg: 'hsl(var(--warning-fg))' },
+        info: { DEFAULT: 'hsl(var(--info))', fg: 'hsl(var(--info-fg))' },
+        danger: { DEFAULT: 'hsl(var(--destructive))', fg: 'hsl(var(--danger-fg))' },
         live: 'hsl(var(--live))',
+        zone: { ucl: 'hsl(var(--zone-ucl))', rel: 'hsl(var(--zone-rel))' },
       },
+      // The one radius scale (see tokens.css).
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
-        // Design-token aligned radii. Prefer these in new components so the
-        // radius scale stays consistent across pages.
-        'fg-xs': 'var(--fg-radius-xs)',
-        'fg-sm': 'var(--fg-radius-sm)',
-        'fg-md': 'var(--fg-radius-md)',
-        'fg-lg': 'var(--fg-radius-lg)',
-        'fg-xl': 'var(--fg-radius-xl)',
-        'fg-2xl': 'var(--fg-radius-2xl)',
-        'fg-pill': 'var(--fg-radius-pill)',
+        xs: 'var(--fg-radius-xs)',
+        sm: 'var(--fg-radius-sm)',
+        md: 'var(--fg-radius-md)',
+        lg: 'var(--fg-radius-lg)',
+        xl: 'var(--fg-radius-xl)',
+        '2xl': 'var(--fg-radius-2xl)',
+      },
+      // Tailwind's default steps plus the fine steps used for glass surfaces.
+      opacity: {
+        2: '0.02',
+        3: '0.03',
+        4: '0.04',
+        6: '0.06',
+        8: '0.08',
+        12: '0.12',
+        18: '0.18',
+      },
+      letterSpacing: {
+        // Uppercase eyebrow labels above headings.
+        eyebrow: '0.16em',
+      },
+      fontSize: {
+        // Smallest allowed text: 11px, only for dense badges/labels.
+        '2xs': ['0.6875rem', { lineHeight: '1rem' }],
+      },
+      zIndex: {
+        sticky: 'var(--fg-z-sticky)',
+        header: 'var(--fg-z-header)',
+        nav: 'var(--fg-z-nav)',
+        fab: 'var(--fg-z-fab)',
+        modal: 'var(--fg-z-modal)',
+        banner: 'var(--fg-z-banner)',
+        toast: 'var(--fg-z-toast)',
+        tooltip: 'var(--fg-z-tooltip)',
       },
       spacing: {
         // 4px scale mirroring tokens.css. These coexist with Tailwind's
@@ -83,6 +111,14 @@ const config = {
         'fg-10': 'var(--fg-space-10)',
         'fg-11': 'var(--fg-space-11)',
         'fg-12': 'var(--fg-space-12)',
+        // Shell geometry (tokens.css › Layout).
+        sidebar: 'var(--fg-sidebar-width)',
+        header: 'var(--fg-header-height)',
+        tabbar: 'var(--fg-tabbar-height)',
+        shell: 'var(--fg-shell-offset)',
+        'shell-gutter': 'var(--fg-shell-gutter)',
+        'header-offset': 'var(--fg-header-offset)',
+        'tabbar-clearance': 'var(--fg-tabbar-clearance)',
       },
       boxShadow: {
         'fg-1': 'var(--fg-elevation-1)',
@@ -93,21 +129,21 @@ const config = {
       },
       transitionTimingFunction: {
         'fg-standard': 'var(--fg-ease-standard)',
-        'fg-emphasized': 'var(--fg-ease-emphasized)',
-        'fg-decelerate': 'var(--fg-ease-decelerate)',
-        'fg-accelerate': 'var(--fg-ease-accelerate)',
+        'fg-enter': 'var(--fg-ease-enter)',
+        'fg-soft': 'var(--fg-ease-soft)',
+        'fg-exit': 'var(--fg-ease-exit)',
       },
       transitionDuration: {
-        'fg-instant': '100ms',
-        'fg-fast': '160ms',
-        'fg-base': '240ms',
-        'fg-slow': '320ms',
-        'fg-slower': '420ms',
-        'fg-hero': '560ms',
+        'fg-instant': 'var(--fg-duration-instant)',
+        'fg-fast': 'var(--fg-duration-fast)',
+        'fg-base': 'var(--fg-duration-base)',
+        'fg-slow': 'var(--fg-duration-slow)',
+        'fg-hero': 'var(--fg-duration-hero)',
       },
       maxWidth: {
         'fg-content': 'var(--fg-content-max)',
         'fg-narrow': 'var(--fg-content-narrow)',
+        shell: 'var(--fg-shell-max)',
       },
     },
   },

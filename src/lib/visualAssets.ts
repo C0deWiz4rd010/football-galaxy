@@ -51,7 +51,15 @@ export function createLeagueLogo(code: string, color: string, name: string) {
   `)
 }
 
-export function createTeamCrest(shortName: string, primary: string, secondary: string, index: number) {
+/** Fallback club colours for generated crests/avatars when the API has none. */
+export const FALLBACK_TEAM_COLORS = { primary: '#0f766e', secondary: '#f8fafc' } as const
+
+export function createTeamCrest(
+  shortName: string,
+  primary: string | undefined = FALLBACK_TEAM_COLORS.primary,
+  secondary: string | undefined = FALLBACK_TEAM_COLORS.secondary,
+  index = 0,
+) {
   const safeShortName = escapeSvgText(shortName)
   const stripeColor = index % 2 === 0 ? secondary : '#ffffff'
   return svgDataUri(`
@@ -66,7 +74,7 @@ export function createTeamCrest(shortName: string, primary: string, secondary: s
   `)
 }
 
-export function createPlayerAvatar(initials: string, color: string) {
+export function createPlayerAvatar(initials: string, color: string | undefined = FALLBACK_TEAM_COLORS.primary) {
   const safeInitials = escapeSvgText(initials)
   return svgDataUri(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="${safeInitials}">

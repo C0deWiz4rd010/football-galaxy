@@ -57,9 +57,9 @@ function PlayerCard({ entry, league, rank }: { entry: LeaguePlayer; league: Leag
           [t('assists'), player.assists],
           [t('appearances'), player.appearances],
         ].map(([label, value]) => (
-          <div key={label} className="surface-soft rounded-fg-sm p-2 text-center">
+          <div key={label} className="surface-soft rounded-sm p-2 text-center">
             <dd className="font-mono text-base font-bold leading-tight tabular-nums">{value}</dd>
-            <dt className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">{label}</dt>
+            <dt className="text-2xs uppercase tracking-eyebrow text-muted-foreground">{label}</dt>
           </div>
         ))}
       </dl>
@@ -97,11 +97,11 @@ export default function PlayersExplorer() {
         <section className="stat-card p-5 sm:p-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('playerExplorerEyebrow')}</p>
+              <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('playerExplorerEyebrow')}</p>
               <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t('playerExplorerTitle')}</h1>
               <p className="mt-2 text-sm text-muted-foreground sm:text-base">{t('playerExplorerLiveSubtitle')}</p>
             </div>
-            <label className="surface-soft flex items-center gap-2 rounded-fg-lg px-3 py-3 focus-within:ring-2 focus-within:ring-ring sm:min-w-[260px]">
+            <label className="surface-soft flex items-center gap-2 rounded-lg px-3 py-3 focus-within:ring-2 focus-within:ring-ring sm:min-w-[260px]">
               <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
               <span className="sr-only">{t('searchPlayersPlaceholder')}</span>
               <input
@@ -137,7 +137,7 @@ export default function PlayersExplorer() {
               </button>
             ),
           )}
-          <label className="surface-soft ml-auto flex items-center gap-2 rounded-fg-lg px-3 py-2 text-sm text-muted-foreground focus-within:ring-2 focus-within:ring-ring">
+          <label className="surface-soft ml-auto flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground focus-within:ring-2 focus-within:ring-ring">
             <ArrowUpDown className="h-3.5 w-3.5 shrink-0" aria-hidden />
             <span className="sr-only">{t('sortBy')}</span>
             <select value={sortBy} onChange={(event) => setSortBy(event.target.value as SortKey)} className="bg-transparent font-medium text-foreground outline-none">
@@ -153,7 +153,7 @@ export default function PlayersExplorer() {
           <ErrorState onRetry={refetch} />
         ) : (
           <>
-            <p className="surface-soft rounded-fg-lg px-4 py-2.5 text-sm text-muted-foreground" aria-live="polite">
+            <p className="surface-soft rounded-lg px-4 py-2.5 text-sm text-muted-foreground" aria-live="polite">
               {isPending && !players.length
                 ? t('loading')
                 : selectedLeagueId !== 'all'
@@ -164,7 +164,7 @@ export default function PlayersExplorer() {
 
             <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-busy={isPending}>
               {isPending && !players.length
-                ? Array.from({ length: 9 }, (_, index) => <Skeleton key={index} className="h-40 rounded-fg-lg" />)
+                ? Array.from({ length: 9 }, (_, index) => <Skeleton key={index} className="h-40 rounded-lg" />)
                 : null}
               {!isPending && players.length === 0 ? (
                 <div className="sm:col-span-2 xl:col-span-3">

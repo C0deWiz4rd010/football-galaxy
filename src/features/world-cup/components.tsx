@@ -127,10 +127,10 @@ export function WorldCupQualityBadge({ quality }: { quality: DataQualityMeta }) 
 export function WorldCupDataStatus({ quality }: { quality: DataQualityMeta }) {
   const isSnapshot = quality.provider === 'snapshot' || quality.confidence === 'snapshot'
   return (
-    <div className="surface-soft rounded-fg-lg p-3">
+    <div className="surface-soft rounded-lg p-3">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Data status</p>
+          <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">Data status</p>
           <h2 className="mt-1 text-sm font-semibold">
             {isSnapshot ? 'Offline snapshot' : quality.isLive ? 'Live feed' : 'Official feed'}
           </h2>
@@ -138,7 +138,7 @@ export function WorldCupDataStatus({ quality }: { quality: DataQualityMeta }) {
         <WorldCupQualityBadge quality={quality} />
       </div>
       <p className="mt-2 text-xs text-muted-foreground">Updated {formatDateTime(quality.lastUpdated)}</p>
-      {quality.note ? <p className="mt-1 text-xs text-amber-100/80">{quality.note}</p> : null}
+      {quality.note ? <p className="mt-1 text-xs text-warning-fg/80">{quality.note}</p> : null}
     </div>
   )
 }
@@ -155,9 +155,9 @@ export function WorldCupPageTitle({
   title: string
 }) {
   return (
-    <section className="stat-card flex flex-wrap items-center justify-between gap-4 rounded-fg-xl p-4">
+    <section className="stat-card flex flex-wrap items-center justify-between gap-4 rounded-xl p-4">
       <div className="flex min-w-0 flex-1 items-start gap-3">
-        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-amber-300/12 text-amber-200">{icon}</div>
+        <div className="flex size-11 shrink-0 items-center justify-center rounded-md bg-warning/12 text-warning-fg">{icon}</div>
         <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-semibold leading-tight tracking-tight">{title}</h1>
           <p className="mt-1 max-w-3xl text-sm leading-5 text-muted-foreground">{description}</p>
@@ -176,9 +176,9 @@ export function WorldCupPageTitle({
 
 export function WorldCupSectionNav() {
   return (
-    <div className="sticky top-[4.75rem] z-20">
+    <div className="sticky top-header-offset z-sticky">
       <nav
-        className="flex gap-1 overflow-x-auto rounded-fg-xl border border-border/50 bg-background/70 p-1.5 backdrop-blur-xl sm:gap-2 sm:pr-8"
+        className="flex gap-1 overflow-x-auto rounded-xl border border-border/50 bg-background/70 p-1.5 backdrop-blur-xl sm:gap-2 sm:pr-8"
         aria-label="World Cup sections"
       >
         {worldCupNavItems.map((item) => (
@@ -188,7 +188,7 @@ export function WorldCupSectionNav() {
             end={item.to === '/world-cup-2026'}
             className={({ isActive }) =>
               cn(
-                'min-w-max rounded-fg-md px-2.5 py-2 text-xs font-medium text-muted-foreground transition hover:bg-white/8 hover:text-foreground sm:px-3.5 sm:text-sm',
+                'min-w-max rounded-md px-2.5 py-2 text-xs font-medium text-muted-foreground transition hover:bg-foreground/8 hover:text-foreground sm:px-3.5 sm:text-sm',
                 isActive &&
                   'bg-amber-300 text-amber-950 shadow-fg-2 hover:bg-amber-300 hover:text-amber-950',
               )
@@ -198,7 +198,7 @@ export function WorldCupSectionNav() {
           </NavLink>
         ))}
       </nav>
-      <div className="pointer-events-none absolute inset-y-1.5 right-0 hidden w-10 rounded-r-fg-xl bg-gradient-to-l from-background/90 to-transparent sm:block" />
+      <div className="pointer-events-none absolute inset-y-1.5 right-0 hidden w-10 rounded-r-xl bg-gradient-to-l from-background/90 to-transparent sm:block" />
     </div>
   )
 }
@@ -206,21 +206,21 @@ export function WorldCupSectionNav() {
 export function WorldCupLoading() {
   return (
     <WorldCupShell>
-      <Skeleton className="h-24 rounded-fg-xl" />
-      <Skeleton className="h-12 rounded-fg-xl" />
+      <Skeleton className="h-24 rounded-xl" />
+      <Skeleton className="h-12 rounded-xl" />
       <div className="grid gap-4 lg:grid-cols-3">
-        <Skeleton className="h-72 rounded-fg-xl" />
-        <Skeleton className="h-72 rounded-fg-xl" />
-        <Skeleton className="h-72 rounded-fg-xl" />
+        <Skeleton className="h-72 rounded-xl" />
+        <Skeleton className="h-72 rounded-xl" />
+        <Skeleton className="h-72 rounded-xl" />
       </div>
-      <Skeleton className="h-64 rounded-fg-xl" />
+      <Skeleton className="h-64 rounded-xl" />
     </WorldCupShell>
   )
 }
 
 export function WorldCupError({ error, onRetry }: { error: string; onRetry: () => void }) {
   return (
-    <div className="stat-card flex flex-col items-start gap-3 rounded-fg-lg p-fg-6 shadow-fg-2 sm:flex-row">
+    <div className="stat-card flex flex-col items-start gap-3 rounded-lg p-fg-6 shadow-fg-2 sm:flex-row">
       <AlertCircle className="mt-0.5 size-5 shrink-0 text-destructive" />
       <div className="flex-1">
         <h2 className="text-base font-semibold tracking-tight">World Cup data is unavailable</h2>
@@ -251,23 +251,23 @@ export function WorldCupHero({
   startsAt: string
 }) {
   return (
-    <section className="stat-card app-grid-lines overflow-hidden rounded-fg-xl p-4 shadow-fg-2 sm:p-5">
+    <section className="stat-card app-grid-lines overflow-hidden rounded-xl p-4 shadow-fg-2 sm:p-5">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-amber-300/12 to-transparent" />
       <div className="relative flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-4">
-          <div className="flex size-14 shrink-0 items-center justify-center rounded-fg-lg border border-amber-300/30 bg-amber-300/12 text-amber-200 shadow-[0_0_42px_rgba(251,191,36,0.14)]">
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-lg border border-warning/30 bg-warning/12 text-warning-fg shadow-[0_0_42px_rgba(251,191,36,0.14)]">
             <Trophy className="size-7" />
           </div>
           <div className="min-w-0">
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">World Cup 2026</h1>
             <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
-                <CalendarDays className="size-3.5 text-amber-200" />
+                <CalendarDays className="size-3.5 text-warning-fg" />
                 {formatDate(startsAt)} – {formatDate(endsAt)}
               </span>
               <span className="text-muted-foreground/50">·</span>
               <span className="inline-flex items-center gap-1.5">
-                <MapPin className="size-3.5 text-sky-200" />
+                <MapPin className="size-3.5 text-info-fg" />
                 {hostCountries.join(', ')}
               </span>
             </p>
@@ -276,9 +276,9 @@ export function WorldCupHero({
 
         <div className="flex flex-wrap items-center gap-2">
           {liveCount > 0 ? (
-            <Badge variant="soft" className="gap-1.5 border-emerald-400/50 bg-emerald-400/12 text-emerald-100">
+            <Badge variant="soft" className="gap-1.5 border-success/50 bg-success/12 text-success-fg">
               <span className="relative flex size-2">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400/70" />
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-success/70" />
                 <span className="relative inline-flex size-2 rounded-full bg-emerald-300" />
               </span>
               {liveCount} live {liveCount === 1 ? 'match' : 'matches'}
@@ -305,12 +305,12 @@ export function WorldCupHero({
 
 function SignalCard({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: string; tone: string }) {
   return (
-    <div className="surface-soft flex min-h-16 items-center justify-between gap-3 rounded-fg-lg p-3">
+    <div className="surface-soft flex min-h-16 items-center justify-between gap-3 rounded-lg p-3">
       <div className="flex items-center gap-3">
-        <div className={cn('flex size-9 items-center justify-center rounded-xl bg-white/10', tone)}>{icon}</div>
+        <div className={cn('flex size-9 items-center justify-center rounded-md bg-foreground/10', tone)}>{icon}</div>
         <span className="text-xs text-muted-foreground">{label}</span>
       </div>
-      <span className={cn('font-mono text-xl font-black tabular-nums', tone)}>{value}</span>
+      <span className={cn('font-mono text-xl font-bold tabular-nums', tone)}>{value}</span>
     </div>
   )
 }
@@ -345,41 +345,41 @@ export function WorldCupTournamentStatus({
   ]
 
   return (
-    <section className="stat-card flex h-full flex-col rounded-fg-xl p-4">
+    <section className="stat-card flex h-full flex-col rounded-xl p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Tournament status</p>
+          <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">Tournament status</p>
           <h2 className="text-base font-semibold tracking-tight">Operational snapshot</h2>
         </div>
         <Badge
           variant={phase.active ? 'soft' : 'outline'}
-          className={cn('gap-1.5', phase.active && 'border-emerald-400/50 bg-emerald-400/12 text-emerald-100')}
+          className={cn('gap-1.5', phase.active && 'border-success/50 bg-success/12 text-success-fg')}
         >
           <span className={cn('size-1.5 rounded-full', phase.active ? 'bg-emerald-300' : 'bg-sky-300')} />
           {phase.label}
         </Badge>
       </div>
       <div className="grid flex-1 gap-2">
-        {(liveCount > 0 || upcomingCount > 0 || recentCount > 0) ? (
-          <div className="surface-soft rounded-xl p-2">
+        {[liveCount, upcomingCount, recentCount].filter((count) => count > 0).length > 1 ? (
+          <div className="surface-soft rounded-md p-2">
             <MatchStatePulse live={liveCount} recent={recentCount} upcoming={upcomingCount} />
           </div>
         ) : null}
         {items.map((item) => (
-          <div key={item.label} className="surface-soft flex items-center gap-3 rounded-xl p-3">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-white/10 text-amber-200">{item.icon}</div>
+          <div key={item.label} className="surface-soft flex items-center gap-3 rounded-md p-3">
+            <div className="flex size-9 items-center justify-center rounded-md bg-foreground/10 text-warning-fg">{item.icon}</div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-medium">{item.label}</p>
-                <p className="font-mono text-sm font-black text-foreground">{item.value}</p>
+                <p className="font-mono text-sm font-bold text-foreground">{item.value}</p>
               </div>
               <p className="truncate text-xs text-muted-foreground">{item.helper}</p>
             </div>
           </div>
         ))}
       </div>
-      <div className="mt-3 flex items-center justify-center gap-2 border-t border-white/5 pt-3 text-xs text-muted-foreground">
-        <Sparkles className="size-3.5 text-amber-200" />
+      <div className="mt-3 flex items-center justify-center gap-2 border-t border-border/60 pt-3 text-xs text-muted-foreground">
+        <Sparkles className="size-3.5 text-warning-fg" />
         Powered by {quality.provider === 'api-football' ? 'API-Football' : quality.provider}
       </div>
     </section>
@@ -394,20 +394,20 @@ export function WorldCupHostCityPanel({ cities }: { cities: string[] }) {
   }, {})
 
   return (
-    <section className="stat-card flex h-full flex-col rounded-fg-xl p-4">
+    <section className="stat-card flex h-full flex-col rounded-xl p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Host cities</p>
+          <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">Host cities</p>
           <h2 className="text-base font-semibold tracking-tight">Three-country map</h2>
         </div>
         <Badge variant="outline">{cities.length}</Badge>
       </div>
       <div className="grid flex-1 gap-3">
         {Object.entries(groupedCities).map(([country, countryCities]) => (
-          <div key={country} className="surface-soft rounded-xl p-3">
+          <div key={country} className="surface-soft rounded-md p-3">
             <div className="mb-2 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <span className="flex size-8 items-center justify-center rounded-lg bg-white/10 text-amber-200">
+                <span className="flex size-8 items-center justify-center rounded-lg bg-foreground/10 text-warning-fg">
                   <MapPin className="size-4" />
                 </span>
                 <p className="text-sm font-semibold">{country}</p>
@@ -418,7 +418,7 @@ export function WorldCupHostCityPanel({ cities }: { cities: string[] }) {
               {countryCities.map((city) => (
                 <span
                   key={city}
-                  className="rounded-lg border border-white/10 bg-background/35 px-2 py-1 text-xs text-muted-foreground"
+                  className="rounded-lg border border-border/60 bg-background/35 px-2 py-1 text-xs text-muted-foreground"
                 >
                   {city}
                 </span>
@@ -434,9 +434,9 @@ export function WorldCupHostCityPanel({ cities }: { cities: string[] }) {
 export function WorldCupFeatureMatch({ fixture }: { fixture?: WorldCupFixture }) {
   if (!fixture) {
     return (
-      <section className="stat-card rounded-fg-xl p-4">
-        <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Match center</p>
-        <div className="mt-3 rounded-xl border border-dashed border-border/70 p-6 text-sm text-muted-foreground">
+      <section className="stat-card rounded-xl p-4">
+        <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">Match center</p>
+        <div className="mt-3 rounded-md border border-dashed border-border/70 p-6 text-sm text-muted-foreground">
           No live or upcoming match is available right now. Matches appear here as soon as the provider publishes them.
         </div>
       </section>
@@ -447,7 +447,7 @@ export function WorldCupFeatureMatch({ fixture }: { fixture?: WorldCupFixture })
   const isFinished = fixture.status === 'FINISHED'
 
   return (
-    <section className="stat-card app-grid-lines flex h-full flex-col rounded-fg-xl p-4">
+    <section className="stat-card app-grid-lines flex h-full flex-col rounded-xl p-4">
       <div className="relative flex items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <span
@@ -456,11 +456,11 @@ export function WorldCupFeatureMatch({ fixture }: { fixture?: WorldCupFixture })
               isLive ? 'bg-emerald-300 shadow-[0_0_18px_rgba(52,211,153,0.65)]' : 'bg-sky-300',
             )}
           />
-          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">
             {isLive ? 'Live now' : isFinished ? 'Latest result' : 'Featured next'}
           </p>
         </div>
-        <Badge variant={isLive ? 'soft' : 'outline'} className={isLive ? 'bg-emerald-500/15 text-emerald-100' : undefined}>
+        <Badge variant={isLive ? 'soft' : 'outline'} className={isLive ? 'bg-success/15 text-success-fg' : undefined}>
           {isLive ? `${fixture.elapsed ?? 0}'` : fixture.status}
         </Badge>
       </div>
@@ -468,8 +468,8 @@ export function WorldCupFeatureMatch({ fixture }: { fixture?: WorldCupFixture })
 
       <div className="relative mt-4 grid flex-1 items-center gap-4 md:grid-cols-[1fr_auto_1fr]">
         <FeaturedTeam team={fixture.homeTeam} align="left" />
-        <div className="rounded-fg-lg border border-white/10 bg-background/40 px-5 py-3 text-center">
-          <p className="font-mono text-4xl font-black tabular-nums">
+        <div className="rounded-lg border border-border/60 bg-background/40 px-5 py-3 text-center">
+          <p className="font-mono text-4xl font-bold tabular-nums">
             {fixture.homeScore ?? '-'}:{fixture.awayScore ?? '-'}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">{fixture.city ?? 'Host city pending'}</p>
@@ -477,7 +477,7 @@ export function WorldCupFeatureMatch({ fixture }: { fixture?: WorldCupFixture })
         <FeaturedTeam team={fixture.awayTeam} align="right" />
       </div>
 
-      <div className="relative mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-3 text-sm">
+      <div className="relative mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-3 text-sm">
         <div className="flex flex-wrap items-center gap-3 text-muted-foreground">
           <span>{formatDateTime(fixture.utcDate)}</span>
           <span>{fixture.venue ?? 'Venue pending'}</span>
@@ -508,10 +508,10 @@ function FeaturedTeam({ align, team }: { align: 'left' | 'right'; team: WorldCup
 
 export function WorldCupUpcomingCard({ fixtures }: { fixtures: WorldCupFixture[] }) {
   return (
-    <section className="stat-card flex h-full flex-col rounded-fg-xl p-4">
+    <section className="stat-card flex h-full flex-col rounded-xl p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Schedule scan</p>
+          <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">Schedule scan</p>
           <h2 className="text-base font-semibold tracking-tight">Upcoming matches</h2>
         </div>
         <Link to="/world-cup-2026/matches" className="inline-flex items-center gap-1 text-sm font-medium text-primary">
@@ -523,7 +523,7 @@ export function WorldCupUpcomingCard({ fixtures }: { fixtures: WorldCupFixture[]
         {fixtures.length ? (
           fixtures.slice(0, 4).map((fixture) => <WorldCupMatchRow key={fixture.id} fixture={fixture} />)
         ) : (
-          <p className="rounded-xl border border-dashed border-border/70 p-4 text-sm text-muted-foreground">
+          <p className="rounded-md border border-dashed border-border/70 p-4 text-sm text-muted-foreground">
             No upcoming matches are scheduled in the live feed yet.
           </p>
         )}
@@ -537,17 +537,17 @@ function WorldCupMatchRow({ fixture }: { fixture: WorldCupFixture }) {
   return (
     <Link
       to={`/world-cup-2026/match/${fixture.apiFootballId ?? fixture.id}`}
-      className="surface-soft flex items-center gap-3 rounded-xl p-2.5 transition hover:bg-background/60"
+      className="surface-soft flex items-center gap-3 rounded-md p-2.5 transition hover:bg-background/60"
     >
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <TeamRowLine team={fixture.homeTeam} score={fixture.homeScore} />
         <TeamRowLine team={fixture.awayTeam} score={fixture.awayScore} />
       </div>
       <div className="shrink-0 text-right">
-        <Badge variant={isLive ? 'soft' : 'outline'} className={cn('text-[10px]', isLive && 'bg-emerald-500/15 text-emerald-100')}>
+        <Badge variant={isLive ? 'soft' : 'outline'} className={cn('text-2xs', isLive && 'bg-success/15 text-success-fg')}>
           {isLive ? `${fixture.elapsed ?? 0}'` : fixture.status === 'SCHEDULED' ? formatDate(fixture.utcDate) : fixture.status}
         </Badge>
-        <p className="mt-1 text-[11px] text-muted-foreground">{formatDateTime(fixture.utcDate).split(', ')[1] ?? ''}</p>
+        <p className="mt-1 text-2xs text-muted-foreground">{formatDateTime(fixture.utcDate).split(', ')[1] ?? ''}</p>
       </div>
     </Link>
   )
@@ -569,14 +569,14 @@ export function WorldCupMatchCard({ fixture, compact = false }: { fixture: World
   return (
     <Link
       to={`/world-cup-2026/match/${fixture.apiFootballId ?? fixture.id}`}
-      className="interactive-card surface-soft block rounded-fg-lg p-3 transition hover:border-border/70 hover:bg-background/60"
+      className="interactive-card surface-soft block rounded-lg p-3 transition hover:border-border/70 hover:bg-background/60"
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={isLive ? 'soft' : 'outline'} className={isLive ? 'bg-emerald-500/15 text-emerald-100' : undefined}>
+          <Badge variant={isLive ? 'soft' : 'outline'} className={isLive ? 'bg-success/15 text-success-fg' : undefined}>
             {isLive ? `${fixture.elapsed ?? 0}'` : fixture.status}
           </Badge>
-          <span className="truncate text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{fixture.round}</span>
+          <span className="truncate text-2xs uppercase tracking-eyebrow text-muted-foreground">{fixture.round}</span>
         </div>
         {!compact ? <ChevronRight className="size-4 shrink-0 text-muted-foreground" /> : null}
       </div>
@@ -593,18 +593,18 @@ export function WorldCupMatchCard({ fixture, compact = false }: { fixture: World
 
 export function WorldCupGroupTable({ group, rows }: { group: string; rows: WorldCupGroupStanding[] }) {
   return (
-    <div className="stat-card overflow-hidden rounded-fg-lg">
-      <div className="flex items-center justify-between border-b border-white/5 px-3 py-2.5">
+    <div className="stat-card overflow-hidden rounded-lg">
+      <div className="flex items-center justify-between border-b border-border/60 px-3 py-2.5">
         <h2 className="text-sm font-semibold">Group {group}</h2>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="border-sky-300/30 text-sky-100">Top 2</Badge>
-          <Badge variant="outline" className="border-amber-300/30 text-amber-100">3rd watch</Badge>
+          <Badge variant="outline" className="border-info/30 text-info-fg">Top 2</Badge>
+          <Badge variant="outline" className="border-warning/30 text-warning-fg">3rd watch</Badge>
         </div>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-            <tr className="border-b border-white/5">
+          <thead className="text-2xs uppercase tracking-eyebrow text-muted-foreground">
+            <tr className="border-b border-border/60">
               <th className="px-3 py-2 text-left">Team</th>
               <th className="px-2 py-2 text-right">P</th>
               <th className="px-2 py-2 text-right">GD</th>
@@ -616,9 +616,9 @@ export function WorldCupGroupTable({ group, rows }: { group: string; rows: World
               <tr
                 key={row.id}
                 className={cn(
-                  'border-b border-white/5 last:border-0',
-                  row.qualificationHint === 'top-two' && 'bg-sky-400/5',
-                  row.qualificationHint === 'best-third-watch' && 'bg-amber-300/5',
+                  'border-b border-border/60 last:border-0',
+                  row.qualificationHint === 'top-two' && 'bg-info/5',
+                  row.qualificationHint === 'best-third-watch' && 'bg-warning/5',
                 )}
               >
                 <td className="px-3 py-2">
@@ -639,8 +639,8 @@ export function WorldCupGroupTable({ group, rows }: { group: string; rows: World
         </table>
       </div>
       {rows.length ? (
-        <div className="border-t border-white/5 px-3 pb-3 pt-2">
-          <p className="mb-1 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Points</p>
+        <div className="border-t border-border/60 px-3 pb-3 pt-2">
+          <p className="mb-1 text-2xs uppercase tracking-eyebrow text-muted-foreground">Points</p>
           <GroupPointsChart rows={rows} />
         </div>
       ) : null}
@@ -652,10 +652,10 @@ export function WorldCupGroupsPreview({ grouped }: { grouped: Record<string, Wor
   const groups = Object.entries(grouped)
 
   return (
-    <section className="stat-card rounded-fg-xl p-4">
+    <section className="stat-card rounded-xl p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Group standings</p>
+          <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">Group standings</p>
           <h2 className="text-base font-semibold tracking-tight">All groups at a glance</h2>
         </div>
         <Link to="/world-cup-2026/groups" className="inline-flex items-center gap-1 text-sm font-medium text-primary">
@@ -666,17 +666,17 @@ export function WorldCupGroupsPreview({ grouped }: { grouped: Record<string, Wor
       {groups.length ? (
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           {groups.map(([group, rows]) => (
-            <div key={group} className="surface-soft rounded-xl p-2.5">
+            <div key={group} className="surface-soft rounded-md p-2.5">
               <div className="mb-2 flex items-center justify-between">
                 <p className="text-sm font-semibold">Group {group}</p>
-                <span className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Pts</span>
+                <span className="text-2xs uppercase tracking-eyebrow text-muted-foreground">Pts</span>
               </div>
               <div className="grid gap-1">
                 {rows.slice(0, 4).map((row) => (
                   <Link
                     key={row.id}
                     to={`/world-cup-2026/team/${row.team.id}`}
-                    className="flex items-center gap-2 rounded-lg px-1.5 py-1 text-xs hover:bg-white/8"
+                    className="flex items-center gap-2 rounded-lg px-1.5 py-1 text-xs hover:bg-foreground/8"
                   >
                     <span
                       className={cn(
@@ -685,7 +685,7 @@ export function WorldCupGroupsPreview({ grouped }: { grouped: Record<string, Wor
                           ? 'bg-sky-300'
                           : row.qualificationHint === 'best-third-watch'
                             ? 'bg-amber-300'
-                            : 'bg-white/20',
+                            : 'bg-foreground/20',
                       )}
                     />
                     <TeamFlag team={row.team} className="h-3.5 w-5" />
@@ -698,7 +698,7 @@ export function WorldCupGroupsPreview({ grouped }: { grouped: Record<string, Wor
           ))}
         </div>
       ) : (
-        <p className="rounded-xl border border-dashed border-border/70 p-5 text-sm text-muted-foreground">
+        <p className="rounded-md border border-dashed border-border/70 p-5 text-sm text-muted-foreground">
           Group standings publish once the first group matches kick off. They will appear here automatically.
         </p>
       )}
@@ -709,8 +709,8 @@ export function WorldCupGroupsPreview({ grouped }: { grouped: Record<string, Wor
 export function WorldCupBracketBoard({ rounds }: { rounds: WorldCupBracketRound[] }) {
   if (!rounds.length) {
     return (
-      <div className="rounded-fg-xl border border-dashed border-border/60 bg-background/25 p-6 text-center">
-        <div className="mx-auto flex size-11 items-center justify-center rounded-xl bg-white/10 text-amber-200">
+      <div className="rounded-xl border border-dashed border-border/60 bg-background/25 p-6 text-center">
+        <div className="mx-auto flex size-11 items-center justify-center rounded-md bg-foreground/10 text-warning-fg">
           <Trophy className="size-5" />
         </div>
         <h2 className="mt-3 text-base font-semibold">The knockout bracket forms after the group stage</h2>
@@ -725,23 +725,23 @@ export function WorldCupBracketBoard({ rounds }: { rounds: WorldCupBracketRound[
   const confirmedMatches = rounds.reduce((total, round) => total + round.matches.filter((match) => !match.placeholder).length, 0)
 
   return (
-    <div className="rounded-fg-xl border border-border/45 bg-background/25 p-2">
+    <div className="rounded-xl border border-border/45 bg-background/25 p-2">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-3 px-1 text-xs text-muted-foreground">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline">{rounds.length} rounds</Badge>
-          <Badge variant="outline" className="border-amber-300/30 text-amber-100">{placeholderMatches} to be decided</Badge>
-          <Badge variant="outline" className="border-emerald-300/30 text-emerald-100">{confirmedMatches} confirmed</Badge>
+          <Badge variant="outline" className="border-warning/30 text-warning-fg">{placeholderMatches} to be decided</Badge>
+          <Badge variant="outline" className="border-success/30 text-success-fg">{confirmedMatches} confirmed</Badge>
         </div>
         <span>Swipe horizontally on small screens</span>
       </div>
       <div className="overflow-x-auto pb-2">
         <div className="grid min-w-[960px] gap-4 xl:grid-cols-5">
           {rounds.map((round) => (
-            <div key={round.id} className="stat-card rounded-fg-xl p-3">
+            <div key={round.id} className="stat-card rounded-xl p-3">
               <h2 className="text-sm font-semibold">{round.label}</h2>
               <div className="mt-3 flex flex-col gap-3">
                 {round.matches.map((match) => (
-                  <div key={match.id} className="surface-soft rounded-xl p-2 text-xs">
+                  <div key={match.id} className="surface-soft rounded-md p-2 text-xs">
                     <div className="flex items-center justify-between gap-2">
                       <p className="truncate font-medium">{match.label}</p>
                       {match.placeholder ? <Badge variant="outline">TBD</Badge> : null}
@@ -763,7 +763,7 @@ export function WorldCupBracketBoard({ rounds }: { rounds: WorldCupBracketRound[
 
 function BracketTeamLine({ placeholder, score, team }: { placeholder: boolean; score?: number; team?: WorldCupTeam }) {
   return (
-    <div className="flex items-center justify-between gap-2 rounded-lg border border-white/5 px-2 py-1.5">
+    <div className="flex items-center justify-between gap-2 rounded-lg border border-border/60 px-2 py-1.5">
       <span className="flex min-w-0 items-center gap-2 text-muted-foreground">
         {placeholder || !team ? (
           <span className="truncate">Qualified team pending</span>
@@ -781,10 +781,10 @@ function BracketTeamLine({ placeholder, score, team }: { placeholder: boolean; s
 
 export function WorldCupBracketPreview({ rounds }: { rounds: WorldCupBracketRound[] }) {
   return (
-    <section className="stat-card flex h-full flex-col rounded-fg-xl p-4">
+    <section className="stat-card flex h-full flex-col rounded-xl p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Knockout</p>
+          <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">Knockout</p>
           <h2 className="text-base font-semibold tracking-tight">Bracket preview</h2>
         </div>
         <Link to="/world-cup-2026/bracket" className="inline-flex items-center gap-1 text-sm font-medium text-primary">
@@ -796,11 +796,11 @@ export function WorldCupBracketPreview({ rounds }: { rounds: WorldCupBracketRoun
         {rounds.length ? (
           <div className="flex flex-col gap-3">
             {rounds.slice(0, 2).map((round) => (
-              <div key={round.id} className="surface-soft rounded-xl p-3">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{round.label}</p>
+              <div key={round.id} className="surface-soft rounded-md p-3">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-eyebrow text-muted-foreground">{round.label}</p>
                 <div className="grid gap-2">
                   {round.matches.slice(0, 3).map((match) => (
-                    <div key={match.id} className="grid gap-1 rounded-lg border border-white/5 p-2 text-xs">
+                    <div key={match.id} className="grid gap-1 rounded-lg border border-border/60 p-2 text-xs">
                       <BracketTeamLine team={match.homeTeam} score={match.homeScore} placeholder={match.placeholder} />
                       <BracketTeamLine team={match.awayTeam} score={match.awayScore} placeholder={match.placeholder} />
                     </div>
@@ -810,8 +810,8 @@ export function WorldCupBracketPreview({ rounds }: { rounds: WorldCupBracketRoun
             ))}
           </div>
         ) : (
-          <div className="flex h-full flex-col items-center justify-center rounded-xl border border-dashed border-border/60 p-5 text-center">
-            <Trophy className="size-5 text-amber-200" />
+          <div className="flex h-full flex-col items-center justify-center rounded-md border border-dashed border-border/60 p-5 text-center">
+            <Trophy className="size-5 text-warning-fg" />
             <p className="mt-2 text-sm font-medium">Bracket forms after the group stage</p>
             <p className="mt-1 text-xs text-muted-foreground">Knockout rounds appear here from the live feed.</p>
           </div>
@@ -826,9 +826,9 @@ export function WorldCupTeamSpotlight({ standing, team }: { standing?: WorldCupG
 
   if (!spotlightTeam) {
     return (
-      <section className="stat-card flex h-full flex-col rounded-fg-xl p-4">
-        <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Team spotlight</p>
-        <div className="mt-3 flex flex-1 items-center rounded-xl border border-dashed border-border/70 p-5 text-sm text-muted-foreground">
+      <section className="stat-card flex h-full flex-col rounded-xl p-4">
+        <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">Team spotlight</p>
+        <div className="mt-3 flex flex-1 items-center rounded-md border border-dashed border-border/70 p-5 text-sm text-muted-foreground">
           A featured national team will appear here once the live team list loads.
         </div>
       </section>
@@ -845,10 +845,10 @@ export function WorldCupTeamSpotlight({ standing, team }: { standing?: WorldCupG
     : []
 
   return (
-    <section className="stat-card flex h-full flex-col rounded-fg-xl p-4">
+    <section className="stat-card flex h-full flex-col rounded-xl p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Team spotlight</p>
-        <Badge variant="outline" className="border-amber-300/30 text-amber-100">
+        <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">Team spotlight</p>
+        <Badge variant="outline" className="border-warning/30 text-warning-fg">
           Group {spotlightTeam.group ?? 'TBD'}
         </Badge>
       </div>
@@ -862,28 +862,28 @@ export function WorldCupTeamSpotlight({ standing, team }: { standing?: WorldCupG
       {stats.length ? (
         <div className="mt-3 grid grid-cols-2 gap-2">
           {stats.map((stat) => (
-            <div key={stat.label} className="surface-soft rounded-xl p-2.5 text-center">
-              <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{stat.label}</p>
-              <p className="mt-0.5 font-mono text-lg font-black">{stat.value}</p>
+            <div key={stat.label} className="surface-soft rounded-md p-2.5 text-center">
+              <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">{stat.label}</p>
+              <p className="mt-0.5 font-mono text-lg font-bold">{stat.value}</p>
             </div>
           ))}
         </div>
       ) : (
-        <p className="mt-3 flex-1 rounded-xl border border-dashed border-border/70 p-3 text-xs text-muted-foreground">
+        <p className="mt-3 flex-1 rounded-md border border-dashed border-border/70 p-3 text-xs text-muted-foreground">
           Standings stats appear once this team has played a group match.
         </p>
       )}
       {standing?.form?.length ? (
         <div className="mt-3 flex items-center gap-1.5">
-          <span className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Form</span>
+          <span className="text-2xs uppercase tracking-eyebrow text-muted-foreground">Form</span>
           {standing.form.map((result, index) => (
             <span
               key={`${result}-${index}`}
               className={cn(
-                'flex size-5 items-center justify-center rounded-md text-[10px] font-bold',
-                result === 'W' && 'bg-emerald-400/15 text-emerald-200',
-                result === 'D' && 'bg-amber-400/15 text-amber-200',
-                result === 'L' && 'bg-rose-400/15 text-rose-200',
+                'flex size-5 items-center justify-center rounded-md text-2xs font-bold',
+                result === 'W' && 'bg-success/15 text-success-fg',
+                result === 'D' && 'bg-warning/15 text-warning-fg',
+                result === 'L' && 'bg-danger/15 text-danger-fg',
               )}
             >
               {result}
@@ -907,7 +907,7 @@ export function WorldCupTeamCard({ team }: { team: WorldCupTeam }) {
     <Link
       key={team.id}
       to={`/world-cup-2026/team/${team.id}`}
-      className="interactive-card stat-card rounded-fg-lg p-3 hover:bg-background/60"
+      className="interactive-card stat-card rounded-lg p-3 hover:bg-background/60"
     >
       <div className="flex items-center gap-3">
         <TeamFlag team={team} className="h-9 w-12" />
@@ -937,9 +937,9 @@ export function WorldCupTeamFilters({
   const groups = uniqueOptions(teams.map((team) => team.group).filter(Boolean))
 
   return (
-    <div className="stat-card rounded-fg-xl p-3">
+    <div className="stat-card rounded-xl p-3">
       <div className="grid gap-2 md:grid-cols-[minmax(220px,1fr)_220px]">
-        <label className="flex items-center gap-2 rounded-xl border border-border/70 bg-background/40 px-3 py-2 text-sm">
+        <label className="flex items-center gap-2 rounded-md border border-border/70 bg-background/40 px-3 py-2 text-sm">
           <Search className="size-4 text-muted-foreground" />
           <input
             value={search}
@@ -971,12 +971,12 @@ export function WorldCupTeamGroupRail({
   const groups = uniqueOptions(Object.keys(grouped))
 
   return (
-    <div className="flex gap-2 overflow-x-auto rounded-fg-xl border border-border/50 bg-background/30 p-2">
+    <div className="flex gap-2 overflow-x-auto rounded-xl border border-border/50 bg-background/30 p-2">
       <button
         type="button"
         onClick={() => onSelectGroup('all')}
         className={cn(
-          'min-w-max rounded-xl border border-border/50 px-3 py-2 text-left text-xs transition hover:bg-white/8',
+          'min-w-max rounded-md border border-border/50 px-3 py-2 text-left text-xs transition hover:bg-foreground/8',
           activeGroup === 'all' && 'border-primary/60 bg-primary text-primary-foreground',
         )}
       >
@@ -989,7 +989,7 @@ export function WorldCupTeamGroupRail({
           type="button"
           onClick={() => onSelectGroup(group)}
           className={cn(
-            'min-w-[72px] rounded-xl border border-border/50 px-3 py-2 text-left text-xs transition hover:bg-white/8',
+            'min-w-[72px] rounded-md border border-border/50 px-3 py-2 text-left text-xs transition hover:bg-foreground/8',
             activeGroup === group && 'border-primary/60 bg-primary text-primary-foreground',
           )}
         >
@@ -1003,7 +1003,7 @@ export function WorldCupTeamGroupRail({
 
 export function WorldCupTeamProfile({ team, playersCount }: { playersCount: number; team: WorldCupTeam }) {
   return (
-    <section className="stat-card app-grid-lines rounded-fg-xl p-5">
+    <section className="stat-card app-grid-lines rounded-xl p-5">
       <div className="relative flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-4">
           <TeamFlag team={team} className="h-16 w-24 shadow-fg-2" />
@@ -1024,7 +1024,7 @@ export function WorldCupTeamProfile({ team, playersCount }: { playersCount: numb
 
 function ProfileLine({ label, value }: { label: string; value: string }) {
   return (
-    <div className="surface-soft flex items-center justify-between gap-3 rounded-xl px-3 py-2">
+    <div className="surface-soft flex items-center justify-between gap-3 rounded-md px-3 py-2">
       <span className="text-xs text-muted-foreground">{label}</span>
       <span className="truncate text-right text-sm font-medium">{value}</span>
     </div>
@@ -1055,10 +1055,10 @@ export function WorldCupMatchFilters({
   const statusTabs: Array<WorldCupFilterState['status']> = ['all', 'live', 'scheduled', 'finished']
 
   return (
-    <div className="stat-card rounded-fg-xl p-3">
+    <div className="stat-card rounded-xl p-3">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-white/10 text-amber-200">
+          <div className="flex size-9 items-center justify-center rounded-md bg-foreground/10 text-warning-fg">
             <SlidersHorizontal className="size-4" />
           </div>
           <div>
@@ -1066,7 +1066,7 @@ export function WorldCupMatchFilters({
             <p className="text-xs text-muted-foreground">{activeFilterCount ? `${activeFilterCount} active` : 'All matches visible'}</p>
           </div>
         </div>
-        <div className="flex gap-1 rounded-xl border border-border/60 bg-background/35 p-1">
+        <div className="flex gap-1 rounded-md border border-border/60 bg-background/35 p-1">
           {statusTabs.map((status) => (
             <button
               key={status}
@@ -1083,7 +1083,7 @@ export function WorldCupMatchFilters({
         </div>
       </div>
       <div className="grid gap-2 lg:grid-cols-[minmax(220px,1.2fr)_repeat(3,minmax(130px,1fr))]">
-        <label className="flex items-center gap-2 rounded-xl border border-border/70 bg-background/40 px-3 py-2 text-sm">
+        <label className="flex items-center gap-2 rounded-md border border-border/70 bg-background/40 px-3 py-2 text-sm">
           <Search className="size-4 text-muted-foreground" />
           <input
             value={filters.search}
@@ -1125,8 +1125,8 @@ export function WorldCupEmptyState({
   title: string
 }) {
   return (
-    <div className="rounded-fg-xl border border-dashed border-border/70 bg-background/25 p-6 text-center">
-      <div className="mx-auto flex size-11 items-center justify-center rounded-xl bg-white/10 text-amber-200">
+    <div className="rounded-xl border border-dashed border-border/70 bg-background/25 p-6 text-center">
+      <div className="mx-auto flex size-11 items-center justify-center rounded-md bg-foreground/10 text-warning-fg">
         <Search className="size-5" />
       </div>
       <h2 className="mt-3 text-base font-semibold">{title}</h2>
@@ -1154,7 +1154,7 @@ function SelectFilter({
   values: string[]
 }) {
   return (
-    <label className="flex items-center gap-2 rounded-xl border border-border/70 bg-background/40 px-3 py-2 text-xs text-muted-foreground">
+    <label className="flex items-center gap-2 rounded-md border border-border/70 bg-background/40 px-3 py-2 text-xs text-muted-foreground">
       <span>{label}</span>
       <select
         value={value}
@@ -1177,7 +1177,7 @@ export function TeamScore({ align, score, team }: { align: 'left' | 'right'; sco
       <TeamFlag team={team} className="h-12 w-16" />
       <div>
         <p className="font-semibold">{team.placeholder ? 'Qualifier pending' : team.name}</p>
-        <p className="font-mono text-2xl font-black">{score ?? '-'}</p>
+        <p className="font-mono text-2xl font-bold">{score ?? '-'}</p>
       </div>
     </div>
   )
@@ -1192,16 +1192,16 @@ export function WorldCupScoreBreakdown({ fixture }: { fixture: WorldCupFixture }
   ]
 
   return (
-    <section className="stat-card rounded-fg-xl p-4">
+    <section className="stat-card rounded-xl p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="text-base font-semibold">Score breakdown</h2>
         <Badge variant="outline">{fixture.timezone ?? 'UTC'}</Badge>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {scores.map((item) => (
-          <div key={item.label} className="surface-soft rounded-xl p-3 text-center">
-            <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
-            <p className="mt-1 font-mono text-xl font-black">{item.score?.home ?? '-'}:{item.score?.away ?? '-'}</p>
+          <div key={item.label} className="surface-soft rounded-md p-3 text-center">
+            <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">{item.label}</p>
+            <p className="mt-1 font-mono text-xl font-bold">{item.score?.home ?? '-'}:{item.score?.away ?? '-'}</p>
           </div>
         ))}
       </div>
@@ -1217,21 +1217,21 @@ export function WorldCupSquadByPosition({ players }: { players: WorldCupSquadPla
   }, {})
 
   return (
-    <section className="stat-card rounded-fg-xl p-4">
+    <section className="stat-card rounded-xl p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="text-base font-semibold">Squad by position</h2>
         <Badge variant="outline">{players.length} players</Badge>
       </div>
       {players.length ? (
-        <div className="surface-soft mb-3 rounded-xl p-3">
-          <p className="mb-1 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Composition</p>
+        <div className="surface-soft mb-3 rounded-md p-3">
+          <p className="mb-1 text-2xs uppercase tracking-eyebrow text-muted-foreground">Composition</p>
           <SquadPositionChart players={players} />
         </div>
       ) : null}
       {players.length ? (
         <div className="grid gap-3 lg:grid-cols-2">
           {Object.entries(grouped).map(([position, groupPlayers]) => (
-            <div key={position} className="surface-soft rounded-xl p-3">
+            <div key={position} className="surface-soft rounded-md p-3">
               <div className="mb-2 flex items-center justify-between">
                 <h3 className="text-sm font-semibold">{position}</h3>
                 <span className="font-mono text-xs text-muted-foreground">{groupPlayers.length}</span>
@@ -1239,7 +1239,7 @@ export function WorldCupSquadByPosition({ players }: { players: WorldCupSquadPla
               <div className="grid gap-2">
                 {groupPlayers.map((player) => (
                   <div key={player.id} className="flex items-center gap-3 rounded-lg px-1 py-1">
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/10 font-mono text-xs">
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-foreground/10 font-mono text-xs">
                       {player.number ?? '-'}
                     </span>
                     <span className="min-w-0 flex-1 truncate text-sm font-medium">{player.name}</span>
@@ -1251,7 +1251,7 @@ export function WorldCupSquadByPosition({ players }: { players: WorldCupSquadPla
           ))}
         </div>
       ) : (
-        <p className="rounded-xl border border-dashed border-border/70 p-4 text-sm text-muted-foreground">
+        <p className="rounded-md border border-dashed border-border/70 p-4 text-sm text-muted-foreground">
           The squad list publishes closer to the tournament. Check back as teams confirm their rosters.
         </p>
       )}
@@ -1262,10 +1262,10 @@ export function WorldCupSquadByPosition({ players }: { players: WorldCupSquadPla
 export function MatchMetaGrid({ fixture }: { fixture: WorldCupFixture }) {
   return (
     <div className="grid gap-3 md:grid-cols-4">
-      <SignalCard icon={<CalendarDays className="size-4" />} label="Kickoff" value={formatDateTime(fixture.utcDate)} tone="text-sky-200" />
-      <SignalCard icon={<MapPin className="size-4" />} label="Venue" value={fixture.venue ?? 'Pending'} tone="text-amber-200" />
-      <SignalCard icon={<Shield className="size-4" />} label="Referee" value={fixture.referee ?? 'Pending'} tone="text-violet-200" />
-      <SignalCard icon={<Activity className="size-4" />} label="Status" value={fixture.status} tone="text-emerald-200" />
+      <SignalCard icon={<CalendarDays className="size-4" />} label="Kickoff" value={formatDateTime(fixture.utcDate)} tone="text-info-fg" />
+      <SignalCard icon={<MapPin className="size-4" />} label="Venue" value={fixture.venue ?? 'Pending'} tone="text-warning-fg" />
+      <SignalCard icon={<Shield className="size-4" />} label="Referee" value={fixture.referee ?? 'Pending'} tone="text-violet-700 dark:text-violet-300" />
+      <SignalCard icon={<Activity className="size-4" />} label="Status" value={fixture.status} tone="text-success-fg" />
     </div>
   )
 }

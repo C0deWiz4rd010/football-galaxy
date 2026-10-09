@@ -1,40 +1,45 @@
-import { useState } from 'react'
-import { PolarAngleAxis, PolarGrid, Radar, RadarChart as ReRadarChart, ResponsiveContainer, Tooltip } from 'recharts'
-import { Button } from '@/components/ui/button'
-import type { Player } from '@/services/types'
+import { useMemo } from 'react'
 
-export function PlayerRadarChart({ player }: { player: Player }) {
-  const [showAverage, setShowAverage] = useState(false)
-  const attrs = player.stats.attributes
-  const data = [
-    ['Pace', attrs.pace],
-    ['Shooting', attrs.shooting],
-    ['Passing', attrs.passing],
-    ['Dribbling', attrs.dribbling],
-    ['Defending', attrs.defending],
-    ['Physical', attrs.physical],
-  ].map(([name, value]) => ({ name, player: value, average: 66 }))
+import { ProfileRadar } from '@/components/charts/ProfileRadar'
+import { EmptyState } from '@/components/shared/EmptyState'
+import { useLocale } from '@/contexts/LocaleContext'
+import { buildMetricPools, playerPercentiles } from '@/lib/percentiles'
+import type { Player, PlayerRef } from '@/services/types'
+
+/**
+ * Season profile as percentiles against the league's goal and assist leaders.
+ * The dashed shape is the pool median (50), so the chart only shows real data.
+ */
+export function PlayerRadarChart({ player, pool }: { player: Player; pool: PlayerRef[] }) {
+  const { t } = useLocale()
+  const data = useMemo(() => {
+    if (!pool.length) return []
+    return playerPercentiles(player, buildMetricPools(pool)).map(({ metric, percentile }) => ({
+      name: t(metric.labelKey),
+      player: percentile,
+      median: 50,
+    }))
+  }, [player, pool, t])
+
   return (
     <section className="stat-card">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold tracking-tight">Attributes</h2>
-        <Button variant="outline" size="sm" onClick={() => setShowAverage((value) => !value)}>vs League Average</Button>
+      <div className="mb-2">
+        <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('percentileEyebrow')}</p>
+        <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('radarView')}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t('percentileLeadersSubtitle')}</p>
       </div>
-      <ResponsiveContainer width="100%" height={320}>
-        <ReRadarChart data={data}>
-          <defs>
-            <linearGradient id="playerRadar" x1="0" x2="1" y1="0" y2="1">
-              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.65} />
-              <stop offset="100%" stopColor="#22c55e" stopOpacity={0.28} />
-            </linearGradient>
-          </defs>
-          <PolarGrid />
-          <PolarAngleAxis dataKey="name" />
-          <Tooltip />
-          <Radar dataKey="player" stroke="hsl(var(--primary))" fill="url(#playerRadar)" fillOpacity={0.55} />
-          {showAverage ? <Radar dataKey="average" stroke="#94a3b8" strokeDasharray="4 4" fill="#94a3b8" fillOpacity={0.12} /> : null}
-        </ReRadarChart>
-      </ResponsiveContainer>
+      {data.length ? (
+        <ProfileRadar
+          data={data}
+          valueSuffix=" / 100"
+          series={[
+            { key: 'player', name: player.name, tone: 'primary' },
+            { key: 'median', name: t('leagueMedian'), tone: 'reference' },
+          ]}
+        />
+      ) : (
+        <EmptyState title={t('noTrendYet')} description={t('chartNeedsMatches')} className="min-h-0 border-0 p-0" />
+      )}
     </section>
   )
 }

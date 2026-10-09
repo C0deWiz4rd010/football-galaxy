@@ -10,6 +10,8 @@ interface PageSectionProps {
   /** Right-aligned action (button, badge, link). */
   action?: ReactNode
   className?: string
+  /** Heading level of `title`; use `h1` for the page's first section. */
+  headingAs?: 'h1' | 'h2'
   /** Spacing between the header and the children. */
   bodyClassName?: string
   children?: ReactNode
@@ -26,6 +28,7 @@ export function PageSection({
   description,
   action,
   className,
+  headingAs: Heading = 'h2',
   bodyClassName,
   children,
 }: PageSectionProps) {
@@ -37,12 +40,14 @@ export function PageSection({
         <div className="flex flex-wrap items-end justify-between gap-fg-3">
           <div className="min-w-0 space-y-1">
             {eyebrow ? (
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              <p className="text-2xs font-semibold uppercase tracking-eyebrow text-muted-foreground">
                 {eyebrow}
               </p>
             ) : null}
             {title ? (
-              <h2 className="text-lg font-semibold tracking-tight sm:text-xl">{title}</h2>
+              <Heading className={cn('font-semibold tracking-tight', Heading === 'h1' ? 'text-2xl sm:text-3xl' : 'text-lg sm:text-xl')}>
+                {title}
+              </Heading>
             ) : null}
             {description ? (
               <p className="text-sm text-muted-foreground">{description}</p>

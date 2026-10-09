@@ -21,7 +21,7 @@ export const FormDot = memo(function FormDot({ result }: { result: FormResult })
             role="img"
             aria-label={`${label}, ${formatDate(result.date)}`}
             className={cn(
-              'inline-block h-3 w-3 rounded-full ring-1 ring-white/30',
+              'inline-block h-3 w-3 rounded-full ring-1 ring-border',
               resultClass[result.result],
             )}
           />

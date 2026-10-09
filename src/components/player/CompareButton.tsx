@@ -11,7 +11,7 @@ export function CompareButton({ playerId, leagueId }: { playerId: string; league
     <Button
       asChild
       variant="outline"
-      className="fab fixed right-5 z-50 h-14 w-14 rounded-full p-0 md:static md:z-auto md:h-10 md:w-auto md:px-4"
+      className="fab fixed right-5 z-fab h-14 w-14 rounded-full p-0 md:static md:z-auto md:h-10 md:w-auto md:px-4"
       style={{ bottom: 'calc(env(safe-area-inset-bottom) + 5.75rem)' }}
     >
       <Link to={`/compare?p1=${encodeURIComponent(playerId)}&l1=${leagueId}`} aria-label={t('comparePlayers')}>

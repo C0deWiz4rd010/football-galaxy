@@ -56,11 +56,11 @@ export default function CoachDetail() {
   return (
     <PageWrapper>
       <div className="space-y-4">
-        <BackButton />
+        <BackButton fallbackTo={`/${team.leagueId}/team/${team.id}`} />
         <section className="stat-card">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('coachProfile')}</p>
+              <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('coachProfile')}</p>
               <h1 className="mt-1 text-2xl font-semibold tracking-tight">
                 {team.manager ?? t('headCoachPending')}
               </h1>
@@ -72,10 +72,10 @@ export default function CoachDetail() {
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-3">
-            <div className="surface-soft rounded-fg-lg px-3 py-3">
+            <div className="surface-soft rounded-lg px-3 py-3">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Building2 className="h-4 w-4" />
-                <span className="text-xs uppercase tracking-[0.16em]">{t('club')}</span>
+                <span className="text-xs uppercase tracking-eyebrow">{t('club')}</span>
               </div>
               <Link
                 to={`/${team.leagueId}/team/${team.id}`}
@@ -84,19 +84,19 @@ export default function CoachDetail() {
                 {team.name}
               </Link>
             </div>
-            <div className="surface-soft rounded-fg-lg px-3 py-3">
+            <div className="surface-soft rounded-lg px-3 py-3">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Trophy className="h-4 w-4" />
-                <span className="text-xs uppercase tracking-[0.16em]">{t('tableContext')}</span>
+                <span className="text-xs uppercase tracking-eyebrow">{t('tableContext')}</span>
               </div>
               <p className="mt-2 text-base font-semibold">
                 {standing ? t('standingShort', { position: standing.position, points: standing.points }) : t('standingsPending')}
               </p>
             </div>
-            <div className="surface-soft rounded-fg-lg px-3 py-3">
+            <div className="surface-soft rounded-lg px-3 py-3">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Briefcase className="h-4 w-4" />
-                <span className="text-xs uppercase tracking-[0.16em]">{t('homeBase')}</span>
+                <span className="text-xs uppercase tracking-eyebrow">{t('homeBase')}</span>
               </div>
               <p className="mt-2 text-base font-semibold">{team.stadium ?? t('venueDataPending')}</p>
             </div>

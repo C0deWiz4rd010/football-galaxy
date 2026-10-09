@@ -32,7 +32,7 @@ const icons = { error: AlertCircle, info: Info, success: CheckCircle2 } as const
 const tones = {
   error: 'border-destructive/30 [&_svg]:text-destructive',
   info: 'border-border [&_svg]:text-primary',
-  success: 'border-emerald-500/30 [&_svg]:text-emerald-600 dark:[&_svg]:text-emerald-400',
+  success: 'border-success/30 [&_svg]:text-emerald-600 dark:[&_svg]:text-emerald-400',
 } as const
 
 export function Toaster() {
@@ -73,7 +73,7 @@ export function Toaster() {
     <div
       aria-live="polite"
       aria-relevant="additions"
-      className="pointer-events-none fixed inset-x-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[80] flex flex-col items-center gap-2 md:inset-x-auto md:bottom-auto md:right-4 md:top-20 md:items-end"
+      className="pointer-events-none fixed inset-x-4 bottom-[calc(var(--fg-tabbar-clearance)+0.25rem)] z-toast flex flex-col items-center gap-2 md:inset-x-auto md:bottom-auto md:right-4 md:top-20 md:items-end"
     >
       {toasts.map((item) => {
         const variant = item.variant ?? 'error'

@@ -14,6 +14,7 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto w-full max-w-fg-narrow space-y-fg-7">
       <PageSection
+        headingAs="h1"
         eyebrow="Football Galaxy"
         title={t('settings')}
         description={t('appearanceHint')}
@@ -22,8 +23,8 @@ export default function SettingsPage() {
       <PageSection eyebrow={t('appearance')} title={t('colorTheme')}>
         <ThemePicker />
 
-        <div className="surface-panel rounded-fg-lg p-fg-4">
-          <p className="mb-fg-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+        <div className="surface-panel rounded-lg p-fg-4">
+          <p className="mb-fg-3 text-2xs font-semibold uppercase tracking-eyebrow text-muted-foreground">
             {t('mode')}
           </p>
           <div className="grid grid-cols-2 gap-fg-2">
@@ -39,7 +40,7 @@ export default function SettingsPage() {
                   aria-pressed={item.active}
                   onClick={() => setTheme(item.id)}
                   className={cn(
-                    'interactive-card flex items-center justify-center gap-2 rounded-fg-md border px-3 py-2.5 text-sm font-medium',
+                    'interactive-card flex items-center justify-center gap-2 rounded-md border px-3 py-2.5 text-sm font-medium',
                     item.active
                       ? 'border-primary/60 bg-primary/10 text-foreground'
                       : 'border-border/55 text-muted-foreground hover:text-foreground',
@@ -55,7 +56,7 @@ export default function SettingsPage() {
       </PageSection>
 
       <PageSection eyebrow={t('languageRegion')} title={t('language')}>
-        <div className="surface-panel rounded-fg-lg p-fg-4">
+        <div className="surface-panel rounded-lg p-fg-4">
           <div className="grid grid-cols-2 gap-fg-2">
             {[
               { id: 'de', label: 'Deutsch' },
@@ -69,7 +70,7 @@ export default function SettingsPage() {
                   aria-pressed={active}
                   onClick={() => setLocale(item.id as 'de' | 'en')}
                   className={cn(
-                    'interactive-card rounded-fg-md border px-3 py-2.5 text-sm font-medium',
+                    'interactive-card rounded-md border px-3 py-2.5 text-sm font-medium',
                     active
                       ? 'border-primary/60 bg-primary/10 text-foreground'
                       : 'border-border/55 text-muted-foreground hover:text-foreground',
@@ -84,9 +85,9 @@ export default function SettingsPage() {
       </PageSection>
 
       <PageSection eyebrow="About" title="Version">
-        <div className="surface-panel flex items-center justify-between rounded-fg-lg p-fg-4">
+        <div className="surface-panel flex items-center justify-between rounded-lg p-fg-4">
           <p className="text-sm text-muted-foreground">Football Galaxy</p>
-          <span className="rounded-fg-sm border border-border/55 px-2.5 py-1 font-mono text-xs font-semibold text-foreground">
+          <span className="rounded-sm border border-border/55 px-2.5 py-1 font-mono text-xs font-semibold text-foreground">
             v{__APP_VERSION__}
           </span>
         </div>

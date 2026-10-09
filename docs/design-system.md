@@ -62,24 +62,47 @@ and consumed through the Tailwind semantic names (`bg-background`,
 | Ring | `--ring` | Focus ring |
 | Danger | `--destructive` | Errors / destructive |
 
-### 3.2 Status colours (semantic, fixed across themes)
+### 3.2 Status colours
 
-| Status | Light | Dark | Use |
-| ------ | ----- | ---- | --- |
-| Success | `152 62% 38%` | `152 58% 52%` | wins, live-OK, qualified |
-| Warning | `38 92% 48%` | `40 96% 60%` | watch / pending |
-| Danger | `0 72% 50%` | `0 75% 60%` | losses, errors |
-| Info | `212 90% 50%` | `212 92% 66%` | neutral highlights |
-| Live | `350 85% 55%` | `350 90% 64%` | live match pulse |
+Each status has a **fill** (`bg-success/12`, `border-warning/40`, chart
+fills) and a **readable text tone** `*-fg` that keeps ≥ 4.5:1 on cards in both
+modes. Never put `text-emerald-200`-style palette shades on surfaces: they
+vanish in light mode.
 
-### 3.3 League brand colours (unchanged)
+| Status | Fill (light / dark) | Text `*-fg` (light / dark) | Use |
+| ------ | ------------------- | ------------------------- | --- |
+| `success` | `152 62% 38%` / `152 58% 52%` | `152 72% 24%` / `152 62% 72%` | wins, qualified, top form |
+| `warning` | `38 92% 48%` / `40 96% 60%` | `30 90% 30%` / `43 96% 72%` | watch, pending, trophies |
+| `danger` | `--destructive` | `350 75% 38%` / `350 90% 80%` | losses, errors, cold form |
+| `info` | `212 85% 44%` / `212 92% 66%` | `212 85% 36%` / `210 92% 80%` | neutral highlights, 2nd series |
+| `live` | `350 85% 52%` / `350 90% 64%` | — | live pulse |
+| `zone-ucl` / `zone-rel` | `217 91% 58%` / `0 80% 58%` | — | table zones |
 
-`pl #3d195b` · `bl #d3010c` · `ll #003f8f` · `sa #009246` · `l1 #091c3e`.
+### 3.3 Data-driven colours (clubs, leagues)
+
+Club and league colours come from the APIs and can be anything from white to
+near-black. Rules:
+
+- Never use them as text colour on our surfaces.
+- Text **on** them uses `readableTextOn(color)` (`src/lib/color.ts`).
+- Club-colour heroes (team page) always get a dark scrim and white text, so
+  white kits (Real Madrid, Tottenham) stay readable.
+- Generated crests/avatars fall back to `FALLBACK_TEAM_COLORS`
+  (`src/lib/visualAssets.ts`).
 
 ### 3.4 World Cup host accents
 
 `USA 213 70% 46%` · `Canada 0 72% 50%` · `Mexico 150 60% 35%`. Used for
 host-nation chips and the hero band gradient.
+
+### 3.5 Charts
+
+One chart library: **Recharts**. Every chart takes its colours, axis ticks,
+tooltip and legend from `src/components/charts/chartTheme.ts` (CSS variables,
+so palette and mode switch without re-render). Series order: `primary`, then
+`secondary` (info hue — never another green next to the green light-mode
+primary). Radars use the shared `ProfileRadar` (0–100 scale, dashed reference
+shape = league median or second player).
 
 ---
 
@@ -115,40 +138,48 @@ dark.
 
 ## 5. Typography
 
-Font: **Inter**, self-hosted via `@fontsource/inter` (offline-friendly for
-static Hostinger hosting). Numeric data uses `font-feature-settings: "tnum"`
-(tabular figures) for column alignment.
+Font: **Inter**, self-hosted via `@fontsource/inter` (weights 400–700; there is
+no 900, so never use `font-black`). Tabular figures are on for every
+`<table>`; elsewhere add `tabular-nums` to numbers that change or align.
+`font-mono` is the system UI mono stack (scores, KPI values).
 
-Modular scale (1rem base × 1.25), tokens in `tokens.css`:
-
-| Token | Size | Typical use |
-| ----- | ---- | ----------- |
-| `--fg-font-size-xs` | 12px | meta / labels |
-| `--fg-font-size-sm` | 14px | body small / table |
-| `--fg-font-size-base` | 16px | body |
-| `--fg-font-size-md` | 18px | card titles |
-| `--fg-font-size-lg` | 20px | section titles |
-| `--fg-font-size-xl` | 24px | page titles (mobile) |
-| `--fg-font-size-2xl` | 30px | page titles (desktop) |
-| `--fg-font-size-3xl–5xl` | 36–60px | hero |
+Scale: Tailwind's `text-xs … text-5xl` plus `text-2xs` (11px) — the smallest
+allowed size, only for dense badges/labels. No arbitrary `text-[Npx]`.
 
 Headings: `font-semibold tracking-tight`. Eyebrow labels:
-`text-[10px] uppercase tracking-[0.18em] text-muted-foreground`.
+`text-2xs|text-xs uppercase tracking-eyebrow text-muted-foreground`.
+
+One `<h1>` per page, owned by the page (the header shows the route title as
+plain text). `PageSection headingAs="h1"` and `NotFoundState headingAs="h1"`
+cover pages without a hero.
 
 ---
 
-## 6. Spacing, radii, elevation, motion
+## 6. Spacing, radii, elevation, motion, layers
 
-- **Spacing** — 4px scale (`--fg-space-1…12`). Card padding = `fg-4` (16px) on
-  mobile, may grow to `fg-5` on `sm+`. Grid gaps = `fg-3` (12px) mobile, `fg-4`
-  (16px) `md+`.
-- **Radii** — `fg-xs` 6 / `fg-sm` 8 / `fg-md` 12 / `fg-lg` 16 (**cards**) /
-  `fg-xl` 24 (**panels/hero**) / `fg-2xl` 32 (page wrappers) / `fg-pill`.
-  **Rule:** cards = `rounded-fg-lg`, panels/hero = `rounded-fg-xl`. No bespoke
-  values.
-- **Elevation** — `fg-1…5`. Cards rest at `fg-1`/`fg-2`; dialogs at `fg-4`/`fg-5`.
-- **Motion** — durations `fg-instant…hero`; eases `fg-standard` (state) /
-  `fg-emphasized` (entrance). All collapse to 0ms under reduced-motion.
+All values live in `src/shared/styles/tokens.css`; Tailwind exposes them.
+
+- **Spacing** — 4px scale (`p-fg-1…12`) alongside Tailwind's default scale.
+- **Radii** — one scale: `rounded-xs` 6 · `sm` 8 · `md` 12 (buttons, inputs,
+  tiles) · `lg` 16 (**cards**) · `xl` 24 (**hero/panels, shell chrome**) ·
+  `2xl` 32 · `full`. No `fg-` prefixed or arbitrary radii.
+- **Opacity** — Tailwind steps plus 2/3/4/6/8/12/18 for glass surfaces. Tint
+  surfaces with `bg-foreground/N` (works in both modes), not `bg-white/N`
+  (only allowed on media/club-colour backgrounds).
+- **Elevation** — `shadow-fg-1…5`. Cards rest at `fg-1`/`fg-2`; dialogs at
+  `fg-4`/`fg-5`.
+- **Motion** — one scale, mirrored in `src/shared/motion/tokens.ts`:
+  `duration-fg-{instant 120, fast 180, base 240, slow 320, hero 420}`,
+  `ease-fg-{standard, enter, soft, exit}`. All durations collapse to 0 under
+  reduced motion. Route transitions are animated once by the shell; pages do
+  not add their own entrance animation.
+- **Layers** — `z-sticky` 10 · `z-header` 30 · `z-nav` 40 · `z-fab` 45 ·
+  `z-modal` 50 · `z-banner` 60 · `z-toast` 70 · `z-tooltip` 80. No `z-[N]`.
+- **Shell geometry** — `--fg-shell-gutter` 12px, `--fg-sidebar-width` 256px,
+  `--fg-header-height` 64px, `--fg-tabbar-height` 64px. Derived offsets:
+  `ml-shell` (content next to the sidebar), `top-header-offset` (sticky
+  sub-navs below the header), `pb-tabbar-clearance` (content above the mobile
+  tab bar, safe-area aware), `max-w-shell` (1440px rail).
 
 ---
 
@@ -158,20 +189,22 @@ Use these instead of hand-rolling grids so alignment stays consistent.
 
 - **`PageSection`** — vertical rhythm wrapper with an optional eyebrow + title +
   action. Standard `space-y` between sections.
-- **`CardGrid`** — responsive grid with standard gaps and equal-height items
-  (`auto-rows-fr`); `cols` prop maps to a mobile-first column ramp
-  (e.g. `1 → sm:2 → xl:4`).
-- **`StatCard`** — the canonical tile: `flex flex-col h-full rounded-fg-lg p-fg-4`,
-  eyebrow + value + caption, value pinned via `mt-auto`.
+- **`MetricTile`** — the canonical KPI tile: label (eyebrow) · value (mono 2xl)
+  · helper, stacked so long labels never collide with the value; `onMedia`
+  for club-colour heroes.
+- **`BackButton`** — the only back control (44px); goes back in history or to
+  `fallbackTo` on deep links. `variant="icon"` for heroes.
+- **`ErrorState` / `NotFoundState`** — shared failure and not-found states.
+- **`ProfileRadar`**, **`chartTheme`** — see §3.5.
 
 ### App shell
 
 | Region | Mobile | Desktop |
 | ------ | ------ | ------- |
-| Sidebar | hidden | fixed left, `var(--fg-sidebar-width)` 288px, `rounded-fg-xl` |
+| Sidebar | hidden | fixed left, `w-sidebar` (256px), `rounded-2xl` |
 | Header | sticky, hamburger, quick theme/search | sticky, offset by sidebar |
 | Nav | bottom `MobileTabBar`, safe-area aware | sidebar nav |
-| Content | single column, `pb` for tab bar + safe-area | centred ≤1280px |
+| Content | single column, `pb-tabbar-clearance` | `ml-shell`, `max-w-shell` (1440px) |
 
 All fixed panels respect `env(safe-area-inset-*)`.
 
@@ -179,12 +212,12 @@ All fixed panels respect `env(safe-area-inset-*)`.
 
 ## 8. Component anatomy
 
-- **Card** — `rounded-fg-lg`, `border-border/55`, surface fill, `p-fg-4`,
+- **Card** — `rounded-lg`, `border-border/55`, surface fill, `p-fg-4`,
   `shadow-fg-1`. Interactive cards add `.interactive-card` (hover lift, active
   press, focus ring).
 - **Stat tile** — eyebrow (xs uppercase) · value (xl/2xl tabular) · caption (xs
-  muted). Equal height in a `CardGrid`.
-- **Badge / pill** — `rounded-fg-pill`, `app-pill` for glass chips.
+  muted) — use `MetricTile`. Equal height in a grid row.
+- **Badge / pill** — `rounded-full`, `app-pill` for glass chips.
 - **Table / list** — desktop = table, mobile = stacked rows; both use tabular
   numerals and aligned numeric columns.
 - **Tabs / section nav** — horizontal scroll on mobile (`overflow-x-auto`,
@@ -234,7 +267,7 @@ always visible (auto-scrolls into view).
    gradient band); start–end dates with a live countdown; host-city count; a
    LIVE match-count badge; a data-quality badge (live / official / snapshot).
    Mobile: stacked, centred. Desktop: horizontal band.
-2. **Tournament status** — stat tiles in a `CardGrid` (`2-col` mobile →
+2. **Tournament status** — stat tiles in a grid (`2-col` mobile →
    `4-col` md+), equal height: **48 teams · 104 matches · 12 groups · host
    cities · days-to-kickoff / live now**.
 3. **Priority rail** — three cards (1-col mobile → custom `xl` 3-track):

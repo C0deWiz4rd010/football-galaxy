@@ -1,25 +1,22 @@
-import { Line, LineChart, ResponsiveContainer } from 'recharts'
+import { useLocale } from '@/contexts/LocaleContext'
 import type { Player } from '@/services/types'
 
 export function StatBar({ player }: { player: Player }) {
+  const { t, locale } = useLocale()
   const stats = [
-    ['Appearances', player.stats.appearances],
-    ['Goals', player.stats.goals],
-    ['Assists', player.stats.assists],
-    ['Yellow Cards', player.stats.yellowCards],
-    ['Red Cards', player.stats.redCards],
-    ['Minutes', player.stats.minutes],
+    ['appearancesLabel', player.stats.appearances],
+    ['goals', player.stats.goals],
+    ['assists', player.stats.assists],
+    ['yellowCards', player.stats.yellowCards],
+    ['redCards', player.stats.redCards],
+    ['minutes', player.stats.minutes],
   ] as const
-  const trend = player.stats.trend.map((value, index) => ({ index, value }))
   return (
-    <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
-      {stats.map(([label, value]) => (
-        <div key={label} className="stat-card">
-          <p className="font-mono text-3xl font-bold">{value}</p>
-          <p className="text-xs text-muted-foreground">{label}</p>
-          <ResponsiveContainer width={60} height={24}>
-            <LineChart data={trend}><Line dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} /></LineChart>
-          </ResponsiveContainer>
+    <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+      {stats.map(([labelKey, value]) => (
+        <div key={labelKey} className="stat-card">
+          <p className="font-mono text-2xl font-bold tabular-nums sm:text-3xl">{value.toLocaleString(locale)}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{t(labelKey)}</p>
         </div>
       ))}
     </section>

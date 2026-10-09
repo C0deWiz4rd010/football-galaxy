@@ -18,7 +18,7 @@ const MemoRow = memo(function MemoRow({ player }: { player: Player }) {
     <>
       <TableRow className="cursor-pointer" onClick={() => setOpen((value) => !value)}>
         <TableCell className="font-mono">{player.number}</TableCell>
-        <TableCell><div className="flex items-center gap-2"><AssetImage src={player.photo} fallbackSrc={[...getPlayerPhotoSources(player), createPlayerAvatar(initialsFromName(player.name), '#0f766e')]} alt={player.name} className="h-8 w-8 rounded-full object-cover" loading="lazy" /> <span>{player.name}</span><Badge>{player.position}</Badge></div></TableCell>
+        <TableCell><div className="flex items-center gap-2"><AssetImage src={player.photo} fallbackSrc={[...getPlayerPhotoSources(player), createPlayerAvatar(initialsFromName(player.name))]} alt={player.name} className="h-8 w-8 rounded-full object-cover" loading="lazy" /> <span>{player.name}</span><Badge>{player.position}</Badge></div></TableCell>
         <TableCell>{player.age ?? '-'}</TableCell>
         <TableCell>{player.stats.appearances}</TableCell>
         <TableCell>{player.stats.goals}</TableCell>
@@ -48,9 +48,9 @@ const MemoRow = memo(function MemoRow({ player }: { player: Player }) {
 function MobileSquadCard({ player }: { player: Player }) {
   const [open, setOpen] = useState(false)
   return (
-    <button type="button" onClick={() => setOpen((value) => !value)} className="rounded-xl border bg-card p-4 text-left">
+    <button type="button" onClick={() => setOpen((value) => !value)} className="rounded-md border bg-card p-4 text-left">
       <div className="flex items-center gap-3">
-        <AssetImage src={player.photo} fallbackSrc={[...getPlayerPhotoSources(player), createPlayerAvatar(initialsFromName(player.name), '#0f766e')]} alt={player.name} className="h-10 w-10 rounded-full object-cover" loading="lazy" />
+        <AssetImage src={player.photo} fallbackSrc={[...getPlayerPhotoSources(player), createPlayerAvatar(initialsFromName(player.name))]} alt={player.name} className="h-10 w-10 rounded-full object-cover" loading="lazy" />
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold">{player.name}</p>
           <p className="text-xs text-muted-foreground">{player.nationality}</p>

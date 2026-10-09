@@ -1,12 +1,7 @@
-import { useCallback } from 'react'
+import { Bar, BarChart, CartesianGrid, Cell, LabelList, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
-import { EChart } from '@/components/charts/EChart'
-import { tooltipStyle, type ChartTheme } from '@/components/charts/echarts-theme'
-import type {
-  WorldCupGroupStanding,
-  WorldCupMatchStatistic,
-  WorldCupSquadPlayer,
-} from '@/services/worldCup/types'
+import { axisTick, chartColors, chartPalette, legendStyle, tooltipProps } from '@/components/charts/chartTheme'
+import type { WorldCupGroupStanding, WorldCupMatchStatistic, WorldCupSquadPlayer } from '@/services/worldCup/types'
 
 function toNumber(value: string | number): number {
   if (typeof value === 'number') return value
@@ -31,10 +26,13 @@ function bucketPosition(position?: string): string {
   return POSITION_BUCKETS[position] ?? position
 }
 
+const legendProps = { wrapperStyle: legendStyle, iconType: 'circle', iconSize: 8 } as const
+const categoryTick = { ...axisTick, fill: chartColors.foreground }
+
 /**
- * Home vs away match-statistic comparison as grouped horizontal bars. Falls back
- * to `null` when the provider has not returned paired numeric statistics so the
- * caller can keep its plain-list fallback.
+ * Home vs away match-statistic comparison as grouped horizontal bars. Renders
+ * nothing when the provider has not returned paired statistics so the caller
+ * keeps its plain-list fallback.
  */
 export function MatchStatsChart({
   statistics,
@@ -51,69 +49,38 @@ export function MatchStatsChart({
 }) {
   const types = Array.from(new Set(statistics.map((stat) => stat.type)))
   const rows = types
-    .map((type) => {
+    .flatMap((type) => {
       const home = statistics.find((stat) => stat.teamId === homeTeamId && stat.type === type)
       const away = statistics.find((stat) => stat.teamId === awayTeamId && stat.type === type)
-      if (!home && !away) return null
-      return { type, home: toNumber(home?.value ?? 0), away: toNumber(away?.value ?? 0) }
+      if (!home && !away) return []
+      return [{ type, home: toNumber(home?.value ?? 0), away: toNumber(away?.value ?? 0) }]
     })
-    .filter((row): row is { type: string; home: number; away: number } => row !== null)
     .slice(0, 8)
-
-  const getOption = useCallback(
-    (theme: ChartTheme) => ({
-      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, ...tooltipStyle(theme) },
-      legend: {
-        data: [homeName, awayName],
-        top: 0,
-        textStyle: { color: theme.muted, fontSize: 11 },
-        itemWidth: 10,
-        itemHeight: 10,
-      },
-      grid: { left: 4, right: 16, top: 34, bottom: 4, containLabel: true },
-      xAxis: {
-        type: 'value',
-        axisLabel: { color: theme.muted, fontSize: 10 },
-        splitLine: { lineStyle: { color: theme.border } },
-      },
-      yAxis: {
-        type: 'category',
-        inverse: true,
-        data: rows.map((row) => row.type),
-        axisLabel: { color: theme.foreground, fontSize: 11 },
-        axisLine: { lineStyle: { color: theme.border } },
-        axisTick: { show: false },
-      },
-      series: [
-        {
-          name: homeName,
-          type: 'bar',
-          data: rows.map((row) => row.home),
-          itemStyle: { color: theme.primary, borderRadius: [0, 4, 4, 0] },
-          barMaxWidth: 12,
-        },
-        {
-          name: awayName,
-          type: 'bar',
-          data: rows.map((row) => row.away),
-          itemStyle: { color: theme.info, borderRadius: [0, 4, 4, 0] },
-          barMaxWidth: 12,
-        },
-      ],
-    }),
-    [rows, homeName, awayName],
-  )
 
   if (!rows.length) return null
 
   return (
-    <EChart
-      ariaLabel={`Match statistics comparison between ${homeName} and ${awayName}`}
-      getOption={getOption}
-      height={Math.max(180, rows.length * 38 + 40)}
-    />
+    <div role="img" aria-label={`Match statistics comparison between ${homeName} and ${awayName}`}>
+      <ResponsiveContainer width="100%" height={Math.max(180, rows.length * 40 + 48)}>
+        <BarChart data={rows} layout="vertical" margin={{ left: 0, right: 16 }} barGap={2}>
+          <CartesianGrid horizontal={false} stroke={chartColors.grid} />
+          <XAxis type="number" tick={axisTick} />
+          <YAxis type="category" dataKey="type" tick={categoryTick} width={110} />
+          <Tooltip {...tooltipProps} />
+          <Legend {...legendProps} verticalAlign="top" />
+          <Bar name={homeName} dataKey="home" fill={chartColors.primary} radius={[0, 4, 4, 0]} maxBarSize={12} />
+          <Bar name={awayName} dataKey="away" fill={chartColors.secondary} radius={[0, 4, 4, 0]} maxBarSize={12} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   )
 }
+
+const hintColor = {
+  'top-two': chartColors.secondary,
+  'best-third-watch': chartColors.warning,
+  pending: chartColors.muted,
+} as const
 
 /** Group points as a colour-coded horizontal bar chart by qualification zone. */
 export function GroupPointsChart({ rows }: { rows: WorldCupGroupStanding[] }) {
@@ -123,61 +90,42 @@ export function GroupPointsChart({ rows }: { rows: WorldCupGroupStanding[] }) {
     hint: row.qualificationHint,
   }))
 
-  const getOption = useCallback(
-    (theme: ChartTheme) => ({
-      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, ...tooltipStyle(theme) },
-      grid: { left: 4, right: 24, top: 8, bottom: 4, containLabel: true },
-      xAxis: {
-        type: 'value',
-        minInterval: 1,
-        axisLabel: { color: theme.muted, fontSize: 10 },
-        splitLine: { lineStyle: { color: theme.border } },
-      },
-      yAxis: {
-        type: 'category',
-        inverse: true,
-        data: data.map((row) => row.name),
-        axisLabel: { color: theme.foreground, fontSize: 11 },
-        axisLine: { lineStyle: { color: theme.border } },
-        axisTick: { show: false },
-      },
-      series: [
-        {
-          type: 'bar',
-          data: data.map((row) => ({
-            value: row.points,
-            itemStyle: {
-              color:
-                row.hint === 'top-two'
-                  ? theme.info
-                  : row.hint === 'best-third-watch'
-                    ? theme.warning
-                    : theme.muted,
-              borderRadius: [0, 5, 5, 0],
-            },
-          })),
-          barMaxWidth: 16,
-          label: {
-            show: true,
-            position: 'right',
-            color: theme.foreground,
-            fontSize: 11,
-            fontWeight: 'bold',
-          },
-        },
-      ],
-    }),
-    [data],
-  )
-
   if (!data.length) return null
 
   return (
-    <EChart
-      ariaLabel="Group points by qualification zone"
-      getOption={getOption}
-      height={Math.max(120, data.length * 30 + 24)}
-    />
+    <div role="img" aria-label="Group points by qualification zone">
+      <ResponsiveContainer width="100%" height={Math.max(120, data.length * 30 + 24)}>
+        <BarChart data={data} layout="vertical" margin={{ left: 0, right: 28 }}>
+          <XAxis type="number" allowDecimals={false} hide />
+          <YAxis type="category" dataKey="name" tick={categoryTick} width={52} axisLine={false} tickLine={false} />
+          <Tooltip {...tooltipProps} />
+          <Bar name="Points" dataKey="points" radius={[0, 5, 5, 0]} maxBarSize={16}>
+            {data.map((row) => (
+              <Cell key={row.name} fill={hintColor[row.hint]} />
+            ))}
+            <LabelList dataKey="points" position="right" fill={chartColors.foreground} fontSize={12} fontWeight={700} />
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
+function Donut({ data, label, height }: { data: Array<{ name: string; value: number; color: string }>; label: string; height: number }) {
+  return (
+    <div role="img" aria-label={label}>
+      <ResponsiveContainer width="100%" height={height}>
+        <PieChart>
+          <Tooltip {...tooltipProps} />
+          <Legend {...legendProps} />
+          <Pie data={data} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="80%" paddingAngle={2} stroke={chartColors.surface} strokeWidth={2}>
+            {data.map((entry) => (
+              <Cell key={entry.name} fill={entry.color} />
+            ))}
+          </Pie>
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
   )
 }
 
@@ -188,93 +136,21 @@ export function SquadPositionChart({ players }: { players: WorldCupSquadPlayer[]
     acc[bucket] = (acc[bucket] ?? 0) + 1
     return acc
   }, {})
-  const data = Object.entries(counts).map(([name, value]) => ({ name, value }))
-
-  const getOption = useCallback(
-    (theme: ChartTheme) => {
-      const palette = [theme.primary, theme.info, theme.warning, theme.success, theme.muted]
-      return {
-        tooltip: { trigger: 'item', ...tooltipStyle(theme) },
-        legend: {
-          orient: 'vertical',
-          right: 0,
-          top: 'center',
-          textStyle: { color: theme.muted, fontSize: 11 },
-          itemWidth: 10,
-          itemHeight: 10,
-        },
-        series: [
-          {
-            type: 'pie',
-            radius: ['52%', '74%'],
-            center: ['34%', '50%'],
-            avoidLabelOverlap: true,
-            itemStyle: { borderColor: theme.surface, borderWidth: 2, borderRadius: 4 },
-            label: { show: false },
-            data: data.map((entry, index) => ({
-              ...entry,
-              itemStyle: { color: palette[index % palette.length] },
-            })),
-          },
-        ],
-      }
-    },
-    [data],
-  )
+  const data = Object.entries(counts).map(([name, value], index) => ({ name, value, color: chartPalette[index % chartPalette.length] ?? chartColors.muted }))
 
   if (!data.length) return null
-
-  return (
-    <EChart ariaLabel="Squad composition by position" getOption={getOption} height={180} />
-  )
+  return <Donut data={data} label="Squad composition by position" height={200} />
 }
 
 /** Overview pulse: live / upcoming / finished match distribution as a donut. */
-export function MatchStatePulse({
-  live,
-  upcoming,
-  recent,
-}: {
-  live: number
-  upcoming: number
-  recent: number
-}) {
+export function MatchStatePulse({ live, upcoming, recent }: { live: number; upcoming: number; recent: number }) {
   const data = [
-    { name: 'Live', value: live, key: 'live' as const },
-    { name: 'Upcoming', value: upcoming, key: 'info' as const },
-    { name: 'Finished', value: recent, key: 'muted' as const },
+    { name: 'Live', value: live, color: chartColors.live },
+    { name: 'Upcoming', value: upcoming, color: chartColors.secondary },
+    { name: 'Finished', value: recent, color: chartColors.muted },
   ].filter((entry) => entry.value > 0)
 
-  const getOption = useCallback(
-    (theme: ChartTheme) => ({
-      tooltip: { trigger: 'item', ...tooltipStyle(theme) },
-      legend: {
-        bottom: 0,
-        textStyle: { color: theme.muted, fontSize: 11 },
-        itemWidth: 10,
-        itemHeight: 10,
-      },
-      series: [
-        {
-          type: 'pie',
-          radius: ['56%', '78%'],
-          center: ['50%', '44%'],
-          itemStyle: { borderColor: theme.surface, borderWidth: 2, borderRadius: 4 },
-          label: { show: false },
-          data: data.map((entry) => ({
-            name: entry.name,
-            value: entry.value,
-            itemStyle: { color: theme[entry.key] },
-          })),
-        },
-      ],
-    }),
-    [data],
-  )
-
-  if (!data.length) return null
-
-  return (
-    <EChart ariaLabel="Match state distribution" getOption={getOption} height={200} />
-  )
+  // A single state (e.g. an archived, finished tournament) is a full ring: no information.
+  if (data.length < 2) return null
+  return <Donut data={data} label="Match state distribution" height={200} />
 }

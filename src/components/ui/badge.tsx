@@ -7,7 +7,7 @@ type BadgeVariant = 'default' | 'outline' | 'soft'
 const badgeVariants: Record<BadgeVariant, string> = {
   default: 'border-transparent bg-primary text-primary-foreground',
   outline: 'border-border/70 bg-transparent text-foreground',
-  soft: 'border-transparent bg-white/10 text-foreground',
+  soft: 'border-transparent bg-foreground/10 text-foreground',
 }
 
 interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {

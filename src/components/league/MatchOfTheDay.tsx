@@ -35,13 +35,13 @@ export function MatchOfTheDay({ match }: { match?: Match }) {
     <section className="stat-card">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+          <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">
             {t('matchCenter')}
           </p>
           <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('matchOfTheDay')}</h2>
         </div>
         {isTodayLive ? (
-          <Badge className="border-red-500/30 bg-red-500/15 text-red-500">LIVE</Badge>
+          <Badge className="border-danger/30 bg-danger/15 text-red-500">LIVE</Badge>
         ) : (
           <Badge variant="outline">{match.status}</Badge>
         )}
@@ -55,18 +55,18 @@ export function MatchOfTheDay({ match }: { match?: Match }) {
               ...getCrestSources(match.homeTeam),
               createTeamCrest(
                 match.homeTeam.shortName,
-                match.homeTeam.primaryColor ?? '#0f766e',
-                match.homeTeam.secondaryColor ?? '#f8fafc',
+                match.homeTeam.primaryColor,
+                match.homeTeam.secondaryColor,
                 0,
               ),
             ]}
             alt={match.homeTeam.name}
-            className="mx-auto h-16 w-16 rounded-2xl object-cover transition group-hover:scale-[1.02]"
+            className="mx-auto h-16 w-16 rounded-lg object-cover transition group-hover:scale-[1.02]"
             loading="lazy"
           />
           <p className="mt-2 text-sm font-medium">{match.homeTeam.shortName}</p>
         </Link>
-        <div className="rounded-fg-lg border border-white/10 bg-white/5 px-4 py-3 font-mono text-4xl font-bold">
+        <div className="rounded-lg border border-border/60 bg-foreground/5 px-4 py-3 font-mono text-4xl font-bold">
           {match.homeScore ?? '-'}-{match.awayScore ?? '-'}
         </div>
         <Link to={`/${match.leagueId}/team/${match.awayTeam.id}`} className="group">
@@ -76,21 +76,21 @@ export function MatchOfTheDay({ match }: { match?: Match }) {
               ...getCrestSources(match.awayTeam),
               createTeamCrest(
                 match.awayTeam.shortName,
-                match.awayTeam.primaryColor ?? '#0f766e',
-                match.awayTeam.secondaryColor ?? '#f8fafc',
+                match.awayTeam.primaryColor,
+                match.awayTeam.secondaryColor,
                 1,
               ),
             ]}
             alt={match.awayTeam.name}
-            className="mx-auto h-16 w-16 rounded-2xl object-cover transition group-hover:scale-[1.02]"
+            className="mx-auto h-16 w-16 rounded-lg object-cover transition group-hover:scale-[1.02]"
             loading="lazy"
           />
           <p className="mt-2 text-sm font-medium">{match.awayTeam.shortName}</p>
         </Link>
       </div>
 
-      <div className="mt-4 rounded-fg-lg border border-white/8 bg-white/4 px-4 py-3 text-center">
-        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+      <div className="mt-4 rounded-lg border border-border/60 bg-foreground/4 px-4 py-3 text-center">
+        <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">
           {t('kickoffAndVenue')}
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -112,7 +112,7 @@ export function MatchOfTheDay({ match }: { match?: Match }) {
           >
             {match.events.length > 0 ? (
               match.events.map((event) => (
-                <li key={event.id} className="surface-soft rounded-xl px-3 py-2 text-sm">
+                <li key={event.id} className="surface-soft rounded-md px-3 py-2 text-sm">
                   <span className="font-mono">{event.minute}'</span> {event.type} —{' '}
                   {event.playerId ? (
                     <Link
@@ -127,7 +127,7 @@ export function MatchOfTheDay({ match }: { match?: Match }) {
                 </li>
               ))
             ) : (
-              <li className="surface-soft rounded-xl px-3 py-2 text-sm text-muted-foreground">
+              <li className="surface-soft rounded-md px-3 py-2 text-sm text-muted-foreground">
                 {t('noEventTimeline')}
               </li>
             )}

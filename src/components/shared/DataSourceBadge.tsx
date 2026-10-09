@@ -15,25 +15,25 @@ const FRESHNESS_STYLES: Record<
 > = {
   live: {
     dot: 'bg-emerald-300',
-    pill: 'border-emerald-400/50 bg-emerald-400/12 text-emerald-100',
+    pill: 'border-success/50 bg-success/12 text-success-fg',
     pulse: true,
     defaultLabel: 'Live',
   },
   official: {
     dot: 'bg-sky-300',
-    pill: 'border-sky-400/40 bg-sky-400/10 text-sky-100',
+    pill: 'border-info/40 bg-info/10 text-info-fg',
     pulse: false,
     defaultLabel: 'Official',
   },
   snapshot: {
     dot: 'bg-amber-300',
-    pill: 'border-amber-400/40 bg-amber-400/10 text-amber-100',
+    pill: 'border-warning/40 bg-warning/10 text-warning-fg',
     pulse: false,
     defaultLabel: 'Snapshot',
   },
   offline: {
     dot: 'bg-zinc-400',
-    pill: 'border-zinc-400/30 bg-zinc-400/10 text-zinc-200',
+    pill: 'border-border bg-muted/60 text-muted-foreground',
     pulse: false,
     defaultLabel: 'Offline',
   },
@@ -54,7 +54,7 @@ export function DataSourceBadge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-lg border px-2 py-0.5 text-[11px] font-medium tracking-tight',
+        'inline-flex items-center gap-1.5 rounded-lg border px-2 py-0.5 text-2xs font-medium tracking-tight',
         style.pill,
         className,
       )}

@@ -27,7 +27,6 @@ export default defineConfig({
           if (!id.includes('node_modules')) return undefined
           if (id.includes('react-router')) return 'router'
           if (id.includes('framer-motion')) return 'motion'
-          if (id.includes('echarts') || id.includes('zrender')) return 'echarts'
           if (id.includes('recharts') || id.includes('d3-')) return 'charts'
           if (id.includes('@radix-ui')) return 'radix'
           if (id.includes('lucide-react')) return 'icons'
@@ -49,7 +48,7 @@ export default defineConfig({
       exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/vite-env.d.ts'],
       reporter: ['text-summary', 'html'],
       // Raised after Phase 2 (2026-10-02). Raised step by step; target in Phase 10.
-      thresholds: { lines: 29, functions: 55, branches: 60, statements: 29 },
+      thresholds: { lines: 30, functions: 58, branches: 62, statements: 30 },
     },
   },
 })

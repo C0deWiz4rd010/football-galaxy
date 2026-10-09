@@ -6,7 +6,7 @@ export function EmptyState({ title, description, icon: Icon = SearchX, className
   return (
     <div
       className={cn(
-        'flex min-h-48 flex-col items-center justify-center rounded-fg-2xl border border-dashed border-border/60 bg-card/40 p-8 text-center',
+        'flex min-h-48 flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-card/40 p-8 text-center',
         className,
       )}
     >

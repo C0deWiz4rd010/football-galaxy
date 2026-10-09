@@ -1,3 +1,4 @@
+/** Mirrors the motion tokens in src/shared/styles/tokens.css (seconds for Framer Motion). */
 export const motionDurations = {
   instant: 0.12,
   fast: 0.18,
@@ -14,16 +15,6 @@ export const motionEasing = {
 } as const
 
 export const pageMotion = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit: { opacity: 0 },
-  transition: {
-    duration: motionDurations.base,
-    ease: motionEasing.enter,
-  },
-} as const
-
-export const fadeUpMotion = {
   initial: { opacity: 0 },
   animate: { opacity: 1 },
   exit: { opacity: 0 },

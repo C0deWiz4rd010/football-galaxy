@@ -36,6 +36,8 @@ import type {
 
 const apiBase = 'https://api.football-data.org/v4'
 const competition = 'WC'
+/** Without an explicit season, finished tournaments 404 on /standings. */
+const competitionPath = (resource: string) => `/competitions/${competition}/${resource}?season=${worldCupTournament.season}`
 
 // ---------------------------------------------------------------------------
 // Raw football-data.org response shapes (only the fields we read)
@@ -327,26 +329,54 @@ function teamMatchesRoute(team: WorldCupTeam, route: string): boolean {
 // ---------------------------------------------------------------------------
 
 async function loadFixtures(): Promise<WorldCupFixture[]> {
-  const data = await getJson<{ matches?: FdMatch[] }>(`/competitions/${competition}/matches`)
+  const data = await getJson<{ matches?: FdMatch[] }>(competitionPath('matches'))
   return (data.matches ?? [])
     .map(mapFixture)
     .sort((left, right) => left.utcDate.localeCompare(right.utcDate))
 }
 
-async function loadGroups(): Promise<WorldCupGroupStanding[]> {
-  const data = await getJson<{ standings?: FdStandingGroup[] }>(`/competitions/${competition}/standings`)
-  const rows: WorldCupGroupStanding[] = []
-  for (const block of data.standings ?? []) {
-    const group = normalizeGroup(block.group) ?? '?'
-    for (const row of block.table ?? []) {
-      rows.push(mapStandingRow(row, group))
-    }
+/** Group letter per team id, read from the group-stage fixtures. */
+function groupsFromMatches(matches: FdMatch[]): Map<number, string> {
+  const groupByTeam = new Map<number, string>()
+  for (const match of matches) {
+    const group = match.stage === 'GROUP_STAGE' ? normalizeGroup(match.group) : undefined
+    if (!group) continue
+    for (const team of [match.homeTeam, match.awayTeam]) if (typeof team.id === 'number') groupByTeam.set(team.id, group)
   }
-  return rows
+  return groupByTeam
+}
+
+async function loadGroups(rawMatches?: FdMatch[]): Promise<WorldCupGroupStanding[]> {
+  const data = await getJson<{ standings?: FdStandingGroup[] }>(competitionPath('standings'))
+  const blocks = (data.standings ?? []).filter((block) => !block.type || block.type === 'TOTAL')
+  const rows: WorldCupGroupStanding[] = []
+
+  if (blocks.some((block) => normalizeGroup(block.group))) {
+    for (const block of blocks) {
+      const group = normalizeGroup(block.group) ?? '?'
+      for (const row of block.table ?? []) rows.push(mapStandingRow(row, group))
+    }
+    return rows
+  }
+
+  // Archived tournaments come back as one overall table without groups:
+  // split it by the teams' group-stage fixtures and rank within each group
+  // (the overall order already applies points, goal difference, goals).
+  const matches = rawMatches ?? (await getJson<{ matches?: FdMatch[] }>(competitionPath('matches'))).matches ?? []
+  const groupByTeam = groupsFromMatches(matches)
+  const rankInGroup = new Map<string, number>()
+  for (const row of blocks.flatMap((block) => block.table ?? []).sort((a, b) => a.position - b.position)) {
+    const group = typeof row.team.id === 'number' ? groupByTeam.get(row.team.id) : undefined
+    if (!group) continue
+    const rank = (rankInGroup.get(group) ?? 0) + 1
+    rankInGroup.set(group, rank)
+    rows.push(mapStandingRow({ ...row, position: rank }, group))
+  }
+  return rows.sort((a, b) => a.group.localeCompare(b.group) || a.rank - b.rank)
 }
 
 async function loadTeams(groups?: WorldCupGroupStanding[]): Promise<WorldCupTeam[]> {
-  const data = await getJson<{ teams?: FdTeamRef[] }>(`/competitions/${competition}/teams`)
+  const data = await getJson<{ teams?: FdTeamRef[] }>(competitionPath('teams'))
   const groupByTeamId = new Map<string, string>()
   for (const row of groups ?? []) {
     groupByTeamId.set(row.team.id, row.group)
@@ -388,10 +418,8 @@ function buildBracket(fixtures: WorldCupFixture[], rawStageByFixtureId: Map<stri
 // ---------------------------------------------------------------------------
 
 async function getDashboard(): Promise<WorldCupDashboard> {
-  const [rawMatchesData, groups] = await Promise.all([
-    getJson<{ matches?: FdMatch[] }>(`/competitions/${competition}/matches`),
-    loadGroups().catch(() => [] as WorldCupGroupStanding[]),
-  ])
+  const rawMatchesData = await getJson<{ matches?: FdMatch[] }>(competitionPath('matches'))
+  const groups = await loadGroups(rawMatchesData.matches).catch(() => [] as WorldCupGroupStanding[])
 
   const rawMatches = rawMatchesData.matches ?? []
   const rawStageByFixtureId = new Map<string, string>()
@@ -432,7 +460,7 @@ async function getDashboard(): Promise<WorldCupDashboard> {
 }
 
 async function getBracket(): Promise<WorldCupBracketRound[]> {
-  const data = await getJson<{ matches?: FdMatch[] }>(`/competitions/${competition}/matches`)
+  const data = await getJson<{ matches?: FdMatch[] }>(competitionPath('matches'))
   const rawMatches = data.matches ?? []
   const rawStageByFixtureId = new Map<string, string>()
   for (const match of rawMatches) {

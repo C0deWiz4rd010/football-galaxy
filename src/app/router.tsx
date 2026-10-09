@@ -174,39 +174,39 @@ function AppLayout() {
       />
       {mobileMenuOpen ? (
         <div
-          className="fixed inset-0 z-50 bg-black/40 md:hidden"
+          className="fixed inset-0 z-modal bg-black/40 md:hidden"
           onClick={() => setMobileMenuOpen(false)}
         >
           <div
-            className="absolute inset-x-4 top-20 rounded-fg-xl border border-border/55 bg-background/95 p-4 shadow-fg-4 backdrop-blur"
+            className="absolute inset-x-4 top-20 rounded-xl border border-border/55 bg-background/95 p-4 shadow-fg-4 backdrop-blur"
             onClick={(event) => event.stopPropagation()}
           >
             <nav className="space-y-2">
               <Link
                 to="/live"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-fg-md border border-live/30 bg-live/10 px-4 py-3 text-sm font-medium text-live"
+                className="block rounded-md border border-live/30 bg-live/10 px-4 py-3 text-sm font-medium text-live"
               >
                 {t('liveScores')}
               </Link>
               <Link
                 to="/players"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-fg-md border border-border/55 px-4 py-3 text-sm font-medium"
+                className="block rounded-md border border-border/55 px-4 py-3 text-sm font-medium"
               >
                 {t('playersExplorer')}
               </Link>
               <Link
                 to="/teams"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-fg-md border border-border/55 px-4 py-3 text-sm font-medium"
+                className="block rounded-md border border-border/55 px-4 py-3 text-sm font-medium"
               >
                 {t('teamsExplorer')}
               </Link>
               <Link
                 to="/world-cup-2026"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-fg-md border border-amber-300/30 bg-amber-300/10 px-4 py-3 text-sm font-medium text-amber-100"
+                className="block rounded-md border border-warning/30 bg-warning/10 px-4 py-3 text-sm font-medium text-warning-fg"
               >
                 World Cup 2026
               </Link>
@@ -215,7 +215,7 @@ function AppLayout() {
                   key={item.id}
                   to={`/${item.id}`}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block rounded-fg-md border border-border/55 px-4 py-3 text-sm font-medium"
+                  className="block rounded-md border border-border/55 px-4 py-3 text-sm font-medium"
                 >
                   {item.name}
                 </NavLink>
@@ -223,14 +223,14 @@ function AppLayout() {
               <Link
                 to="/compare"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-fg-md border border-border/55 px-4 py-3 text-sm font-medium"
+                className="block rounded-md border border-border/55 px-4 py-3 text-sm font-medium"
               >
                 {t('comparePlayers')}
               </Link>
               <Link
                 to="/settings"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-fg-md border border-border/55 px-4 py-3 text-sm font-medium"
+                className="block rounded-md border border-border/55 px-4 py-3 text-sm font-medium"
               >
                 {t('settings')}
               </Link>
@@ -238,7 +238,7 @@ function AppLayout() {
           </div>
         </div>
       ) : null}
-      <main className="mx-auto max-w-[1440px] px-4 pb-[calc(env(safe-area-inset-bottom)+6rem)] pt-5 md:ml-[17rem] md:px-6 md:pb-12 lg:px-8">
+      <main className="mx-auto max-w-shell px-4 pb-[calc(var(--fg-tabbar-clearance)+1rem)] pt-5 md:ml-shell md:px-6 md:pb-12 lg:px-8">
         <ErrorBoundary key={location.pathname} title={t('routeErrorTitle')}>
           <Suspense fallback={<LoadingGrid />}>
             <AnimatePresence mode="wait" initial={false}>

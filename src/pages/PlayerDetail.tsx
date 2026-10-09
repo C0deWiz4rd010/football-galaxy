@@ -1,15 +1,17 @@
 import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { ArrowLeft, ArrowRight, Award, Clock3, Heart, Shield, Sparkles, Target } from 'lucide-react'
+import { ArrowRight, Award, Clock3, Heart, Shield, Sparkles, Target } from 'lucide-react'
 
 import { CompareButton } from '@/components/player/CompareButton'
 import { PlayerHeader } from '@/components/player/PlayerHeader'
+import { BackButton } from '@/components/shared/BackButton'
 import { PerformanceChart } from '@/components/player/PerformanceChart'
 import { PlayerRadarChart } from '@/components/player/RadarChart'
 import { StatBar } from '@/components/player/StatBar'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { MetricTile } from '@/components/shared/MetricTile'
 import { FormBadge } from '@/components/shared/FormBadge'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { ErrorState, NotFoundState } from '@/components/shared/StatusStates'
@@ -19,36 +21,11 @@ import { Badge } from '@/components/ui/badge'
 import { useLocale } from '@/contexts/LocaleContext'
 import { useLeagueSummary, usePlayer, useTeam, useTeamMatches } from '@/hooks/queries/football'
 import { isNotFoundError } from '@/services/errors'
-import { useNavigate } from 'react-router-dom'
 import { useFavorites } from '@/hooks/useFavorites'
 import { isLeagueId } from '@/lib/leagues'
 import type { Player } from '@/services/types'
 import { getFormScore } from '@/lib/player-ratings'
 
-function DetailMetric({
-  label,
-  value,
-  helper,
-  icon,
-}: {
-  label: string
-  value: string
-  helper: string
-  icon: React.ReactNode
-}) {
-  return (
-    <div className="surface-soft flex items-center gap-3 rounded-fg-lg p-3">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/10">
-        {icon}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
-        <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{helper}</p>
-      </div>
-      <p className="shrink-0 font-mono text-xl font-black leading-none tabular-nums">{value}</p>
-    </div>
-  )
-}
 function FavoriteHeartButton({ player }: { player: Player }) {
   const { t } = useLocale()
   const favorites = useFavorites()
@@ -62,8 +39,8 @@ function FavoriteHeartButton({ player }: { player: Player }) {
       title={isFavorite ? t('unfollowPlayer') : t('followPlayer')}
       className={`group inline-flex h-10 w-10 items-center justify-center rounded-full border transition ${
         isFavorite
-          ? 'border-rose-400/40 bg-rose-500/10 text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.35)]'
-          : 'border-border/60 bg-background/40 text-muted-foreground hover:text-rose-400 hover:border-rose-400/40'
+          ? 'border-danger/40 bg-danger/10 text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.35)]'
+          : 'border-border/60 bg-background/40 text-muted-foreground hover:text-rose-400 hover:border-danger/40'
       }`}
     >
       <Heart className={`h-5 w-5 transition-transform group-active:scale-90 ${isFavorite ? 'fill-current' : ''}`} />
@@ -73,7 +50,6 @@ function FavoriteHeartButton({ player }: { player: Player }) {
 
 export default function PlayerDetail() {
   const { t } = useLocale()
-  const navigate = useNavigate()
   const params = useParams()
   const leagueId = isLeagueId(params.leagueId) ? params.leagueId : undefined
   const playerId = params.playerId
@@ -81,6 +57,7 @@ export default function PlayerDetail() {
   const { data: player, isPending, error, refetch } = usePlayer(leagueId, playerId)
   const notFound = isNotFoundError(error)
   const { data: leagueSummary } = useLeagueSummary(leagueId)
+  const leaderPool = useMemo(() => leagueSummary?.playerPool.map((entry) => entry.player) ?? [], [leagueSummary])
   const { data: matches } = useTeamMatches(leagueId, player?.teamId)
   // Only resolves once the player (and therefore its team id) is known.
   const { data: team } = useTeam(leagueId, player?.teamId)
@@ -145,16 +122,7 @@ export default function PlayerDetail() {
           <PlayerHeader
             player={player}
             team={team ?? undefined}
-            backButton={
-              <button
-                type="button"
-                onClick={() => navigate(-1)}
-                aria-label={t('back')}
-                className="flex h-7 w-7 items-center justify-center rounded-full border border-border/60 bg-background/80 text-muted-foreground backdrop-blur-sm transition hover:bg-background hover:text-foreground"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-              </button>
-            }
+            backButton={<BackButton variant="icon" fallbackTo={`/${player.leagueId}`} />}
             action={
               <div className="flex items-center gap-2">
                 <FavoriteHeartButton player={player} />
@@ -169,7 +137,7 @@ export default function PlayerDetail() {
             <section className="stat-card">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">
                     {t('playerProfile')}
                   </p>
                   <h2 className="mt-1 text-xl font-semibold tracking-tight">{t('liveProfileOverview')}</h2>
@@ -180,26 +148,26 @@ export default function PlayerDetail() {
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-                <DetailMetric
+              <div className="mt-4 grid grid-cols-2 gap-2 xl:grid-cols-4">
+                <MetricTile
                   label={t('formScore')}
                   value={String(card.score)}
                   helper={t('formDerivedFromResults', { label: card.label })}
                   icon={<Award className="h-4 w-4 text-amber-400" />}
                 />
-                <DetailMetric
+                <MetricTile
                   label={t('contribution')}
                   value={contributionRate}
                   helper={t('contributionHelper')}
                   icon={<Target className="h-4 w-4 text-orange-400" />}
                 />
-                <DetailMetric
+                <MetricTile
                   label={t('availability')}
                   value={availability}
                   helper={t('availabilityHelper')}
                   icon={<Clock3 className="h-4 w-4 text-sky-400" />}
                 />
-                <DetailMetric
+                <MetricTile
                   label={t('discipline')}
                   value={`${player.stats.yellowCards}/${player.stats.redCards}`}
                   helper={t('disciplineHelper')}
@@ -208,8 +176,8 @@ export default function PlayerDetail() {
               </div>
 
               <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <div className="surface-soft rounded-fg-lg p-3">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                <div className="surface-soft rounded-lg p-3">
+                  <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">
                     {t('squadContext')}
                   </p>
                   <p className="mt-2 text-lg font-semibold">
@@ -221,8 +189,8 @@ export default function PlayerDetail() {
                       : t('leagueStandingUnavailable')}
                   </p>
                 </div>
-                <div className="surface-soft rounded-fg-lg p-3">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                <div className="surface-soft rounded-lg p-3">
+                  <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">
                     {t('minutesPlayed')}
                   </p>
                   <p className="mt-2 text-lg font-semibold tabular-nums">
@@ -239,7 +207,7 @@ export default function PlayerDetail() {
 
             <StatBar player={player} />
             <div className="grid gap-4 lg:grid-cols-2">
-              <PlayerRadarChart player={player} />
+              <PlayerRadarChart player={player} pool={leaderPool} />
               <PerformanceChart player={player} />
             </div>
           </div>
@@ -248,7 +216,7 @@ export default function PlayerDetail() {
             <section className="stat-card">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">
                     {t('scoutingNotes')}
                   </p>
                   <h2 className="mt-1 text-lg font-semibold tracking-tight">
@@ -282,7 +250,7 @@ export default function PlayerDetail() {
 
             <section className="stat-card">
               <div className="mb-3">
-                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">
                   {t('matchContext')}
                 </p>
                 <h2 className="mt-1 text-base font-semibold tracking-tight">{t('recentTeamMatches')}</h2>

@@ -210,3 +210,28 @@ Zielbreiten testen: 360, 390, 768, 1024, 1280, 1440, 1920 + Landscape-Phone.
 - WM-Übersicht nach Turnierende: „Upcoming matches“, „Group TBD“, „Host city pending“ → Archiv-gerechte Darstellung (Phase 3/7).
 - WM-Provider-Antworten noch ohne Zod (nur Typ-Casts).
 - `vendor`-Chunk 522 KB (TanStack/Zod hinzugekommen) → Phase 5.
+
+### Phase 3 – erledigt (2026-10-09)
+- **A** Tailwind-Opacity-Skala um 2/3/4/6/8/12/18 erweitert – `bg-primary/12`, `bg-live/12`, `bg-white/8` usw. erzeugten vorher stillschweigend kein CSS.
+- **B** Eine Motion-Skala (`tokens.css` ↔ `shared/motion/tokens.ts` ↔ Tailwind `duration-fg-*`/`ease-fg-*`); doppelte `--motion-*`/`--ease-*` entfernt. `PageWrapper` animiert nicht mehr zusätzlich zur Router-Transition; ungenutzte Varianten gelöscht.
+- **C** Shell-Geometrie als Tokens (`--fg-shell-gutter`, `--fg-sidebar-width`, `--fg-header-height`, `--fg-tabbar-height` + abgeleitete Offsets) und Tailwind-Utilities (`ml-shell`, `top-header-offset`, `pb-tabbar-clearance`, `max-w-shell`, `w-sidebar`, `h-tabbar`). Header, Sidebar, Tab-Bar, Main, Toast, WM-Section-Nav nutzen sie. Z-Index-Skala `z-sticky … z-tooltip` statt `z-50`/`z-[80]`.
+- **D** Eine Radius-Skala `rounded-{xs,sm,md,lg,xl,2xl,full}` (Token-basiert); `rounded-fg-*` und die widersprüchlichen shadcn-Radien (lg=16, md=14, sm=12) migriert (31 Dateien, größengetreu).
+- **E** `text-[10px]/[11px]` → `text-2xs` (11 px Minimum), `tracking-[0.1x em]` → `tracking-eyebrow`, `font-black` (Inter 900 nicht geladen) → `font-bold`, `font-mono`-Stack definiert, `tnum` nur noch für Tabellen/`tabular-nums` statt global. Ungenutzte Typo-Variablen entfernt.
+- **F** Semantische Farben: Status-Fills + lesbare Text-Töne `text-{success,warning,info,danger}-fg`, Tabellenzonen `zone-ucl`/`zone-rel`, Stat-Kacheln mit semantischen Tönen statt Hex. Fallback-Clubfarben zentral (`FALLBACK_TEAM_COLORS`, 35 Duplikate entfernt).
+- **G** Light Mode: ~170 dunkel-only Klassen (`text-emerald-200`, `bg-white/5`, `border-white/10` …) in 17 Dateien auf theme-fähige Tokens (`*-fg`, `bg-foreground/N`, `border-border/60`). Ausnahmen bewusst: Club-Hero, Galaxy-Karte (Phase 4G).
+- **H** `src/lib/color.ts` (`readableTextOn`, WCAG-Kontrast); Team-Hero mit dunklem Scrim → weiße Texte auch bei weißen Trikotfarben lesbar; Rückennummer-Badge mit berechneter Textfarbe.
+- **I** Kein Theme-Flash: Inline-Script setzt `dark`/`light`, `colorScheme`, Palette und `lang` vor dem ersten Paint; `<meta name="color-scheme">`. Hintergrund-Verlauf als fixierte Ebene statt `background-attachment: fixed` (kein Repaint beim Scrollen).
+- **J** **ECharts entfernt** (−817 KB Chunk). WM-Charts auf Recharts; gemeinsames `chartTheme.ts` (Farben, Achsen, Tooltip, Legende) für alle Charts; eine `ProfileRadar`-Komponente für Team, Spieler, Vergleich. Spieler-Radar zeigt jetzt **echte Perzentile** gegen die Liga-Bestenliste statt erfundener FIFA-Attribute mit festem „Liga-Schnitt 66“; Vergleich ebenso (`src/lib/percentiles.ts`). Sinnlose Sparkline unter jeder Spielerstatistik entfernt, Labels übersetzt. Zweite Datenreihe in Info-Blau statt Grün neben grünem Light-Primary. Einfarbiger „Finished“-Donut im WM-Archiv ausgeblendet.
+- **K** Primitives: `BackButton` (44 px, `fallbackTo` bei Direktaufruf statt App verlassen, Icon-Variante für Heros), `MetricTile` (gestapelt, keine Label/Wert-Kollision; ersetzt zwei Ad-hoc-Kacheln), `PageSection`/`NotFoundState` mit `headingAs`. Genau ein `<h1>` pro Seite (Header-Titel ist kein `h1` mehr; Einstellungen/404 haben jetzt eins). `vh` → `dvh`.
+- **L** Liga-Logos 512² PNG (180 KB) → 128² WebP (21,6 KB).
+- **M** `docs/design-system.md` auf die neuen Regeln aktualisiert (Farben, Charts, Typo, Radien, Opacity, Motion, Layer, Shell).
+
+**Nebenbei gefunden und behoben:**
+- WM-Gruppenseite war kaputt: football-data.org liefert `/competitions/WC/standings` nach Turnierende nur mit `?season=2026` (sonst 404) und als eine 48-Team-Tabelle ohne Gruppen → Season-Parameter für alle WC-Endpunkte, Gruppen werden aus den Gruppenspielen abgeleitet (+Test).
+- Live-Ticker zeigt bei angesetzten Spielen „–“ statt „0“ (+Test).
+
+**Offen / notiert:**
+- WM-Übersicht im Archiv: „Upcoming matches“ leer, „Group TBD“ beim Finale, „Host city pending“ (football-data liefert keine Venues) → Phase 4H/7.
+- WM-Gruppentabelle läuft in schmalen Karten horizontal über (Phase 4H).
+- Team-Spotlight wählt teils Torhüter ohne Output (Form-Score-Gewichtung) → Phase 10 prüfen.
+- Bilder blenden per Opacity ein (auch LCP-Bilder) → Phase 5E.

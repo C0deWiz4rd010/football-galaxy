@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { ArrowRight, Gauge, Loader2, Sparkles, Swords, Target, X } from 'lucide-react'
-import { PolarAngleAxis, PolarGrid, Radar, RadarChart, ResponsiveContainer, Tooltip } from 'recharts'
 
+import { ProfileRadar } from '@/components/charts/ProfileRadar'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { AssetImage } from '@/components/shared/AssetImage'
 import { FormBadge } from '@/components/shared/FormBadge'
@@ -16,38 +16,30 @@ import { MIN_SEARCH_LENGTH, useFootballSearch } from '@/hooks/queries/search'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { getCrestSources, getPlayerPhotoSources } from '@/lib/assetSources'
 import { getLeague, isLeagueId } from '@/lib/leagues'
+import { buildMetricPools, percentileRank, playerMetrics } from '@/lib/percentiles'
 import { getFormScore } from '@/lib/player-ratings'
 import { createPlayerAvatar, createTeamCrest, initialsFromName } from '@/lib/visualAssets'
 import { isNotFoundError } from '@/services/errors'
 import type { SearchHit } from '@/services/espn/search'
-import type { LeagueId, Player, PlayerRef, Team } from '@/services/types'
+import type { LeagueId, Player, Team } from '@/services/types'
 
-/** Percentile rank (0–100) of `value` within an ascending-sorted pool. */
-function percentileRank(sortedAsc: number[], value: number): number {
-  if (sortedAsc.length === 0) return 0
-  let count = 0
-  for (const entry of sortedAsc) {
-    if (entry <= value) count += 1
-    else break
-  }
-  return Math.round((count / sortedAsc.length) * 100)
-}
+const formatMetric = (value: number) => (Number.isInteger(value) ? String(value) : value.toFixed(2))
 
 function PercentileRow({ label, leftPct, rightPct, leftValue, rightValue }: { label: string; leftPct: number; rightPct: number; leftValue: number; rightValue: number }) {
   return (
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-3">
       <div className="flex items-center gap-2">
-        <span className="w-8 shrink-0 text-right font-mono text-xs tabular-nums text-muted-foreground">{leftValue}</span>
+        <span className="w-9 shrink-0 text-right font-mono text-xs tabular-nums text-muted-foreground">{formatMetric(leftValue)}</span>
         <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-muted/50" role="img" aria-label={`${leftPct}%`}>
           <div className="absolute inset-y-0 right-0 rounded-full bg-primary/70" style={{ width: `${leftPct}%` }} />
         </div>
       </div>
-      <span className="min-w-[5.5rem] text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
+      <span className="min-w-[5.5rem] text-center text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
       <div className="flex items-center gap-2">
         <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-muted/50" role="img" aria-label={`${rightPct}%`}>
-          <div className="absolute inset-y-0 left-0 rounded-full bg-emerald-500/70" style={{ width: `${rightPct}%` }} />
+          <div className="absolute inset-y-0 left-0 rounded-full bg-info/70" style={{ width: `${rightPct}%` }} />
         </div>
-        <span className="w-8 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">{rightValue}</span>
+        <span className="w-9 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">{formatMetric(rightValue)}</span>
       </div>
     </div>
   )
@@ -104,7 +96,7 @@ function PlayerPicker({
 
   return (
     <div className="stat-card">
-      <label className="text-xs uppercase tracking-[0.18em] text-muted-foreground" htmlFor={`${listId}-input`}>
+      <label className="text-xs uppercase tracking-eyebrow text-muted-foreground" htmlFor={`${listId}-input`}>
         {label}
       </label>
       <div className="relative mt-3">
@@ -118,7 +110,7 @@ function PlayerPicker({
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={placeholder}
-          className="h-11 w-full rounded-xl border bg-background/70 px-3 pr-9 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="h-11 w-full rounded-md border bg-background/70 px-3 pr-9 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
         {search.isFetching ? <Loader2 className="absolute right-3 top-3.5 h-4 w-4 animate-spin text-muted-foreground" aria-hidden /> : null}
       </div>
@@ -133,7 +125,7 @@ function PlayerPicker({
                   onSelect(hit)
                   setQuery('')
                 }}
-                className="surface-soft flex w-full items-center gap-2 rounded-xl p-2 text-left transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="surface-soft flex w-full items-center gap-2 rounded-md p-2 text-left transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <AssetImage
                   src={hit.image ?? ''}
@@ -156,10 +148,10 @@ function PlayerPicker({
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> {t('loading')}
         </div>
       ) : selected ? (
-        <div className="surface-soft mt-4 flex items-center gap-3 rounded-fg-lg p-3">
+        <div className="surface-soft mt-4 flex items-center gap-3 rounded-lg p-3">
           <AssetImage
             src={selected.photo}
-            fallbackSrc={[...getPlayerPhotoSources(selected), createPlayerAvatar(initialsFromName(selected.name), '#0f766e')]}
+            fallbackSrc={[...getPlayerPhotoSources(selected), createPlayerAvatar(initialsFromName(selected.name))]}
             alt=""
             className="h-12 w-12 rounded-full bg-muted object-cover"
           />
@@ -188,20 +180,20 @@ function CompareHeroCard({ player, team }: { player: Player; team?: Team }) {
   const { t } = useLocale()
   const form = getFormScore(player)
   return (
-    <div className="surface-soft rounded-fg-xl p-4 shadow-fg-2">
+    <div className="surface-soft rounded-xl p-4 shadow-fg-2">
       <div className="flex items-center gap-3">
         <AssetImage
           src={player.photo}
-          fallbackSrc={[...getPlayerPhotoSources(player), createPlayerAvatar(initialsFromName(player.name), team?.primaryColor ?? '#0f766e')]}
+          fallbackSrc={[...getPlayerPhotoSources(player), createPlayerAvatar(initialsFromName(player.name), team?.primaryColor)]}
           alt=""
-          className="h-14 w-14 rounded-fg-md bg-muted object-cover"
+          className="h-14 w-14 rounded-md bg-muted object-cover"
         />
         <div className="min-w-0 flex-1">
           <p className="truncate text-lg font-semibold">{player.name}</p>
           <p className="truncate text-sm text-muted-foreground">{team?.name ?? t('clubUnavailable')}</p>
         </div>
-        <div className="rounded-fg-lg border border-border bg-muted/40 px-3 py-2 text-center">
-          <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{t('formLabel')}</p>
+        <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-center">
+          <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">{t('formLabel')}</p>
           <p className="text-2xl font-bold tabular-nums">{form.score}</p>
         </div>
       </div>
@@ -218,7 +210,7 @@ function CompareHeroCard({ player, team }: { player: Player; team?: Team }) {
         <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
           <AssetImage
             src={team.crest}
-            fallbackSrc={[...getCrestSources(team), createTeamCrest(team.shortName, team.primaryColor ?? '#0f766e', team.secondaryColor ?? '#f8fafc', 0)]}
+            fallbackSrc={[...getCrestSources(team), createTeamCrest(team.shortName, team.primaryColor, team.secondaryColor, 0)]}
             alt=""
             className="h-6 w-6 object-contain"
           />
@@ -250,20 +242,7 @@ export default function Compare() {
   const teamsById = useMemo(() => new Map(summaries.flatMap((summary) => summary.teams).map((team) => [team.id, team])), [summaries])
   const pool = useMemo(() => summaries.flatMap((summary) => summary.playerPool.map((entry) => entry.player)), [summaries])
 
-  const percentileMetrics = useMemo(
-    () =>
-      [
-        { key: 'goals', label: t('goals'), pool: (p: PlayerRef) => p.goals, value: (p: Player) => p.stats.goals },
-        { key: 'assists', label: t('assists'), pool: (p: PlayerRef) => p.assists, value: (p: Player) => p.stats.assists },
-        { key: 'contributions', label: t('goalContributions'), pool: (p: PlayerRef) => p.goals + p.assists, value: (p: Player) => p.stats.goals + p.stats.assists },
-        { key: 'appearances', label: t('appearancesLabel'), pool: (p: PlayerRef) => p.appearances, value: (p: Player) => p.stats.appearances },
-      ] as const,
-    [t],
-  )
-  const pools = useMemo(
-    () => new Map(percentileMetrics.map((metric) => [metric.key, pool.map(metric.pool).sort((a, b) => a - b)])),
-    [percentileMetrics, pool],
-  )
+  const pools = useMemo(() => buildMetricPools(pool), [pool])
 
   const bothReady = Boolean(player1 && player2)
   const form1 = player1 ? getFormScore(player1) : null
@@ -281,11 +260,11 @@ export default function Compare() {
       : []
 
   const radar =
-    player1 && player2
-      ? (Object.keys(player1.stats.attributes) as Array<keyof Player['stats']['attributes']>).map((key) => ({
-          name: t(`attribute_${key}`),
-          p1: player1.stats.attributes[key],
-          p2: player2.stats.attributes[key],
+    player1 && player2 && pool.length
+      ? playerMetrics.map((metric) => ({
+          name: t(metric.labelKey),
+          p1: percentileRank(pools.get(metric.key) ?? [], metric.value(player1)),
+          p2: percentileRank(pools.get(metric.key) ?? [], metric.value(player2)),
         }))
       : []
 
@@ -298,7 +277,7 @@ export default function Compare() {
         <section className="stat-card">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('compareLab')}</p>
+              <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('compareLab')}</p>
               <h1 className="mt-1 text-3xl font-semibold tracking-tight">{t('compareHeading')}</h1>
               <p className="mt-2 max-w-2xl text-muted-foreground">{t('compareLongSubtitle')}</p>
             </div>
@@ -326,35 +305,31 @@ export default function Compare() {
               <section className="stat-card">
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('attributeContrast')}</p>
+                    <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('attributeContrast')}</p>
                     <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('radarView')}</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">{t('attributesDerivedHint')}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{t('percentileLeadersSubtitle')}</p>
                   </div>
                   <Swords className="h-5 w-5 text-muted-foreground" aria-hidden />
                 </div>
-                <ResponsiveContainer width="100%" height={340}>
-                  <RadarChart data={radar} outerRadius="72%">
-                    <PolarGrid stroke="hsl(var(--border))" />
-                    <PolarAngleAxis dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
-                    <Tooltip
-                      contentStyle={{
-                        background: 'hsl(var(--popover))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: 12,
-                        color: 'hsl(var(--popover-foreground))',
-                        fontSize: 12,
-                      }}
-                    />
-                    <Radar name={player1.name} dataKey="p1" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.32} />
-                    <Radar name={player2.name} dataKey="p2" stroke="#10b981" strokeDasharray="4 4" fill="#10b981" fillOpacity={0.14} />
-                  </RadarChart>
-                </ResponsiveContainer>
+                {radar.length ? (
+                  <ProfileRadar
+                    data={radar}
+                    height={340}
+                    valueSuffix=" / 100"
+                    series={[
+                      { key: 'p1', name: player1.name, tone: 'primary' },
+                      { key: 'p2', name: player2.name, tone: 'secondary' },
+                    ]}
+                  />
+                ) : (
+                  <LoadingSpinner />
+                )}
               </section>
 
               <section className="stat-card">
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('verdict')}</p>
+                    <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('verdict')}</p>
                     <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('quickRead')}</h2>
                   </div>
                   <Sparkles className="h-5 w-5 text-muted-foreground" aria-hidden />
@@ -371,8 +346,8 @@ export default function Compare() {
                       : t('behindOnGoalInvolvements')}
                     .
                   </p>
-                  <div className="surface-soft rounded-fg-lg p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('suggestedUsage')}</p>
+                  <div className="surface-soft rounded-lg p-4">
+                    <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('suggestedUsage')}</p>
                     <p className="mt-2 text-sm">{t('suggestedUsageBody')}</p>
                   </div>
                 </div>
@@ -382,7 +357,7 @@ export default function Compare() {
             <section className="stat-card space-y-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('metricDiff')}</p>
+                  <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('metricDiff')}</p>
                   <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('headToHead')}</h2>
                 </div>
                 <Target className="h-5 w-5 text-muted-foreground" aria-hidden />
@@ -400,7 +375,7 @@ export default function Compare() {
                     <Badge
                       className={[
                         'justify-self-start sm:justify-self-auto',
-                        delta >= 0 ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' : 'bg-red-500/15 text-red-700 dark:text-red-300',
+                        delta >= 0 ? 'bg-success/15 text-emerald-700 dark:text-success-fg' : 'bg-danger/15 text-red-700 dark:text-danger-fg',
                       ].join(' ')}
                     >
                       {delta > 0 ? '+' : ''}
@@ -415,7 +390,7 @@ export default function Compare() {
               <section className="stat-card space-y-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('percentileEyebrow')}</p>
+                    <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('percentileEyebrow')}</p>
                     <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('percentileTitle')}</h2>
                     <p className="mt-1 text-sm text-muted-foreground">{t('percentileLeadersSubtitle')}</p>
                   </div>
@@ -423,17 +398,17 @@ export default function Compare() {
                 </div>
                 <div className="flex items-center justify-between gap-2 text-xs font-medium">
                   <span className="truncate text-primary">{player1.name}</span>
-                  <span className="truncate text-right text-emerald-600 dark:text-emerald-400">{player2.name}</span>
+                  <span className="truncate text-right text-info">{player2.name}</span>
                 </div>
                 <div className="space-y-3">
-                  {percentileMetrics.map((metric) => {
+                  {playerMetrics.map((metric) => {
                     const sorted = pools.get(metric.key) ?? []
                     const leftValue = metric.value(player1)
                     const rightValue = metric.value(player2)
                     return (
                       <PercentileRow
                         key={metric.key}
-                        label={metric.label}
+                        label={t(metric.labelKey)}
                         leftValue={leftValue}
                         rightValue={rightValue}
                         leftPct={percentileRank(sorted, leftValue)}

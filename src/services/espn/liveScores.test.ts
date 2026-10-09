@@ -75,6 +75,8 @@ const scoreboardFixture = {
           competitors: [
             {
               homeAway: 'home',
+              // ESPN reports a 0 score before kick-off.
+              score: '0',
               team: { id: '5', displayName: 'Spurs', shortDisplayName: 'Spurs', abbreviation: 'TOT' },
             },
             {

@@ -13,21 +13,23 @@ interface StateShellProps {
   description: string
   actions?: ReactNode
   role?: 'alert' | 'status'
+  /** `h1` when the state replaces the whole page (404 route). */
+  headingAs?: 'h1' | 'h2'
   className?: string
 }
 
-function StateShell({ icon, title, description, actions, role, className }: StateShellProps) {
+function StateShell({ icon, title, description, actions, role, headingAs: Heading = 'h2', className }: StateShellProps) {
   return (
     <div
       role={role}
       className={cn(
-        'stat-card mx-auto flex max-w-xl flex-col items-center gap-fg-3 rounded-fg-lg p-fg-6 text-center shadow-fg-2',
+        'stat-card mx-auto flex max-w-xl flex-col items-center gap-fg-3 rounded-lg p-fg-6 text-center shadow-fg-2',
         className,
       )}
     >
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted/60">{icon}</div>
       <div className="space-y-fg-1">
-        <h2 className="text-base font-semibold tracking-tight">{title}</h2>
+        <Heading className="text-base font-semibold tracking-tight">{title}</Heading>
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
       {actions ? <div className="flex flex-wrap justify-center gap-fg-2">{actions}</div> : null}
@@ -66,18 +68,21 @@ export function NotFoundState({
   description,
   backTo = '/',
   backLabel,
+  headingAs,
   className,
 }: {
   title?: string
   description?: string
   backTo?: string
   backLabel?: string
+  headingAs?: 'h1' | 'h2'
   className?: string
 }) {
   const { t } = useLocale()
   return (
     <StateShell
       role="status"
+      headingAs={headingAs}
       className={className}
       icon={<Compass className="h-6 w-6 text-muted-foreground" aria-hidden />}
       title={title ?? t('pageNotFound')}

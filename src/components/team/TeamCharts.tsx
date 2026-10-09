@@ -1,22 +1,9 @@
 import { useMemo } from 'react'
 
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  PolarAngleAxis,
-  PolarGrid,
-  Radar,
-  RadarChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
+import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
+import { axisTick, chartColors, legendStyle, tooltipProps } from '@/components/charts/chartTheme'
+import { ProfileRadar } from '@/components/charts/ProfileRadar'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { useLocale } from '@/contexts/LocaleContext'
 import type { Match, Standing, Team } from '@/services/types'
@@ -69,23 +56,13 @@ export function TeamProfileRadar({ standing, standings }: { standing?: Standing;
   }
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <RadarChart data={data} outerRadius="72%">
-        <PolarGrid stroke="hsl(var(--border))" />
-        <PolarAngleAxis dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
-        <Tooltip contentStyle={tooltipStyle} />
-        <Legend wrapperStyle={{ fontSize: 12 }} />
-        <Radar name={t('team')} dataKey="team" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.35} />
-        <Radar
-          name={t('leagueMedian')}
-          dataKey="median"
-          stroke="hsl(var(--muted-foreground))"
-          strokeDasharray="4 4"
-          fill="hsl(var(--muted-foreground))"
-          fillOpacity={0.08}
-        />
-      </RadarChart>
-    </ResponsiveContainer>
+    <ProfileRadar
+      data={data}
+      series={[
+        { key: 'team', name: t('team'), tone: 'primary' },
+        { key: 'median', name: t('leagueMedian'), tone: 'reference' },
+      ]}
+    />
   )
 }
 
@@ -106,14 +83,6 @@ function finishedTeamMatches(matches: Match[], team: Team) {
       const opponent = home ? match.awayTeam : match.homeTeam
       return { match, scored, conceded, opponent: opponent.shortName || opponent.name, home }
     })
-}
-
-const tooltipStyle = {
-  background: 'hsl(var(--popover))',
-  border: '1px solid hsl(var(--border))',
-  borderRadius: 12,
-  color: 'hsl(var(--popover-foreground))',
-  fontSize: 12,
 }
 
 /** Goals scored vs conceded in the team's most recent finished matches. */
@@ -138,13 +107,13 @@ export function TeamMatchGoalsChart({ matches, team, limit = 10 }: { matches: Ma
   return (
     <ResponsiveContainer width="100%" height={260}>
       <BarChart data={data} margin={{ left: -20, right: 8 }}>
-        <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
-        <XAxis dataKey="label" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} interval={0} angle={-30} textAnchor="end" height={48} />
-        <YAxis allowDecimals={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
-        <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'hsl(var(--muted) / 0.4)' }} />
-        <Legend wrapperStyle={{ fontSize: 12 }} />
-        <Bar name={t('goalsScored')} dataKey="scored" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-        <Bar name={t('goalsConceded')} dataKey="conceded" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
+        <CartesianGrid vertical={false} stroke={chartColors.grid} />
+        <XAxis dataKey="label" tick={axisTick} interval={0} angle={-30} textAnchor="end" height={48} />
+        <YAxis allowDecimals={false} tick={axisTick} />
+        <Tooltip {...tooltipProps} />
+        <Legend wrapperStyle={legendStyle} iconType="circle" iconSize={8} />
+        <Bar name={t('goalsScored')} dataKey="scored" fill={chartColors.primary} radius={[4, 4, 0, 0]} />
+        <Bar name={t('goalsConceded')} dataKey="conceded" fill={chartColors.negative} radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   )
@@ -179,13 +148,13 @@ export function TeamPointsTrendChart({ matches, team }: { matches: Match[]; team
   return (
     <ResponsiveContainer width="100%" height={300}>
       <LineChart data={data} margin={{ left: -20, right: 8 }}>
-        <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
-        <XAxis dataKey="game" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
-        <YAxis allowDecimals={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
-        <Tooltip contentStyle={tooltipStyle} labelFormatter={(game) => t('matchNumber', { number: String(game) })} />
-        <Legend wrapperStyle={{ fontSize: 12 }} />
-        <Line name={t('cumulativePoints')} type="monotone" dataKey="points" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} activeDot={{ r: 5 }} />
-        <Line name={t('cumulativeGoals')} type="monotone" dataKey="goals" stroke="hsl(var(--muted-foreground))" strokeWidth={2} dot={false} activeDot={{ r: 5 }} />
+        <CartesianGrid vertical={false} stroke={chartColors.grid} />
+        <XAxis dataKey="game" tick={axisTick} />
+        <YAxis allowDecimals={false} tick={axisTick} />
+        <Tooltip {...tooltipProps} cursor={{ stroke: chartColors.grid }} labelFormatter={(game) => t('matchNumber', { number: String(game) })} />
+        <Legend wrapperStyle={legendStyle} iconType="circle" iconSize={8} />
+        <Line name={t('cumulativePoints')} type="monotone" dataKey="points" stroke={chartColors.primary} strokeWidth={2} dot={false} activeDot={{ r: 5 }} />
+        <Line name={t('cumulativeGoals')} type="monotone" dataKey="goals" stroke={chartColors.secondary} strokeWidth={2} dot={false} activeDot={{ r: 5 }} />
       </LineChart>
     </ResponsiveContainer>
   )

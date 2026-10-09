@@ -25,7 +25,6 @@
     --border: 214 27% 84%;
     --input: 214 27% 84%;
     --ring: 155 65% 24%;
-    --radius: 1rem;
     --surface-canvas: #f3f6fb;
     --surface-panel: rgba(255, 255, 255, 0.8);
     --surface-elevated: rgba(255, 255, 255, 0.92);
@@ -36,19 +35,21 @@
     --shadow-card: 0 18px 42px rgba(15, 23, 42, 0.1);
     --league-accent: rgba(19, 177, 117, 1);
     --league-accent-soft: rgba(19, 177, 117, 0.16);
-    --motion-fast: 180ms;
-    --motion-base: 240ms;
-    --motion-slow: 320ms;
-    --motion-hero: 420ms;
-    --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
-    --ease-soft: cubic-bezier(0.45, 0, 0.55, 1);
-    --ease-exit: cubic-bezier(0.32, 0, 0.67, 0);
 
     /* Semantic status colours — fixed across palettes (HSL triplets). */
     --success: 152 62% 38%;
     --warning: 38 92% 48%;
-    --info: 212 90% 50%;
-    --live: 350 85% 55%;
+    --info: 212 85% 44%;
+    --live: 350 85% 52%;
+    /* Readable text tones for status colours (>= 4.5:1 on card/background). */
+    --success-fg: 152 72% 24%;
+    --warning-fg: 30 90% 30%;
+    --info-fg: 212 85% 36%;
+    --danger-fg: 350 75% 38%;
+
+    /* Table zones: Champions League places and relegation. */
+    --zone-ucl: 217 91% 58%;
+    --zone-rel: 0 80% 58%;
 
     /* World Cup host-nation accents. */
     --wc-host-usa: 213 70% 46%;
@@ -93,6 +94,10 @@
     --warning: 40 96% 60%;
     --info: 212 92% 66%;
     --live: 350 90% 64%;
+    --success-fg: 152 62% 72%;
+    --warning-fg: 43 96% 72%;
+    --info-fg: 210 92% 80%;
+    --danger-fg: 350 90% 80%;
   }
 
   /* ---------------------------------------------------------------- Palettes
@@ -185,16 +190,28 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "tnum";
     min-width: 320px;
+  }
+
+  /* Ambient backdrop on its own fixed layer: unlike background-attachment:
+   * fixed it does not repaint the page on every scroll frame (mobile). */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
     background-image:
       radial-gradient(circle at top left, rgba(244, 180, 56, 0.12), transparent 24%),
       radial-gradient(circle at top right, rgba(17, 134, 132, 0.12), transparent 30%),
       linear-gradient(180deg, rgba(247, 250, 253, 0.98), rgba(235, 241, 248, 1));
-    background-attachment: fixed;
   }
 
-  .dark body {
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dark body::before {
     background-image:
       radial-gradient(circle at top left, rgba(244, 180, 56, 0.12), transparent 22%),
       radial-gradient(circle at top right, rgba(46, 203, 163, 0.12), transparent 30%),
@@ -247,7 +264,7 @@
   }
 
   .stat-card {
-    @apply relative overflow-hidden rounded-[1.25rem] p-3.5 transition-all;
+    @apply relative overflow-hidden rounded-lg p-3.5;
     border: 1px solid hsl(var(--border) / 0.55);
     background:
       linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
@@ -255,9 +272,9 @@
     box-shadow: var(--shadow-card);
     backdrop-filter: blur(18px);
     transition:
-      box-shadow var(--motion-base) var(--ease-enter),
-      border-color var(--motion-fast) var(--ease-soft),
-      background-color var(--motion-fast) var(--ease-soft);
+      box-shadow var(--fg-duration-base) var(--fg-ease-enter),
+      border-color var(--fg-duration-fast) var(--fg-ease-soft),
+      background-color var(--fg-duration-fast) var(--fg-ease-soft);
   }
 
   .stat-card:hover {
@@ -268,10 +285,10 @@
     cursor: pointer;
     outline: none;
     transition:
-      transform var(--motion-base) var(--ease-enter),
-      box-shadow var(--motion-base) var(--ease-enter),
-      border-color var(--motion-fast) var(--ease-soft),
-      background-color var(--motion-fast) var(--ease-soft);
+      transform var(--fg-duration-base) var(--fg-ease-enter),
+      box-shadow var(--fg-duration-base) var(--fg-ease-enter),
+      border-color var(--fg-duration-fast) var(--fg-ease-soft),
+      background-color var(--fg-duration-fast) var(--fg-ease-soft);
   }
 
   .interactive-card:hover {
@@ -280,7 +297,7 @@
 
   .interactive-card:active {
     transform: scale(0.985) translateY(0);
-    transition-duration: 80ms;
+    transition-duration: var(--fg-duration-instant);
   }
 
   .interactive-card:focus-visible {

@@ -55,7 +55,7 @@ export function ResultsTimeline({ matches, team }: { matches: Match[]; team?: Te
                   to={`/${opponent.leagueId}/team/${opponent.id}`}
                   className="flex min-w-0 items-center gap-3 hover:text-primary"
                 >
-                  <AssetImage src={opponent.crest} fallbackSrc={[...getCrestSources(opponent), createTeamCrest(opponent.shortName, opponent.primaryColor ?? '#0f766e', opponent.secondaryColor ?? '#f8fafc', 0)]} alt={opponent.name} className="h-8 w-8 rounded object-cover" loading="lazy" />
+                  <AssetImage src={opponent.crest} fallbackSrc={[...getCrestSources(opponent), createTeamCrest(opponent.shortName, opponent.primaryColor, opponent.secondaryColor, 0)]} alt={opponent.name} className="h-8 w-8 rounded object-cover" loading="lazy" />
                   <span className="min-w-0 truncate">{isHome ? '' : '@ '}{opponent.name}</span>
                 </Link>
                 <span className="ml-auto font-mono text-lg tabular-nums">

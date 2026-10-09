@@ -1,8 +1,8 @@
-import bundesligaLogo from '@/assets/leagues/bundesliga.png'
-import laLigaLogo from '@/assets/leagues/la-liga.png'
-import ligue1Logo from '@/assets/leagues/ligue-1.png'
-import premierLeagueLogo from '@/assets/leagues/premier-league.png'
-import serieALogo from '@/assets/leagues/serie-a.png'
+import bundesligaLogo from '@/assets/leagues/bundesliga.webp'
+import laLigaLogo from '@/assets/leagues/la-liga.webp'
+import ligue1Logo from '@/assets/leagues/ligue-1.webp'
+import premierLeagueLogo from '@/assets/leagues/premier-league.webp'
+import serieALogo from '@/assets/leagues/serie-a.webp'
 import type { League, LeagueId } from '@/services/types'
 
 export const leagues: League[] = [

@@ -14,19 +14,19 @@ export function MobileTabBar() {
   return (
     <nav
       data-mobile-nav
-      className="surface-panel fixed bottom-3 left-3 right-3 z-40 grid h-16 grid-cols-7 rounded-fg-xl px-1 md:hidden"
+      className="surface-panel fixed bottom-[calc(var(--fg-shell-gutter)+env(safe-area-inset-bottom,0px))] left-shell-gutter right-shell-gutter z-nav grid h-tabbar grid-cols-7 rounded-xl px-1 md:hidden"
       style={{ bottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
     >
       <NavLink
         to="/world-cup-2026"
         className={({ isActive }) =>
           cn(
-            'flex flex-col items-center justify-center rounded-fg-lg text-[10px] text-muted-foreground transition duration-150',
-            isActive && 'bg-amber-300/10 font-semibold text-amber-100',
+            'flex flex-col items-center justify-center rounded-lg text-2xs text-muted-foreground transition duration-150',
+            isActive && 'bg-warning/10 font-semibold text-warning-fg',
           )
         }
       >
-        <Trophy className="h-4 w-4 text-amber-300" />
+        <Trophy className="h-4 w-4 text-warning-fg" />
         <span>WM</span>
       </NavLink>
       {leagues.map((league) => (
@@ -35,7 +35,7 @@ export function MobileTabBar() {
           to={`/${league.id}`}
           className={({ isActive }) =>
             cn(
-              'flex flex-col items-center justify-center rounded-fg-lg text-[10px] text-muted-foreground transition duration-150',
+              'flex flex-col items-center justify-center rounded-lg text-2xs text-muted-foreground transition duration-150',
               isActive && 'bg-primary/10 font-semibold',
             )
           }
@@ -49,7 +49,7 @@ export function MobileTabBar() {
         to="/live"
         className={({ isActive }) =>
           cn(
-            'flex flex-col items-center justify-center rounded-fg-lg text-[10px] text-muted-foreground transition duration-150',
+            'flex flex-col items-center justify-center rounded-lg text-2xs text-muted-foreground transition duration-150',
             isActive && 'bg-live/10 font-semibold text-live',
           )
         }

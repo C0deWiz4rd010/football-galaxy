@@ -36,7 +36,7 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={cn(
-        'shrink-0 rounded-fg-pill border px-3.5 py-1.5 text-xs font-medium transition',
+        'shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition',
         active
           ? 'border-primary/50 bg-primary/12 text-foreground'
           : 'border-border/60 bg-background/40 text-muted-foreground hover:text-foreground',
@@ -67,10 +67,10 @@ export default function LiveScoresPage() {
   return (
     <PageWrapper>
       <div className="space-y-4">
-        <section className="stat-card app-grid-lines overflow-hidden rounded-fg-xl p-4 shadow-fg-2 sm:p-5">
+        <section className="stat-card app-grid-lines overflow-hidden rounded-xl p-4 shadow-fg-2 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
-              <span className="grid size-11 place-items-center rounded-fg-lg bg-live/12 text-live">
+              <span className="grid size-11 place-items-center rounded-lg bg-live/12 text-live">
                 <RadioTower className="size-5" />
               </span>
               <div className="min-w-0">
@@ -129,7 +129,7 @@ export default function LiveScoresPage() {
               ))}
             </div>
           ) : error && matches.length === 0 ? (
-            <div className="stat-card flex items-start gap-3 rounded-fg-lg p-fg-6 shadow-fg-2">
+            <div className="stat-card flex items-start gap-3 rounded-lg p-fg-6 shadow-fg-2">
               <AlertCircle className="mt-0.5 h-5 w-5 text-destructive" />
               <div className="flex-1 space-y-fg-2">
                 <h2 className="text-base font-semibold tracking-tight">

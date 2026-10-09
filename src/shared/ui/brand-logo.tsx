@@ -57,10 +57,10 @@ export function BrandLogo({ className = '', subtitle = 'Live football dashboard'
       </svg>
 
       <span className="flex flex-col leading-none">
-        <span className="text-base tracking-[-0.03em] text-foreground">
+        <span className="text-base tracking-tight text-foreground">
           Football Galaxy
         </span>
-        <span className="mt-1 text-[11px] font-medium uppercase tracking-[0.24em] text-muted-foreground">
+        <span className="mt-1 text-2xs font-medium uppercase tracking-eyebrow text-muted-foreground">
           {subtitle}
         </span>
       </span>

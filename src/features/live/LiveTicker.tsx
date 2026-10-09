@@ -10,7 +10,7 @@ import type { LiveMatch, LiveMatchEvent, LiveMatchTeam } from '@/services/espn/l
 function LiveStatusPill({ match }: { match: LiveMatch }) {
   if (match.state === 'live') {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-fg-pill border border-live/50 bg-live/12 px-2 py-0.5 text-[11px] font-semibold text-live">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-live/50 bg-live/12 px-2 py-0.5 text-2xs font-semibold text-live">
         <span className="relative flex size-1.5">
           <span className="absolute inline-flex size-full animate-ping rounded-full bg-live opacity-75" />
           <span className="relative inline-flex size-1.5 rounded-full bg-live" />
@@ -24,10 +24,10 @@ function LiveStatusPill({ match }: { match: LiveMatch }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-fg-pill border px-2 py-0.5 text-[11px] font-medium',
+        'inline-flex items-center rounded-full border px-2 py-0.5 text-2xs font-medium',
         isFinished
           ? 'border-border/60 bg-muted/40 text-muted-foreground'
-          : 'border-sky-400/40 bg-sky-400/10 text-sky-200',
+          : 'border-info/40 bg-info/10 text-info-fg',
       )}
     >
       {match.statusLabel}
@@ -78,7 +78,7 @@ function EventChip({ event }: { event: LiveMatchEvent }) {
   const minute = event.minute ? `${event.minute} ` : ''
   if (event.type === 'goal') {
     return (
-      <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+      <span className="inline-flex items-center gap-1 text-2xs text-muted-foreground">
         <CircleDot className="size-3 text-emerald-400" />
         {minute}
         {label}
@@ -87,7 +87,7 @@ function EventChip({ event }: { event: LiveMatchEvent }) {
   }
   if (event.type === 'red') {
     return (
-      <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+      <span className="inline-flex items-center gap-1 text-2xs text-muted-foreground">
         <span className="inline-block h-3 w-2 rounded-[2px] bg-red-500" />
         {minute}
         {label}
@@ -96,7 +96,7 @@ function EventChip({ event }: { event: LiveMatchEvent }) {
   }
   if (event.type === 'yellow') {
     return (
-      <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+      <span className="inline-flex items-center gap-1 text-2xs text-muted-foreground">
         <span className="inline-block h-3 w-2 rounded-[2px] bg-amber-400" />
         {minute}
         {label}
@@ -117,10 +117,10 @@ export function LiveMatchCard({ match }: { match: LiveMatch }) {
   return (
     <motion.article
       layout
-      className="stat-card flex flex-col gap-3 rounded-fg-lg p-fg-4 shadow-fg-1"
+      className="stat-card flex flex-col gap-3 rounded-lg p-fg-4 shadow-fg-1"
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <span className="truncate text-2xs font-medium uppercase tracking-wide text-muted-foreground">
           {match.leagueLabel}
         </span>
         <LiveStatusPill match={match} />
@@ -138,7 +138,7 @@ export function LiveMatchCard({ match }: { match: LiveMatch }) {
           ))}
         </div>
       ) : match.venue ? (
-        <div className="flex items-center gap-1 border-t border-border/50 pt-2 text-[11px] text-muted-foreground">
+        <div className="flex items-center gap-1 border-t border-border/50 pt-2 text-2xs text-muted-foreground">
           <MapPin className="size-3" />
           <span className="truncate">{match.venue}</span>
         </div>
@@ -159,7 +159,7 @@ export function LiveMatchGrid({ matches }: { matches: LiveMatch[] }) {
 
 export function LiveMatchCardSkeleton() {
   return (
-    <div className="stat-card flex animate-pulse flex-col gap-3 rounded-fg-lg p-fg-4">
+    <div className="stat-card flex animate-pulse flex-col gap-3 rounded-lg p-fg-4">
       <div className="flex items-center justify-between">
         <div className="h-3 w-20 rounded bg-muted/60" />
         <div className="h-4 w-12 rounded bg-muted/60" />

@@ -227,10 +227,11 @@ function mapMatch(
   const competitors = competition.competitors ?? []
   const homeRaw = competitors.find((c) => c.homeAway === 'home') ?? competitors[0]
   const awayRaw = competitors.find((c) => c.homeAway === 'away') ?? competitors[1]
-  const home = mapTeam(homeRaw)
-  const away = mapTeam(awayRaw)
-  const kickoff = competition.date ?? null
   const state = mapState(competition.status)
+  // ESPN reports "0" for matches that have not kicked off; show no score instead.
+  const home = { ...mapTeam(homeRaw), ...(state === 'pre' ? { score: null } : {}) }
+  const away = { ...mapTeam(awayRaw), ...(state === 'pre' ? { score: null } : {}) }
+  const kickoff = competition.date ?? null
 
   const events: LiveMatchEvent[] = (competition.details ?? []).map(
     (detail, index) => {

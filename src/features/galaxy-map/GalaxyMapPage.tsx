@@ -63,7 +63,7 @@ function NodeCard({
       whileHover={{ scale: 1.04 }}
       whileTap={{ scale: 0.97 }}
       className={cn(
-        'relative flex flex-col gap-2 rounded-2xl border p-3 text-left transition-all',
+        'relative flex flex-col gap-2 rounded-lg border p-3 text-left transition-all',
         isMaxed && 'border-amber-400/40 bg-amber-400/5',
         !isMaxed && upgradeable && 'border-emerald-400/40 bg-emerald-400/5 cursor-pointer',
         !isMaxed && !upgradeable && !isLocked && 'border-white/10 bg-white/3 cursor-pointer',
@@ -72,12 +72,12 @@ function NodeCard({
     >
       {/* level glow ring when upgradeable */}
       {upgradeable && !isMaxed && (
-        <span className="absolute inset-0 animate-pulse rounded-2xl ring-1 ring-emerald-400/30" />
+        <span className="absolute inset-0 animate-pulse rounded-lg ring-1 ring-emerald-400/30" />
       )}
 
       <div className="flex items-center justify-between gap-2">
         <span
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-xl"
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-md"
           style={{ background: `${regionColor}33` }}
         >
           <NodeIcon type={node.type} className="h-4 w-4" color={regionColor} />
@@ -114,7 +114,7 @@ function MilestoneBadge({ milestone, reached }: { milestone: RegionMilestone; re
   return (
     <div
       className={cn(
-        'flex items-start gap-3 rounded-xl border p-3 text-sm',
+        'flex items-start gap-3 rounded-md border p-3 text-sm',
         reached ? 'border-amber-400/30 bg-amber-400/8' : 'border-white/8 bg-white/3 opacity-50',
       )}
     >
@@ -153,13 +153,13 @@ function NodeDetailPanel({
       initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 40 }}
-      className="flex h-full flex-col overflow-y-auto rounded-2xl border border-white/10 bg-background/95 p-5 shadow-2xl"
+      className="flex h-full flex-col overflow-y-auto rounded-lg border border-white/10 bg-background/95 p-5 shadow-2xl"
     >
       {/* Header */}
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <span
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-md"
             style={{ background: `${regionColor}33` }}
           >
             <NodeIcon type={node.type} className="h-5 w-5" color={regionColor} />
@@ -183,7 +183,7 @@ function NodeDetailPanel({
       <p className="mb-4 text-sm text-muted-foreground">{node.description}</p>
 
       {/* XP bar */}
-      <div className="mb-4 rounded-xl border border-white/10 bg-white/5 p-3">
+      <div className="mb-4 rounded-md border border-white/10 bg-white/5 p-3">
         <p className="mb-1 text-xs text-muted-foreground">Your XP</p>
         <p className="text-lg font-bold text-amber-400">{progress.totalXp.toLocaleString()} XP</p>
       </div>
@@ -195,7 +195,7 @@ function NodeDetailPanel({
           disabled={!upgradeable}
           onClick={() => upgradeNode(node.id)}
           className={cn(
-            'mb-4 w-full rounded-xl border px-4 py-3 text-sm font-semibold transition-all',
+            'mb-4 w-full rounded-md border px-4 py-3 text-sm font-semibold transition-all',
             upgradeable
               ? 'cursor-pointer border-emerald-400/40 bg-emerald-400/10 text-emerald-400 hover:bg-emerald-400/20'
               : 'cursor-not-allowed border-white/10 bg-white/5 text-muted-foreground',
@@ -207,7 +207,7 @@ function NodeDetailPanel({
         </button>
       )}
       {isMaxed && (
-        <div className="mb-4 w-full rounded-xl border border-amber-400/30 bg-amber-400/8 px-4 py-3 text-center text-sm font-semibold text-amber-400">
+        <div className="mb-4 w-full rounded-md border border-amber-400/30 bg-amber-400/8 px-4 py-3 text-center text-sm font-semibold text-amber-400">
           ★ Max Level Reached
         </div>
       )}
@@ -233,7 +233,7 @@ function NodeDetailPanel({
               </p>
               <div className="flex flex-wrap gap-1">
                 {rewards.map((r, ri) => (
-                  <span key={ri} className="rounded bg-white/10 px-1.5 py-0.5 text-[10px]">{r.label}</span>
+                  <span key={ri} className="rounded bg-white/10 px-1.5 py-0.5 text-2xs">{r.label}</span>
                 ))}
               </div>
             </div>
@@ -268,7 +268,7 @@ function RegionPanel({
   return (
     <div className="space-y-5">
       {/* Entry lore */}
-      <div className="rounded-2xl border border-white/10 bg-white/3 p-4 text-sm italic text-muted-foreground">
+      <div className="rounded-lg border border-white/10 bg-white/3 p-4 text-sm italic text-muted-foreground">
         <Sparkles className="mb-2 h-4 w-4 text-amber-400" />
         {region.entryLore}
       </div>
@@ -325,7 +325,7 @@ export function GalaxyMapPage() {
           <p className="text-sm text-muted-foreground">Unlock nodes, level up, discover lore across all 5 regions.</p>
         </div>
         {/* XP widget */}
-        <div className="flex items-center gap-3 rounded-2xl border border-amber-400/20 bg-amber-400/8 px-4 py-2.5">
+        <div className="flex items-center gap-3 rounded-lg border border-amber-400/20 bg-amber-400/8 px-4 py-2.5">
           <Star className="h-4 w-4 text-amber-400" />
           <div>
             <p className="text-xs text-muted-foreground">Your XP</p>
@@ -353,7 +353,7 @@ export function GalaxyMapPage() {
               type="button"
               onClick={() => { setActiveRegionId(region.id); setSelectedNode(null) }}
               className={cn(
-                'flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-sm font-medium transition-all',
+                'flex items-center gap-2.5 rounded-md border px-3 py-2.5 text-left text-sm font-medium transition-all',
                 region.id === activeRegionId
                   ? 'border-white/15 bg-white/8 text-foreground'
                   : 'border-transparent text-muted-foreground hover:bg-white/5 hover:text-foreground',
@@ -382,7 +382,7 @@ export function GalaxyMapPage() {
             >
               {/* Region header */}
               <div
-                className="mb-4 flex items-center gap-3 rounded-2xl border px-4 py-3"
+                className="mb-4 flex items-center gap-3 rounded-lg border px-4 py-3"
                 style={{ borderColor: `${activeRegion.color}44`, background: `${activeRegion.color}15` }}
               >
                 <span className="h-3 w-3 rounded-full" style={{ background: activeRegion.color }} />
@@ -419,7 +419,7 @@ export function GalaxyMapPage() {
 function GalaxyXpDemo() {
   const { addXp } = useGalaxy()
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/8 bg-white/3 px-4 py-3 text-sm text-muted-foreground">
+    <div className="flex flex-wrap items-center gap-2 rounded-md border border-white/8 bg-white/3 px-4 py-3 text-sm text-muted-foreground">
       <span className="font-medium text-foreground">Demo — earn XP:</span>
       {[50, 100, 250, 500].map((amount) => (
         <button

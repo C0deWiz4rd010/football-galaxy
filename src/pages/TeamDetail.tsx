@@ -1,13 +1,15 @@
 import { useMemo } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 
-import { ArrowLeft, Heart, Shield, Sparkles, Users, Zap } from 'lucide-react'
+import { Heart, Shield, Sparkles, Users, Zap } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { TeamMatchGoalsChart, TeamPointsTrendChart, TeamProfileRadar } from '@/components/team/TeamCharts'
 import { ResultsTimeline } from '@/components/team/ResultsTimeline'
 import { SquadTable } from '@/components/team/SquadTable'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { AssetImage } from '@/components/shared/AssetImage'
+import { BackButton } from '@/components/shared/BackButton'
+import { MetricTile } from '@/components/shared/MetricTile'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { ErrorState, NotFoundState } from '@/components/shared/StatusStates'
 import { StaggerGrid, StaggerGridItem } from '@/components/shared/StaggerGrid'
@@ -22,31 +24,11 @@ import { formFromMatches } from '@/services/footballData'
 import { FormBadge } from '@/components/shared/FormBadge'
 import { getCrestSources, getPlayerPhotoSources } from '@/lib/assetSources'
 import { getFormScore } from '@/lib/player-ratings'
-import { createPlayerAvatar, createTeamCrest, initialsFromName } from '@/lib/visualAssets'
+import { createPlayerAvatar, createTeamCrest, FALLBACK_TEAM_COLORS, initialsFromName } from '@/lib/visualAssets'
 import { isLeagueId } from '@/lib/leagues'
 
-function TeamMetric({
-  label,
-  value,
-  helper,
-}: {
-  label: string
-  value: string
-  helper: string
-}) {
-  return (
-    <div className="surface-soft flex items-center gap-3 rounded-[1rem] p-3">
-      <div className="min-w-0 flex-1">
-        <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
-        <p className="mt-0.5 truncate text-xs text-muted-foreground">{helper}</p>
-      </div>
-      <p className="shrink-0 font-mono text-xl font-black leading-none tabular-nums">{value}</p>
-    </div>
-  )
-}
 export default function TeamDetail() {
   const { t } = useLocale()
-  const navigate = useNavigate()
   const params = useParams()
   const leagueId = isLeagueId(params.leagueId) ? params.leagueId : undefined
   const teamId = params.teamId
@@ -112,21 +94,15 @@ export default function TeamDetail() {
     <PageWrapper>
       <StaggerGrid className="space-y-4">
         <StaggerGridItem as="section"
-          className="stat-card relative overflow-hidden rounded-fg-xl p-5 text-white shadow-fg-4 sm:p-6"
+          className="stat-card relative overflow-hidden rounded-xl p-5 text-white shadow-fg-4 sm:p-6"
           style={{
-            background: `linear-gradient(135deg, ${team.primaryColor ?? '#0f766e'}, ${team.secondaryColor ?? '#0f172a'})`,
+            background: `linear-gradient(135deg, ${team.primaryColor ?? FALLBACK_TEAM_COLORS.primary}, ${team.secondaryColor ?? '#0f172a'})`,
           }}
         >
-          {/* Back button — absolute icon in the top-left corner of the hero card */}
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            aria-label={t('back')}
-            className="absolute left-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/30 text-white/80 backdrop-blur-sm transition hover:bg-black/50 hover:text-white"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-          </button>
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.72fr)]">
+          {/* Scrim: keeps white text readable on any club colours (white kits included). */}
+          <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-br from-black/35 via-black/40 to-black/55" />
+          <BackButton variant="icon" onMedia fallbackTo={`/${team.leagueId}`} className="relative mb-3" />
+          <div className="relative grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.72fr)]">
             <div>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <AssetImage
@@ -135,13 +111,13 @@ export default function TeamDetail() {
                     ...getCrestSources(team),
                     createTeamCrest(
                       team.shortName,
-                      team.primaryColor ?? '#0f766e',
-                      team.secondaryColor ?? '#f8fafc',
+                      team.primaryColor,
+                      team.secondaryColor,
                       0,
                     ),
                   ]}
                   alt={team.name}
-                  className="h-20 w-20 rounded-fg-lg object-cover ring-1 ring-white/20"
+                  className="h-20 w-20 rounded-lg object-cover ring-1 ring-white/20"
                   loading="lazy"
                 />
                 <div className="flex-1">
@@ -181,18 +157,21 @@ export default function TeamDetail() {
                 </motion.div>
               </div>
 
-              <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-                <TeamMetric
+              <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
+                <MetricTile
+                  onMedia
                   label={t('leaguePosition')}
                   value={standing ? `#${standing.position}` : '-'}
                   helper={standing ? t('pointsLabel', { count: standing.points }) : t('noTableContext')}
                 />
-                <TeamMetric
+                <MetricTile
+                  onMedia
                   label={t('squadSize')}
                   value={String(players.length)}
                   helper={t('averageAgeLabel', { age: averageAge })}
                 />
-                <TeamMetric
+                <MetricTile
+                  onMedia
                   label={t('goalsPerGame')}
                   value={standing && standing.played > 0 ? (standing.goalsFor / standing.played).toFixed(2) : '-'}
                   helper={
@@ -201,7 +180,8 @@ export default function TeamDetail() {
                       : t('waitingForData')
                   }
                 />
-                <TeamMetric
+                <MetricTile
+                  onMedia
                   label={t('goalDifference')}
                   value={standing ? `${standing.goalDifference}` : '-'}
                   helper={standing ? t('goalsForAgainst', { forCount: standing.goalsFor, against: standing.goalsAgainst }) : t('waitingForData')}
@@ -209,10 +189,10 @@ export default function TeamDetail() {
               </div>
             </div>
 
-            <section className="rounded-fg-lg border border-white/12 bg-black/18 p-4">
+            <section className="rounded-lg border border-white/12 bg-black/18 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-white/60">
+                  <p className="text-xs uppercase tracking-eyebrow text-white/60">
                     {t('teamSpotlight')}
                   </p>
                   <h2 className="mt-1 text-lg font-semibold">
@@ -231,10 +211,10 @@ export default function TeamDetail() {
                       src={topRatedPlayer.photo}
                       fallbackSrc={[
                         ...getPlayerPhotoSources(topRatedPlayer),
-                        createPlayerAvatar(initialsFromName(topRatedPlayer.name), team.primaryColor ?? '#0f766e'),
+                        createPlayerAvatar(initialsFromName(topRatedPlayer.name), team.primaryColor),
                       ]}
                       alt={topRatedPlayer.name}
-                      className="h-14 w-14 rounded-fg-lg object-cover ring-1 ring-white/15"
+                      className="h-14 w-14 rounded-lg object-cover ring-1 ring-white/15"
                       loading="lazy"
                     />
                     <div>
@@ -246,16 +226,16 @@ export default function TeamDetail() {
                     </div>
                   </Link>
                   <div className="grid grid-cols-3 gap-2">
-                    <div className="rounded-xl border border-white/10 bg-white/6 p-2.5">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-white/60">{t('goals')}</p>
+                    <div className="rounded-md border border-white/10 bg-white/6 p-2.5">
+                      <p className="text-2xs uppercase tracking-eyebrow text-white/60">{t('goals')}</p>
                       <p className="mt-1 text-xl font-semibold">{topRatedPlayer.stats.goals}</p>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/6 p-2.5">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-white/60">{t('assists')}</p>
+                    <div className="rounded-md border border-white/10 bg-white/6 p-2.5">
+                      <p className="text-2xs uppercase tracking-eyebrow text-white/60">{t('assists')}</p>
                       <p className="mt-1 text-xl font-semibold">{topRatedPlayer.stats.assists}</p>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/6 p-2.5">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-white/60">{t('formShort')}</p>
+                    <div className="rounded-md border border-white/10 bg-white/6 p-2.5">
+                      <p className="text-2xs uppercase tracking-eyebrow text-white/60">{t('formShort')}</p>
                       <p className="mt-1 text-sm font-semibold">{getFormScore(topRatedPlayer).label}</p>
                     </div>
                   </div>
@@ -288,14 +268,14 @@ export default function TeamDetail() {
             <section className="stat-card">
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('clubIdentity')}</p>
+                  <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('clubIdentity')}</p>
                   <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('atAGlance')}</h2>
                 </div>
                 <Users className="h-5 w-5 text-muted-foreground" />
               </div>
               <div className="grid gap-3 md:grid-cols-2">
-                <div className="surface-soft rounded-fg-lg p-4">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t('manager')}</p>
+                <div className="surface-soft rounded-lg p-4">
+                  <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('manager')}</p>
                   {team.manager ? (
                     <Link
                       to={`/${team.leagueId}/team/${team.id}/coach`}
@@ -307,18 +287,18 @@ export default function TeamDetail() {
                     <p className="mt-2 text-lg font-semibold text-muted-foreground">{t('notAvailable')}</p>
                   )}
                 </div>
-                <div className="surface-soft rounded-fg-lg p-4">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t('homeGround')}</p>
+                <div className="surface-soft rounded-lg p-4">
+                  <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('homeGround')}</p>
                   <p className="mt-2 text-lg font-semibold">{team.stadium ?? '-'}</p>
                 </div>
-                <div className="surface-soft rounded-fg-lg p-4">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t('momentum')}</p>
+                <div className="surface-soft rounded-lg p-4">
+                  <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('momentum')}</p>
                   <p className="mt-2 text-lg font-semibold">
                     {recentForm.length ? t('winsInLastFive', { count: recentForm.filter((item) => item.result === 'W').length }) : t('noTrendYet')}
                   </p>
                 </div>
-                <div className="surface-soft rounded-fg-lg p-4">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t('bestCurrentEdge')}</p>
+                <div className="surface-soft rounded-lg p-4">
+                  <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('bestCurrentEdge')}</p>
                   <p className="mt-2 text-lg font-semibold">
                     {standing && standing.goalsFor >= standing.goalsAgainst ? t('attackingOutput') : t('defensiveRecovery')}
                   </p>
@@ -329,7 +309,7 @@ export default function TeamDetail() {
             <section className="stat-card">
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('recentForm')}</p>
+                  <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('recentForm')}</p>
                   <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('goalsPerMatchTitle')}</h2>
                 </div>
                 <Shield className="h-5 w-5 text-muted-foreground" />
@@ -349,14 +329,14 @@ export default function TeamDetail() {
           <TabsContent value="statistics" className="grid gap-4">
             <div className="stat-card">
               <div className="mb-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('leagueProfile')}</p>
+                <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('leagueProfile')}</p>
                 <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('teamRadar')}</h2>
               </div>
               <TeamProfileRadar standing={standing} standings={standings ?? []} />
             </div>
             <div className="stat-card">
               <div className="mb-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('seasonProgress')}</p>
+                <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('seasonProgress')}</p>
                 <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('goalsPerMatchTitle')}</h2>
               </div>
               <TeamMatchGoalsChart matches={matches ?? []} team={team} />
@@ -365,7 +345,7 @@ export default function TeamDetail() {
 
           <TabsContent value="form" className="stat-card">
             <div className="mb-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('trendLine')}</p>
+              <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('trendLine')}</p>
               <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('recentForm')}</h2>
             </div>
             <TeamPointsTrendChart matches={matches ?? []} team={team} />

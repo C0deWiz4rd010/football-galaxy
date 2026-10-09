@@ -26,11 +26,11 @@ import type { Standing } from '@/services/types'
 
 function rowAccent(position: number, total: number) {
   if (position <= 4) {
-    return 'inset 3px 0 0 #3b82f6'
+    return 'inset 3px 0 0 hsl(var(--zone-ucl))'
   }
 
   if (position >= total - 2) {
-    return 'inset 3px 0 0 #ef4444'
+    return 'inset 3px 0 0 hsl(var(--zone-rel))'
   }
 
   return undefined
@@ -57,7 +57,7 @@ const LeagueTableRow = memo(function LeagueTableRow({
       }}
       role="button"
       tabIndex={0}
-      className="interactive-card surface-soft w-full rounded-fg-lg p-4 text-left md:hidden"
+      className="interactive-card surface-soft w-full rounded-lg p-4 text-left md:hidden"
       whileTap={{ scale: 0.99 }}
     >
       <div className="flex items-center justify-between gap-3">
@@ -71,8 +71,8 @@ const LeagueTableRow = memo(function LeagueTableRow({
               ...getCrestSources(standing.team),
               createTeamCrest(
                 standing.team.shortName,
-                standing.team.primaryColor ?? '#0f766e',
-                standing.team.secondaryColor ?? '#f8fafc',
+                standing.team.primaryColor,
+                standing.team.secondaryColor,
                 standing.position,
               ),
             ]}
@@ -88,7 +88,7 @@ const LeagueTableRow = memo(function LeagueTableRow({
             event.stopPropagation()
             onOpen(standing)
           }}
-          className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 font-mono text-xl font-bold"
+          className="rounded-md border border-border/60 bg-foreground/5 px-3 py-1 font-mono text-xl font-bold"
         >
           {standing.points}
         </button>
@@ -137,8 +137,8 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
                 ...getCrestSources(row.original.team),
                 createTeamCrest(
                   row.original.team.shortName,
-                  row.original.team.primaryColor ?? '#0f766e',
-                  row.original.team.secondaryColor ?? '#f8fafc',
+                  row.original.team.primaryColor,
+                  row.original.team.secondaryColor,
                   row.original.position,
                 ),
               ]}
@@ -194,7 +194,7 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
     <section className="stat-card">
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+          <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">
             {t('primaryLeagueView')}
           </p>
           <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('fullStandings')}</h2>
@@ -212,7 +212,7 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
       ) : null}
       {standings.length > 0 ? (
         <>
-          <div className="hidden overflow-hidden rounded-fg-lg border border-border/50 md:block">
+          <div className="hidden overflow-hidden rounded-lg border border-border/50 md:block">
             <Table>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -269,7 +269,7 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
                     }}
                     className={cn(
                       'cursor-pointer border-b border-border/50 transition-colors hover:bg-background/60 focus:bg-background/60 focus:outline-none',
-                      favorites.isTeamFavorite(row.original.team.id) && 'bg-amber-500/5',
+                      favorites.isTeamFavorite(row.original.team.id) && 'bg-warning/5',
                     )}
                     style={{ boxShadow: rowAccent(row.original.position, standings.length) }}
                   >
@@ -297,17 +297,17 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
               <LeagueTableRow key={standing.id} standing={standing} onOpen={openTeam} />
             ))}
           </div>
-          <div className="mt-3 grid gap-2 rounded-fg-lg border border-border/45 bg-background/35 p-3 text-[11px] text-muted-foreground sm:grid-cols-2 xl:grid-cols-5">
+          <div className="mt-3 grid gap-2 rounded-lg border border-border/45 bg-background/35 p-3 text-2xs text-muted-foreground sm:grid-cols-2 xl:grid-cols-5">
             <div>
-              <p className="font-semibold uppercase tracking-[0.16em] text-foreground/80">{t('tableLegend')}</p>
+              <p className="font-semibold uppercase tracking-eyebrow text-foreground/80">{t('tableLegend')}</p>
               <p className="mt-1">{t('tableAbbrevLegend')}</p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="h-7 w-1.5 rounded-full bg-blue-500" />
+              <span className="h-7 w-1.5 rounded-full bg-zone-ucl" />
               <span>{t('championsLeagueLegend')}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="h-7 w-1.5 rounded-full bg-red-500" />
+              <span className="h-7 w-1.5 rounded-full bg-zone-rel" />
               <span>{t('relegationLegend')}</span>
             </div>
             <div className="flex items-center gap-2">

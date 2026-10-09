@@ -23,7 +23,7 @@ export function ThemePicker() {
             aria-checked={active}
             onClick={() => setPalette(item.id as PaletteId)}
             className={cn(
-              'interactive-card flex flex-col gap-fg-3 rounded-fg-lg border p-fg-4 text-left',
+              'interactive-card flex flex-col gap-fg-3 rounded-lg border p-fg-4 text-left',
               active
                 ? 'border-primary/60 bg-primary/5 shadow-fg-2'
                 : 'border-border/55 hover:border-border',
@@ -31,7 +31,7 @@ export function ThemePicker() {
           >
             <div className="flex items-center justify-between gap-2">
               <span
-                className="flex h-9 w-16 items-center overflow-hidden rounded-fg-md border border-border/40"
+                className="flex h-9 w-16 items-center overflow-hidden rounded-md border border-border/40"
                 aria-hidden
               >
                 <span

@@ -19,16 +19,16 @@ export function Sidebar() {
   return (
     <aside
       data-sidebar
-      className="surface-panel fixed left-3 top-3 z-40 hidden h-[calc(100vh-1.5rem)] w-64 overflow-hidden rounded-fg-2xl md:flex md:flex-col"
+      className="surface-panel fixed left-shell-gutter top-shell-gutter z-nav hidden h-[calc(100dvh-2*var(--fg-shell-gutter))] w-sidebar overflow-hidden rounded-2xl md:flex md:flex-col"
     >
-      <Link to="/premier-league" className="app-grid-lines relative flex h-16 items-center gap-3 border-b border-white/5 px-4">
+      <Link to="/premier-league" className="app-grid-lines relative flex h-16 items-center gap-3 border-b border-border/60 px-4">
         <BrandLogo subtitle="Live dashboard" />
       </Link>
 
       <div className="flex min-h-0 flex-1 flex-col justify-between">
         <nav className="shrink-0 py-2.5">
           <div className="mb-1 px-3">
-            <p className="px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            <p className="px-2 text-2xs font-semibold uppercase tracking-eyebrow text-muted-foreground">
               {t('explore')}
             </p>
           </div>
@@ -36,7 +36,7 @@ export function Sidebar() {
             to="/live"
             className={({ isActive }) =>
               cn(
-                'group mx-3 mb-1 flex items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm transition duration-150 hover:border-live/40 hover:bg-live/10',
+                'group mx-3 mb-1 flex items-center gap-3 rounded-md border border-transparent px-3 py-2 text-sm transition duration-150 hover:border-live/40 hover:bg-live/10',
                 isActive
                   ? 'border-live/40 bg-live/12 text-live shadow-[0_14px_32px_rgba(0,0,0,0.12)]'
                   : 'text-muted-foreground hover:text-live',
@@ -50,7 +50,7 @@ export function Sidebar() {
             to="/players"
             className={({ isActive }) =>
               cn(
-                'group mx-3 mb-1 flex items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm transition duration-150 hover:border-border/70 hover:bg-background/50',
+                'group mx-3 mb-1 flex items-center gap-3 rounded-md border border-transparent px-3 py-2 text-sm transition duration-150 hover:border-border/70 hover:bg-background/50',
                 isActive
                   ? 'bg-primary/10 text-foreground shadow-[0_14px_32px_rgba(0,0,0,0.12)]'
                   : 'text-muted-foreground hover:text-foreground',
@@ -64,7 +64,7 @@ export function Sidebar() {
             to="/teams"
             className={({ isActive }) =>
               cn(
-                'group mx-3 mb-1 flex items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm transition duration-150 hover:border-border/70 hover:bg-background/50',
+                'group mx-3 mb-1 flex items-center gap-3 rounded-md border border-transparent px-3 py-2 text-sm transition duration-150 hover:border-border/70 hover:bg-background/50',
                 isActive
                   ? 'bg-primary/10 text-foreground shadow-[0_14px_32px_rgba(0,0,0,0.12)]'
                   : 'text-muted-foreground hover:text-foreground',
@@ -78,9 +78,9 @@ export function Sidebar() {
             to="/galaxy"
             className={({ isActive }) =>
               cn(
-                'group mx-3 mb-2 flex items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm transition duration-150 hover:border-border/70 hover:bg-background/50',
+                'group mx-3 mb-2 flex items-center gap-3 rounded-md border border-transparent px-3 py-2 text-sm transition duration-150 hover:border-border/70 hover:bg-background/50',
                 isActive
-                  ? 'bg-amber-400/10 text-amber-300 shadow-[0_14px_32px_rgba(0,0,0,0.12)]'
+                  ? 'bg-warning/10 text-warning-fg shadow-[0_14px_32px_rgba(0,0,0,0.12)]'
                   : 'text-muted-foreground hover:text-foreground',
               )
             }
@@ -90,7 +90,7 @@ export function Sidebar() {
           </NavLink>
 
           <div className="mb-1 px-3">
-            <p className="px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            <p className="px-2 text-2xs font-semibold uppercase tracking-eyebrow text-muted-foreground">
               WM 2026
             </p>
           </div>
@@ -99,14 +99,14 @@ export function Sidebar() {
             end
             className={({ isActive }) =>
               cn(
-                'group mx-3 mb-1 flex items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm transition duration-150 hover:border-amber-300/40 hover:bg-amber-300/10',
+                'group mx-3 mb-1 flex items-center gap-3 rounded-md border border-transparent px-3 py-2 text-sm transition duration-150 hover:border-warning/40 hover:bg-warning/10',
                 isActive
-                  ? 'border-amber-300/40 bg-amber-300/12 text-amber-100 shadow-[0_14px_32px_rgba(0,0,0,0.12)]'
-                  : 'text-muted-foreground hover:text-amber-100',
+                  ? 'border-warning/40 bg-warning/12 text-warning-fg shadow-[0_14px_32px_rgba(0,0,0,0.12)]'
+                  : 'text-muted-foreground hover:text-warning-fg',
               )
             }
           >
-            <Trophy className="h-4 w-4 text-amber-300" />
+            <Trophy className="h-4 w-4 text-warning-fg" />
             World Cup 2026
           </NavLink>
           <div className="mx-3 mb-2 grid grid-cols-2 gap-1">
@@ -123,8 +123,8 @@ export function Sidebar() {
                   to={item.to}
                   className={({ isActive }) =>
                     cn(
-                      'flex items-center gap-1.5 rounded-lg border border-transparent px-2 py-1.5 text-[11px] text-muted-foreground transition hover:border-border/60 hover:bg-background/50 hover:text-foreground',
-                      isActive && 'border-amber-300/30 bg-amber-300/10 text-amber-100',
+                      'flex items-center gap-1.5 rounded-lg border border-transparent px-2 py-1.5 text-2xs text-muted-foreground transition hover:border-border/60 hover:bg-background/50 hover:text-foreground',
+                      isActive && 'border-warning/30 bg-warning/10 text-warning-fg',
                     )
                   }
                 >
@@ -136,7 +136,7 @@ export function Sidebar() {
           </div>
 
           <div className="mb-1 px-3">
-            <p className="px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            <p className="px-2 text-2xs font-semibold uppercase tracking-eyebrow text-muted-foreground">
               {t('leagues')}
             </p>
           </div>
@@ -146,7 +146,7 @@ export function Sidebar() {
               to={`/${league.id}`}
               className={({ isActive }) =>
                 cn(
-                  'group mx-3 flex items-center gap-2.5 rounded-xl border border-transparent px-3 py-1.5 text-sm text-muted-foreground transition duration-150 hover:border-border/70 hover:bg-background/50 hover:text-foreground',
+                  'group mx-3 flex items-center gap-2.5 rounded-md border border-transparent px-3 py-1.5 text-sm text-muted-foreground transition duration-150 hover:border-border/70 hover:bg-background/50 hover:text-foreground',
                   isActive && 'bg-primary/10 text-foreground shadow-[0_14px_32px_rgba(0,0,0,0.12)]',
                 )
               }
@@ -164,36 +164,36 @@ export function Sidebar() {
               />
               <div className="min-w-0 flex-1">
                 <p className="truncate">{league.name}</p>
-                <p className="truncate text-[10px] text-muted-foreground">{league.country}</p>
+                <p className="truncate text-2xs text-muted-foreground">{league.country}</p>
               </div>
             </NavLink>
           ))}
         </nav>
 
-        <div className="space-y-2 border-t border-white/5 p-2.5 text-sm">
+        <div className="space-y-2 border-t border-border/60 p-2.5 text-sm">
           <Link
             to="/compare"
-            className="surface-soft flex items-center gap-2 rounded-xl px-3 py-2 text-muted-foreground transition hover:bg-background/55 hover:text-foreground"
+            className="surface-soft flex items-center gap-2 rounded-md px-3 py-2 text-muted-foreground transition hover:bg-background/55 hover:text-foreground"
           >
             <BarChart3 className="h-4 w-4 text-violet-400" /> {t('comparePlayers')}
           </Link>
           <Link
             to="/settings"
-            className="surface-soft flex items-center gap-2 rounded-xl px-3 py-2 text-muted-foreground transition hover:bg-background/55 hover:text-foreground"
+            className="surface-soft flex items-center gap-2 rounded-md px-3 py-2 text-muted-foreground transition hover:bg-background/55 hover:text-foreground"
           >
             <Settings className="h-4 w-4 text-sky-400" /> {t('settings')}
           </Link>
-          <div className="surface-soft rounded-xl p-2.5">
-            <p className="mb-1.5 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <div className="surface-soft rounded-md p-2.5">
+            <p className="mb-1.5 flex items-center gap-2 text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
               <Star className="h-3.5 w-3.5 text-amber-400" /> {t('favorites')}
               {favorites.teams.length + favorites.players.length > 0 ? (
-                <span className="ml-auto rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                <span className="ml-auto rounded-full bg-primary/15 px-2 py-0.5 text-2xs font-semibold text-primary">
                   {favorites.teams.length + favorites.players.length}
                 </span>
               ) : null}
             </p>
             {favorites.teams.length + favorites.players.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-border/60 px-2.5 py-2 text-[10px] text-muted-foreground">
+              <div className="rounded-lg border border-dashed border-border/60 px-2.5 py-2 text-2xs text-muted-foreground">
                 <p className="font-medium text-foreground/80">{t('favoritesEmpty')}</p>
                 <p className="mt-0.5 line-clamp-2">{t('favoritesEmptyHint')}</p>
               </div>
