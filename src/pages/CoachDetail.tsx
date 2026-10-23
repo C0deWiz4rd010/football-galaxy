@@ -11,6 +11,7 @@ import { useLocale } from '@/contexts/LocaleContext'
 import { useLeagueSummary, useTeam } from '@/hooks/queries/football'
 import { isNotFoundError } from '@/services/errors'
 import { isLeagueId } from '@/lib/leagues'
+import { useEntityTitle } from '@/app/documentMeta'
 
 export default function CoachDetail() {
   const { t } = useLocale()
@@ -19,6 +20,7 @@ export default function CoachDetail() {
   const teamId = params.teamId
   const enabled = Boolean(leagueId && teamId)
   const { data: team, isPending, error, refetch } = useTeam(leagueId, teamId)
+  useEntityTitle(team?.manager ?? team?.name)
   const notFound = isNotFoundError(error)
   const { data: leagueSummary } = useLeagueSummary(leagueId)
 

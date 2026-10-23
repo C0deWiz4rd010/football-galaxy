@@ -60,6 +60,8 @@ jobs:
       - name: Build
         env:
           VITE_BASE: /football-galaxy/
+          # Absolute URLs for the sitemap and link previews.
+          VITE_SITE_URL: https://c0dewiz4rd010.github.io/football-galaxy
           # Set a repository variable VITE_LIVE_DATA_PROXY_URL to the deployed
           # proxy (e.g. https://your-proxy.example.com/api/live) so the Pages
           # build routes live requests through it. When unset, the app falls

@@ -17,12 +17,13 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { Toaster } from '@/components/ui/toast'
-import { type MessageKey, useLocale } from '@/contexts/LocaleContext'
+import { useLocale } from '@/contexts/LocaleContext'
 import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
 import { useLazyDialog } from '@/hooks/useLazyDialog'
-import { getLeague } from '@/lib/leagues'
 import { lazyWithReload } from '@/lib/lazyWithReload'
 
+import { DocumentMeta } from './documentMeta'
+import { routeMeta } from './routeMeta'
 import { prefetchRoute, routeModules } from './routeModules'
 
 const ComparePage = lazyWithReload(routeModules.compare)
@@ -75,106 +76,13 @@ function LoadingGrid() {
   return <LoadingSpinner />
 }
 
-function getLayoutTitle(pathname: string, t: (key: MessageKey) => string) {
-  const segments = pathname.split('/').filter(Boolean)
-  const leagueId = segments[0]
-
-  if (segments[0] === 'galaxy') {
-    return {
-      title: t('galaxyMap'),
-      subtitle: t('subtitleExplore'),
-      leagueId: undefined,
-    }
-  }
-
-  if (segments[0] === 'live') {
-    return {
-      title: t('liveScores'),
-      subtitle: t('liveScoresSubtitle'),
-      leagueId: undefined,
-    }
-  }
-
-  if (segments[0] === 'world-cup-2026') {
-    return {
-      title: t('worldCup2026'),
-      subtitle: t('worldCupSubtitle'),
-      leagueId: undefined,
-    }
-  }
-
-  if (segments[0] === 'players') {
-    return {
-      title: t('playersExplorer'),
-      subtitle: t('subtitlePlayers'),
-      leagueId: undefined,
-    }
-  }
-
-  if (segments[0] === 'teams') {
-    return {
-      title: t('teamsExplorer'),
-      subtitle: t('subtitleTeams'),
-      leagueId: undefined,
-    }
-  }
-
-  if (segments[0] === 'compare') {
-    return {
-      title: t('comparePlayers'),
-      subtitle: t('subtitleCompare'),
-      leagueId: undefined,
-    }
-  }
-
-  if (segments[0] === 'settings') {
-    return {
-      title: t('settings'),
-      subtitle: t('settingsSubtitle'),
-      leagueId: undefined,
-    }
-  }
-
-  const league = getLeague(leagueId)
-
-  if (segments[1] === 'team') {
-    if (segments[3] === 'coach') {
-      return {
-        title: t('coachDetailTitle'),
-        subtitle: `Football Galaxy / ${league.name}`,
-        leagueId: league.id,
-      }
-    }
-
-    return {
-      title: t('teamDetailTitle'),
-      subtitle: `Football Galaxy / ${league.name}`,
-      leagueId: league.id,
-    }
-  }
-
-  if (segments[1] === 'player') {
-    return {
-      title: t('playerDetailTitle'),
-      subtitle: `Football Galaxy / ${league.name}`,
-      leagueId: league.id,
-    }
-  }
-
-  return {
-    title: league.name,
-    subtitle: `Football Galaxy / ${league.name}`,
-    leagueId: league.id,
-  }
-}
-
 function AppLayout() {
   const search = useLazyDialog()
   const menu = useLazyDialog()
   const handbook = useLazyDialog()
   const location = useLocation()
   const { t } = useLocale()
-  const layout = useMemo(() => getLayoutTitle(location.pathname, t), [location.pathname, t])
+  const meta = useMemo(() => routeMeta(location.pathname, t), [location.pathname, t])
   usePrefetchOnIntent()
 
   // After client-side navigation, move focus to the new page so keyboard and
@@ -197,7 +105,7 @@ function AppLayout() {
   })
 
   return (
-    <>
+    <DocumentMeta title={meta.title} description={meta.description}>
       <a
         href="#main"
         className="sr-only z-toast rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground focus:not-sr-only focus:fixed focus:left-3 focus:top-3"
@@ -206,8 +114,8 @@ function AppLayout() {
       </a>
       <Sidebar />
       <Header
-        title={layout.title}
-        subtitle={layout.subtitle}
+        title={meta.title}
+        subtitle={meta.subtitle}
         onSearch={() => search.setOpen(true)}
         onHandbook={() => handbook.setOpen(true)}
       />
@@ -231,7 +139,7 @@ function AppLayout() {
       <Toaster />
       {/* Top of the page on new navigations, previous position on back/forward. */}
       <ScrollRestoration />
-    </>
+    </DocumentMeta>
   )
 }
 

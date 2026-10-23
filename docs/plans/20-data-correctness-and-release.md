@@ -282,3 +282,11 @@ Gate: Lint, `tsc -b`, 79 Tests, Build grün.
 - **Neu:** Produktions-Hinweis, wenn kein Daten-Proxy konfiguriert ist („Keine Datenquelle verbunden“) oder er nicht antwortet. Das betrifft die GitHub-Pages-Seite, die vorher ohne Erklärung endlos lud.
 
 Gate grün; Browser: Spielerseite DE/EN (Länder, Form, Eigenschaften), Build ohne Proxy zeigt den Hinweis.
+
+### Phase 6 – erledigt (2026-10-23)
+- **1** Routen-Tabelle `src/app/routeMeta.ts` statt der `getLayoutTitle`-If-Kette (Header-Titel, Untertitel, Beschreibung). `src/app/documentMeta.tsx` setzt `document.title` und `<meta name="description">` je Route. Detailseiten ergänzen ihren Namen über `useEntityTitle`, z. B. „Erling Haaland · Spieler-Details · Football Galaxy“ oder „Deutschland – Paraguay · WM 2026 · …“. Texte DE/EN (`metaDesc*`), Test `routeMeta.test.ts`.
+- **2** `index.html`: Beschreibung, `theme-color` hell/dunkel, Open Graph/Twitter, Apple-Touch-Icon, Manifest-Link, `<noscript>`.
+- **3** `manifest.webmanifest` mit Icons aus dem Emblem (192/512, maskable 512, SVG), `apple-touch-icon.png`, `og-image.jpg` (1200×630, 40 KB). Plugin `siteFiles`: `robots.txt` immer; mit `VITE_SITE_URL` zusätzlich `sitemap.xml` (16 Seiten) und absolute `og:url`/`og:image`. Pages-Workflows setzen `VITE_SITE_URL`; `.htaccess` liefert `.webmanifest` mit richtigem MIME-Typ.
+- Ohne Service Worker (bewusst: Live-Daten, kein Offline-Modus gewünscht; die App ist trotzdem installierbar).
+
+Gate grün; Browser: Titel/Beschreibung auf Liga-, Spieler- und WM-Spielseite, Manifest lädt; Pages-Build mit Basis-Pfad erzeugt korrekte URLs.

@@ -16,8 +16,10 @@ Entweder das ZIP aus dem GitHub-Release nehmen (`football-galaxy-hostinger-vX.Y.
 Push auf `develop`) oder lokal bauen:
 
 ```bash
-npm run build:hostinger
+VITE_SITE_URL=https://<deine-domain> npm run build:hostinger
 ```
+
+`VITE_SITE_URL` ist optional: Ohne die Variable fehlen nur `sitemap.xml` und die absoluten URLs für Link-Vorschauen.
 
 Ergebnis: `dist-hostinger/` mit `index.html`, `assets/`, `.htaccess` und `api/` (`live.php`, `rules.json`,
 `.htaccess`).

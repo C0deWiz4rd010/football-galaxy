@@ -53,6 +53,7 @@ import { useWorldCupLabels } from '@/features/world-cup/labels'
 import { WorldCupBracketBoard } from '@/features/world-cup/BracketBoard'
 import { MatchStatsChart } from '@/features/world-cup/charts'
 import { formatDateTime } from '@/lib/utils'
+import { useEntityTitle } from '@/app/documentMeta'
 import type {
   WorldCupFilterState,
   WorldCupFixture,
@@ -313,6 +314,7 @@ export function WorldCupMatchDetailPage() {
   const { t } = useLocale()
   const wc = useWorldCupLabels()
   const { data, error, isPending: isLoading, refetch } = useWorldCupFixture(matchId)
+  useEntityTitle(data ? `${wc.team(data.homeTeam)} – ${wc.team(data.awayTeam)}` : undefined)
 
   if (isNotFoundError(error)) return <NotFoundState backTo="/world-cup-2026/matches" />
 
@@ -366,6 +368,7 @@ export function WorldCupTeamDetailPage() {
   const { t } = useLocale()
   const wc = useWorldCupLabels()
   const { data, error, isPending: isLoading, refetch } = useWorldCupTeam(teamId)
+  useEntityTitle(data ? wc.team(data.team) : undefined)
 
   if (isNotFoundError(error)) return <NotFoundState backTo="/world-cup-2026/teams" />
 

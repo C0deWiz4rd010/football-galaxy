@@ -25,6 +25,7 @@ import { getCrestSources, getPlayerPhotoSources } from '@/lib/assetSources'
 import { getFormScore } from '@/lib/player-ratings'
 import { createPlayerAvatar, createTeamCrest, FALLBACK_TEAM_COLORS, initialsFromName } from '@/lib/visualAssets'
 import { isLeagueId } from '@/lib/leagues'
+import { useEntityTitle } from '@/app/documentMeta'
 
 export default function TeamDetail() {
   const { t } = useLocale()
@@ -33,6 +34,7 @@ export default function TeamDetail() {
   const teamId = params.teamId
   const enabled = Boolean(leagueId && teamId)
   const { data: team, isPending, error, refetch } = useTeam(leagueId, teamId)
+  useEntityTitle(team?.name)
   const notFound = isNotFoundError(error)
   const { data: squad } = useSquad(leagueId, teamId)
   const { data: matches } = useTeamMatches(leagueId, teamId)

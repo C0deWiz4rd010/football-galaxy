@@ -34,6 +34,7 @@ jobs:
         env:
           # vite.config.ts reads the base path from VITE_BASE (Hostinger builds use /).
           VITE_BASE: /football-galaxy/
+          VITE_SITE_URL: https://c0dewiz4rd010.github.io/football-galaxy
         run: npm run build
 
       - name: Upload Pages artifact

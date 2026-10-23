@@ -2,6 +2,7 @@
 
 Options -Indexes
 DirectoryIndex index.html
+AddType application/manifest+json .webmanifest
 
 # --- Single-page app: unknown paths serve index.html, the proxy stays reachable
 <IfModule mod_rewrite.c>

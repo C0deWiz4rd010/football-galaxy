@@ -55,6 +55,56 @@ function preloadLeagueData(): Plugin {
   }
 }
 
+/** Public pages for the sitemap (detail pages depend on live data and are reached by links). */
+const SITEMAP_PATHS = [
+  '',
+  ...Object.keys(espnSlugByLeague),
+  'live',
+  'players',
+  'teams',
+  'compare',
+  'galaxy',
+  'world-cup-2026',
+  'world-cup-2026/matches',
+  'world-cup-2026/groups',
+  'world-cup-2026/bracket',
+  'world-cup-2026/teams',
+]
+
+/**
+ * robots.txt always; with VITE_SITE_URL (the public origin + base, e.g.
+ * https://example.com) also sitemap.xml and absolute Open Graph URLs, which
+ * link previews require.
+ */
+function siteFiles(): Plugin {
+  let siteUrl: string | undefined
+  return {
+    name: 'fg-site-files',
+    configResolved(config) {
+      siteUrl = normalizeProxyBase(config.env.VITE_SITE_URL)
+    },
+    transformIndexHtml() {
+      if (!siteUrl) return []
+      return [
+        { tag: 'meta', injectTo: 'head', attrs: { property: 'og:url', content: `${siteUrl}/` } },
+        { tag: 'meta', injectTo: 'head', attrs: { property: 'og:image', content: `${siteUrl}/og-image.jpg` } },
+        { tag: 'meta', injectTo: 'head', attrs: { name: 'twitter:image', content: `${siteUrl}/og-image.jpg` } },
+      ]
+    },
+    generateBundle() {
+      const sitemap = siteUrl ? `Sitemap: ${siteUrl}/sitemap.xml\n` : ''
+      this.emitFile({ type: 'asset', fileName: 'robots.txt', source: `User-agent: *\nAllow: /\n${sitemap}` })
+      if (!siteUrl) return
+      const urls = SITEMAP_PATHS.map((path) => `  <url><loc>${siteUrl}/${path}</loc></url>`).join('\n')
+      this.emitFile({
+        type: 'asset',
+        fileName: 'sitemap.xml',
+        source: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`,
+      })
+    },
+  }
+}
+
 const pkg = JSON.parse(readFileSync(fileURLToPath(new URL('./package.json', import.meta.url)), 'utf-8'))
 
 // https://vite.dev/config/
@@ -65,7 +115,7 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
-  plugins: [react(), preloadMainFont(), preloadLeagueData()],
+  plugins: [react(), preloadMainFont(), preloadLeagueData(), siteFiles()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

@@ -25,6 +25,7 @@ import { useFavorites } from '@/hooks/useFavorites'
 import { isLeagueId } from '@/lib/leagues'
 import type { Player } from '@/services/types'
 import { formLabelKey, getFormScore, traitKey } from '@/lib/player-ratings'
+import { useEntityTitle } from '@/app/documentMeta'
 
 function FavoriteHeartButton({ player }: { player: Player }) {
   const { t } = useLocale()
@@ -55,6 +56,7 @@ export default function PlayerDetail() {
   const playerId = params.playerId
   const enabled = Boolean(leagueId && playerId)
   const { data: player, isPending, error, refetch } = usePlayer(leagueId, playerId)
+  useEntityTitle(player?.name)
   const notFound = isNotFoundError(error)
   const { data: leagueSummary } = useLeagueSummary(leagueId)
   const leaderPool = useMemo(() => leagueSummary?.playerPool.map((entry) => entry.player) ?? [], [leagueSummary])
