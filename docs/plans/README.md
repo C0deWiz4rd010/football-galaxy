@@ -44,4 +44,4 @@ language lives in [`docs/design-system.md`](../design-system.md).
 - [17 — Data acquisition & mobile features](17-data-acquisition-mobile-features-plan.md)
 - [18 — Release-ready overhaul](18-release-ready-overhaul-plan.md)
 - [19 — Perfection overhaul (phases 0–6 done, rest moved to 20)](19-perfection-overhaul.md)
-- [20 — Data correctness, stability & release (active)](20-data-correctness-and-release.md)
+- [20 — Data correctness, stability & release (completed)](20-data-correctness-and-release.md)

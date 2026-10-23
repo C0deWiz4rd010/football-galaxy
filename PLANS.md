@@ -18,11 +18,11 @@ The project should grow step by step:
 
 ## Active Plans
 
-The active plan is [`docs/plans/20-data-correctness-and-release.md`](docs/plans/20-data-correctness-and-release.md); its `Fortschritt` section records what is done.
+There is no active plan right now. The latest, [`docs/plans/20-data-correctness-and-release.md`](docs/plans/20-data-correctness-and-release.md), was completed on 2026-10-23; its `Fortschritt` section lists what is done and the remaining steps outside the repo (Hostinger upload, Lighthouse on the live site).
 
 | Plan | Status | Description |
 |------|--------|-------------|
-| [`docs/plans/20-data-correctness-and-release.md`](docs/plans/20-data-correctness-and-release.md) | active | Data correctness, API efficiency, Node + PHP proxy, Hostinger deploy, performance, i18n, SEO, tests, docs (successor of plan 19) |
+| [`docs/plans/20-data-correctness-and-release.md`](docs/plans/20-data-correctness-and-release.md) | completed (2026-10-23) | Data correctness, API efficiency, Node + PHP proxy, Hostinger deploy, performance, i18n, SEO, tests, docs (successor of plan 19) |
 
 ## Completed Plans
 
