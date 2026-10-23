@@ -98,4 +98,4 @@ export function getPlayer(params: FootballQueryParams = {}): Promise<Player> {
   return espn.getPlayer(requireLeague(params.leagueId), params.playerId)
 }
 
-export { formFromMatches } from './espn/league'
+export { formFromMatches, withRecentForm } from './espn/league'

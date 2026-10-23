@@ -30,9 +30,14 @@ describe('season helpers', () => {
 describe('matchday helpers', () => {
   it('derives the current matchday from the table', async () => {
     const { currentMatchdayFromTable, totalMatchdays } = await import('./season')
-    const table = Array.from({ length: 20 }, (_, index) => ({ played: index % 2 ? 5 : 4 }))
-    expect(currentMatchdayFromTable(table, [{ status: 'SCHEDULED' }])).toBe(6)
-    expect(currentMatchdayFromTable(table, [{ status: 'FINISHED' }])).toBe(5)
+    // Round 5 half played: still matchday 5, not 6.
+    const midRound = Array.from({ length: 20 }, (_, index) => ({ played: index % 2 ? 5 : 4 }))
+    expect(currentMatchdayFromTable(midRound, [{ status: 'SCHEDULED' }])).toBe(5)
+    expect(currentMatchdayFromTable(midRound, [{ status: 'FINISHED' }])).toBe(5)
+    // Round 5 done except one postponed game: matchday 6 is next.
+    const postponed = Array.from({ length: 20 }, (_, index) => ({ played: index < 2 ? 4 : 5 }))
+    expect(currentMatchdayFromTable(postponed, [{ status: 'SCHEDULED' }])).toBe(6)
+    expect(currentMatchdayFromTable(postponed, [{ status: 'FINISHED' }])).toBe(5)
     expect(currentMatchdayFromTable([], [])).toBe(1)
     expect(totalMatchdays(18)).toBe(34)
     expect(currentMatchdayFromTable(Array.from({ length: 18 }, () => ({ played: 34 })), [{ status: 'SCHEDULED' }])).toBe(34)

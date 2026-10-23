@@ -17,9 +17,9 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useLocale } from '@/contexts/LocaleContext'
 import { useFavorites } from '@/hooks/useFavorites'
-import { useSquad, useStandings, useTeam, useTeamMatches } from '@/hooks/queries/football'
+import { useMatches, useSquad, useStandings, useTeam, useTeamMatches } from '@/hooks/queries/football'
 import { isNotFoundError } from '@/services/errors'
-import { formFromMatches } from '@/services/footballData'
+import { formFromMatches, withRecentForm } from '@/services/footballData'
 import { FormBadge } from '@/components/shared/FormBadge'
 import { getCrestSources, getPlayerPhotoSources } from '@/lib/assetSources'
 import { getFormScore } from '@/lib/player-ratings'
@@ -37,6 +37,10 @@ export default function TeamDetail() {
   const { data: squad } = useSquad(leagueId, teamId)
   const { data: matches } = useTeamMatches(leagueId, teamId)
   const { data: standings } = useStandings(leagueId)
+  // League-wide results give every club its form, so the radar's form axis
+  // compares like with like (shared, cached query with the league dashboard).
+  const { data: seasonMatches } = useMatches(leagueId)
+  const standingsWithForm = useMemo(() => withRecentForm(standings ?? [], seasonMatches), [standings, seasonMatches])
   const favorites = useFavorites()
   const teamMatches = useMemo(
     () =>
@@ -333,7 +337,7 @@ export default function TeamDetail() {
                 <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('leagueProfile')}</p>
                 <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('teamRadar')}</h2>
               </div>
-              <TeamProfileRadar standing={standing} standings={standings ?? []} />
+              <TeamProfileRadar standing={standingsWithForm.find((row) => row.team.id === team.id)} standings={standingsWithForm} />
             </div>
             <div className="stat-card">
               <div className="mb-4">

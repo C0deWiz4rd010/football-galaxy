@@ -6,7 +6,7 @@ vi.mock('@/services/net/liveClient', () => ({
 
 import { fetchLiveJson } from '@/services/net/liveClient'
 
-import { fetchLeagueLiveScores, hasLiveMatch } from './liveScores'
+import { fetchAllLiveScores, fetchLeagueLiveScores, hasLiveMatch } from './liveScores'
 
 const mockedFetch = vi.mocked(fetchLiveJson)
 
@@ -131,5 +131,36 @@ describe('fetchLeagueLiveScores', () => {
     mockedFetch.mockResolvedValue({ events: null })
     const matches = await fetchLeagueLiveScores('bundesliga')
     expect(matches).toEqual([])
+  })
+  it('shows postponed games without a score', async () => {
+    mockedFetch.mockResolvedValueOnce({
+      events: [
+        {
+          id: 'postponed-1',
+          competitions: [
+            {
+              id: 'comp-postponed',
+              date: '2026-05-02T14:00:00Z',
+              status: { type: { state: 'post', completed: false, shortDetail: 'Postponed' } },
+              competitors: [
+                { homeAway: 'home', score: '0', team: { id: '1', displayName: 'Arsenal', abbreviation: 'ARS' } },
+                { homeAway: 'away', score: '0', team: { id: '2', displayName: 'Chelsea', abbreviation: 'CHE' } },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+
+    const [match] = await fetchLeagueLiveScores('premier-league')
+
+    expect(match?.state).toBe('postponed')
+    expect(match?.home.score).toBeNull()
+    expect(match?.away.score).toBeNull()
+  })
+
+  it('reports an error when every league fails instead of an empty day', async () => {
+    mockedFetch.mockRejectedValue(new Error('offline'))
+    await expect(fetchAllLiveScores()).rejects.toThrow('offline')
   })
 })

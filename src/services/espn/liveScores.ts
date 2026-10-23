@@ -44,7 +44,8 @@ export const LIVE_SCORE_LEAGUES: LeagueId[] = [
   'ligue-1',
 ]
 
-export type LiveMatchState = 'pre' | 'live' | 'ft'
+/** 'postponed': ESPN marks called-off games as state 'post' without `completed`. */
+export type LiveMatchState = 'pre' | 'live' | 'ft' | 'postponed'
 export type LiveEventType = 'goal' | 'yellow' | 'red' | 'substitution' | 'other'
 
 export interface LiveMatchTeam {
@@ -167,7 +168,7 @@ function parseScore(value: string | undefined): number | null {
 function mapState(status: EspnStatus | undefined): LiveMatchState {
   const state = status?.type?.state
   if (state === 'in') return 'live'
-  if (state === 'post') return 'ft'
+  if (state === 'post') return status?.type?.completed === false ? 'postponed' : 'ft'
   return 'pre'
 }
 
@@ -182,6 +183,7 @@ function mapStatusLabel(
     return status?.type?.shortDetail ?? 'Live'
   }
   if (state === 'ft') return 'FT'
+  if (state === 'postponed') return status?.type?.shortDetail ?? 'Postponed'
   if (kickoff) {
     const date = new Date(kickoff)
     if (!Number.isNaN(date.getTime())) {
@@ -229,8 +231,9 @@ function mapMatch(
   const awayRaw = competitors.find((c) => c.homeAway === 'away') ?? competitors[1]
   const state = mapState(competition.status)
   // ESPN reports "0" for matches that have not kicked off; show no score instead.
-  const home = { ...mapTeam(homeRaw), ...(state === 'pre' ? { score: null } : {}) }
-  const away = { ...mapTeam(awayRaw), ...(state === 'pre' ? { score: null } : {}) }
+  const unplayed = state === 'pre' || state === 'postponed'
+  const home = { ...mapTeam(homeRaw), ...(unplayed ? { score: null } : {}) }
+  const away = { ...mapTeam(awayRaw), ...(unplayed ? { score: null } : {}) }
   const kickoff = competition.date ?? null
 
   const events: LiveMatchEvent[] = (competition.details ?? []).map(
@@ -262,7 +265,7 @@ function mapMatch(
   }
 }
 
-const STATE_ORDER: Record<LiveMatchState, number> = { live: 0, pre: 1, ft: 2 }
+const STATE_ORDER: Record<LiveMatchState, number> = { live: 0, pre: 1, ft: 2, postponed: 3 }
 
 function sortMatches(matches: LiveMatch[]): LiveMatch[] {
   return [...matches].sort((a, b) => {
@@ -299,12 +302,15 @@ export async function fetchLeagueLiveScores(
 
 /**
  * Fetch scoreboards for every supported league in parallel and merge them.
- * A single failing league never blocks the rest.
+ * A single failing league never blocks the rest, but when every league fails
+ * that is an error — not a quiet day without matches.
  */
 export async function fetchAllLiveScores(): Promise<LiveMatch[]> {
   const results = await Promise.allSettled(
     LIVE_SCORE_LEAGUES.map((leagueId) => fetchLeagueLiveScores(leagueId)),
   )
+  const failure = results.find((result) => result.status === 'rejected')
+  if (failure && results.every((result) => result.status === 'rejected')) throw failure.reason
   const matches = results.flatMap((result) =>
     result.status === 'fulfilled' ? result.value : [],
   )

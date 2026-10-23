@@ -527,6 +527,7 @@ export const de = {
   wcStateFinished: 'Beendet',
   wcStatePostponed: 'Verlegt',
   wcFullTimeShort: 'Ende',
+  livePostponed: 'Verlegt',
   wcAfterExtraTimeShort: 'n. V.',
   wcOnPenaltiesShort: 'i. E. {home}:{away}',
   wcWonAfterExtraTime: '{team} gewinnt nach Verlängerung',

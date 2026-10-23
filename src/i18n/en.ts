@@ -515,6 +515,7 @@ export const en: Messages = {
   wcStateFinished: 'Finished',
   wcStatePostponed: 'Postponed',
   wcFullTimeShort: 'FT',
+  livePostponed: 'Postponed',
   wcAfterExtraTimeShort: 'AET',
   wcOnPenaltiesShort: '{home}–{away} pens',
   wcWonAfterExtraTime: '{team} win after extra time',

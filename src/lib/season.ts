@@ -48,13 +48,19 @@ export function totalMatchdays(teamCount: number): number {
  * The matchday currently being played (or next up), derived from the table.
  * The free scoreboard feeds rarely carry a round number, but the table always
  * knows how many games have been played.
+ *
+ * While fewer than half the clubs have reached the highest games-played count,
+ * that round is still in progress. Once most have, the stragglers only owe
+ * postponed games and the next round is up — if there are open matches at all.
  */
 export function currentMatchdayFromTable(
   standings: Array<{ played: number }>,
   matches: Array<{ status: string }>,
 ): number {
   const played = standings.reduce((max, row) => Math.max(max, row.played), 0)
+  const atMax = standings.filter((row) => row.played === played).length
+  const roundComplete = atMax * 2 > standings.length
   const hasOpenMatches = matches.some((match) => match.status !== 'FINISHED')
   const total = totalMatchdays(standings.length)
-  return Math.min(total, Math.max(1, played + (hasOpenMatches ? 1 : 0)))
+  return Math.min(total, Math.max(1, played + (roundComplete && hasOpenMatches ? 1 : 0)))
 }

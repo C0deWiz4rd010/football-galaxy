@@ -1,12 +1,14 @@
 import { CircleDot, MapPin } from 'lucide-react'
 
 import { AssetImage } from '@/components/shared/AssetImage'
+import { useLocale } from '@/contexts/LocaleContext'
 import { createTeamCrest } from '@/lib/visualAssets'
 import { cn } from '@/lib/utils'
 import type { LiveMatch, LiveMatchEvent, LiveMatchTeam } from '@/services/espn/liveScores'
 
 /** Small status pill: pulsing minute while live, FT/kickoff otherwise. */
 function LiveStatusPill({ match }: { match: LiveMatch }) {
+  const { t } = useLocale()
   if (match.state === 'live') {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-live/50 bg-live/12 px-2 py-0.5 text-2xs font-semibold text-live">
@@ -20,16 +22,17 @@ function LiveStatusPill({ match }: { match: LiveMatch }) {
   }
 
   const isFinished = match.state === 'ft'
+  const isPostponed = match.state === 'postponed'
   return (
     <span
       className={cn(
         'inline-flex items-center rounded-full border px-2 py-0.5 text-2xs font-medium',
-        isFinished
-          ? 'border-border/60 bg-muted/40 text-muted-foreground'
-          : 'border-info/40 bg-info/10 text-info-fg',
+        isFinished && 'border-border/60 bg-muted/40 text-muted-foreground',
+        isPostponed && 'border-warning/40 bg-warning/10 text-warning-fg',
+        !isFinished && !isPostponed && 'border-info/40 bg-info/10 text-info-fg',
       )}
     >
-      {match.statusLabel}
+      {isPostponed ? t('livePostponed') : match.statusLabel}
     </span>
   )
 }

@@ -29,16 +29,23 @@ export function TeamProfileRadar({ standing, standings }: { standing?: Standing;
   const data = useMemo(() => {
     const rows = standings.filter((row) => row.played > 0)
     if (!standing || standing.played === 0 || rows.length < 2) return []
+    // Without results for every club a form axis would put everyone on 50.
+    const hasForm = rows.every((row) => row.form.length > 0)
     const metrics: Array<{ key: MessageKey; of: (row: Standing) => number; invert?: boolean }> = [
       { key: 'radarAttack', of: (row) => perGame(row.goalsFor, row.played) },
       { key: 'radarDefense', of: (row) => perGame(row.goalsAgainst, row.played), invert: true },
       { key: 'radarPoints', of: (row) => perGame(row.points, row.played) },
       { key: 'radarWinRate', of: (row) => perGame(row.won, row.played) },
       { key: 'radarGoalDiff', of: (row) => perGame(row.goalDifference, row.played) },
-      {
-        key: 'radarForm',
-        of: (row) => row.form.reduce((sum, item) => sum + (item.result === 'W' ? 3 : item.result === 'D' ? 1 : 0), 0),
-      },
+      ...(hasForm
+        ? [
+            {
+              key: 'radarForm' as const,
+              of: (row: Standing) =>
+                perGame(row.form.reduce((sum, item) => sum + (item.result === 'W' ? 3 : item.result === 'D' ? 1 : 0), 0), row.form.length),
+            },
+          ]
+        : []),
     ]
     return metrics.map(({ key, of, invert }) => {
       const values = rows.map(of)

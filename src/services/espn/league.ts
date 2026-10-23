@@ -310,6 +310,14 @@ export function formFromMatches(matches: Match[], teamId: string): FormResult[] 
     })
 }
 
+/** ESPN tables carry no form: fill the last five results in from the season's matches. */
+export function withRecentForm(standings: Standing[], matches: Match[] | undefined): Standing[] {
+  if (!matches) return standings
+  return standings.map((standing) =>
+    standing.form.length ? standing : { ...standing, form: formFromMatches(matches, standing.team.id) },
+  )
+}
+
 // ---------------------------------------------------------------------------
 // Public API (consumed by the source cascade in `footballData.ts`)
 // ---------------------------------------------------------------------------

@@ -28,7 +28,7 @@ import { StaggerGrid, StaggerGridItem } from '@/components/shared/StaggerGrid'
 import { Badge } from '@/components/ui/badge'
 import { useLocale } from '@/contexts/LocaleContext'
 import { useLeagueSummary, useMatches } from '@/hooks/queries/football'
-import { formFromMatches } from '@/services/footballData'
+import { withRecentForm } from '@/services/footballData'
 import { getPlayerPhotoSources } from '@/lib/assetSources'
 import { getLeague, isLeagueId } from '@/lib/leagues'
 import { cn, formatRelativeTime } from '@/lib/utils'
@@ -96,10 +96,7 @@ export default function LeagueDashboard() {
   // enrich it with the form column, so they never delay the first paint.
   const { data: seasonMatches } = useMatches(validLeague ? leagueId : undefined)
   const standingsWithForm = useMemo(
-    () =>
-      (data?.standings ?? []).map((standing) =>
-        standing.form.length || !seasonMatches ? standing : { ...standing, form: formFromMatches(seasonMatches, standing.team.id) },
-      ),
+    () => withRecentForm(data?.standings ?? [], seasonMatches),
     [data?.standings, seasonMatches],
   )
   const league = data?.league ?? getLeague(leagueId)
