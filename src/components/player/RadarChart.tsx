@@ -3,7 +3,7 @@ import { useMemo } from 'react'
 import { ProfileRadar } from '@/components/charts/ProfileRadar'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { useLocale } from '@/contexts/LocaleContext'
-import { buildMetricPools, playerPercentiles } from '@/lib/percentiles'
+import { buildMetricPools, comparablePool, playerPercentiles } from '@/lib/percentiles'
 import type { Player, PlayerRef } from '@/services/types'
 
 /**
@@ -13,8 +13,9 @@ import type { Player, PlayerRef } from '@/services/types'
 export function PlayerRadarChart({ player, pool }: { player: Player; pool: PlayerRef[] }) {
   const { t } = useLocale()
   const data = useMemo(() => {
-    if (!pool.length) return []
-    return playerPercentiles(player, buildMetricPools(pool)).map(({ metric, percentile }) => ({
+    const comparable = comparablePool(pool)
+    if (!comparable.length) return []
+    return playerPercentiles(player, buildMetricPools(comparable)).map(({ metric, percentile }) => ({
       name: t(metric.labelKey),
       player: percentile,
       median: 50,

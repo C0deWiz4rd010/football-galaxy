@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { makePlayer, makePlayerRef, makeTeam } from '@/test/fixtures'
 
-import { buildMetricPools, percentileRank, playerPercentiles } from './percentiles'
+import { buildMetricPools, comparablePool, MIN_POOL_SIZE, percentileRank, playerPercentiles } from './percentiles'
 
 describe('percentiles', () => {
   it('ranks a value within an ascending pool', () => {
@@ -20,5 +20,14 @@ describe('percentiles', () => {
     expect(byKey.goals).toBe(67)
     expect(byKey.assists).toBe(100)
     expect(byKey.appearances).toBe(100)
+  })
+
+  it('drops leaders without appearances and refuses tiny pools', () => {
+    const team = makeTeam(0)
+    const ref = (appearances: number, index: number) => ({ ...makePlayerRef(index, team), goals: 3, assists: 1, appearances })
+    const full = Array.from({ length: MIN_POOL_SIZE }, (_, index) => ref(6, index))
+
+    expect(comparablePool([...full, ref(0, 99)])).toHaveLength(MIN_POOL_SIZE)
+    expect(comparablePool(full.slice(1))).toEqual([])
   })
 })

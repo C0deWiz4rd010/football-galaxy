@@ -233,11 +233,12 @@ export async function getStandings(params: FootballQueryParams = {}): Promise<St
   })
 }
 
-export async function getTopScorers(params: FootballQueryParams = {}): Promise<Scorer[]> {
+/** `limit` caps the list; the endpoint ranks by goals and has no assists ranking of its own. */
+async function fetchScorers(params: FootballQueryParams, limit: number): Promise<Scorer[]> {
   const leagueId = leagueOrDefault(params.leagueId)
   const league = leagueConfig(leagueId)
   const season = normalizeSeason(params.season)
-  const url = `${apiBase}/competitions/${league.apiCode}/scorers?limit=20${season ? `&season=${season}` : ''}`
+  const url = `${apiBase}/competitions/${league.apiCode}/scorers?limit=${limit}${season ? `&season=${season}` : ''}`
   const data = await getJson(url, fdScorersSchema)
   if (!data.scorers?.length) {
     throw new Error('football-data.org returned no scorers')
@@ -258,8 +259,17 @@ export async function getTopScorers(params: FootballQueryParams = {}): Promise<S
   })
 }
 
+export function getTopScorers(params: FootballQueryParams = {}): Promise<Scorer[]> {
+  return fetchScorers(params, 20)
+}
+
+/**
+ * Assists ranked from the 100 best scorers — the widest list the free tier
+ * offers. Players who assist a lot but never score are missing, so this is
+ * only the fallback behind ESPN's real assists leaderboard.
+ */
 export async function getTopAssists(params: FootballQueryParams = {}): Promise<Assist[]> {
-  const scorers = await getTopScorers(params)
+  const scorers = await fetchScorers(params, 100)
   return scorers
     .filter((entry) => entry.assists > 0)
     .sort((a, b) => b.assists - a.assists)
@@ -294,7 +304,8 @@ export async function getMatches(params: FootballQueryParams = {}): Promise<Matc
     const status = (() => {
       const value = raw.status?.toUpperCase()
       if (value === 'IN_PLAY' || value === 'PAUSED' || value === 'LIVE') return 'LIVE' as const
-      if (value === 'FINISHED') return 'FINISHED' as const
+      if (value === 'FINISHED' || value === 'AWARDED') return 'FINISHED' as const
+      if (value === 'POSTPONED' || value === 'SUSPENDED' || value === 'CANCELLED') return 'POSTPONED' as const
       return 'SCHEDULED' as const
     })()
 

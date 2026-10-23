@@ -39,7 +39,8 @@ export interface Match {
   season: string
   matchday: number
   utcDate: string
-  status: 'SCHEDULED' | 'LIVE' | 'FINISHED'
+  /** POSTPONED covers postponed, suspended and cancelled games (no score). */
+  status: 'SCHEDULED' | 'LIVE' | 'FINISHED' | 'POSTPONED'
   homeTeam: Team
   awayTeam: Team
   homeScore?: number
@@ -48,22 +49,20 @@ export interface Match {
   events: MatchEvent[]
 }
 
+/**
+ * Season totals as the feeds report them. ESPN has no minutes played, so there
+ * is deliberately no minutes field: starts and sub appearances are the real
+ * measure of playing time.
+ */
 export interface PlayerStats {
   appearances: number
+  starts: number
+  subAppearances: number
   goals: number
   assists: number
   yellowCards: number
   redCards: number
-  minutes: number
   trend: number[]
-  attributes: {
-    pace: number
-    shooting: number
-    passing: number
-    dribbling: number
-    defending: number
-    physical: number
-  }
 }
 
 export interface Player {

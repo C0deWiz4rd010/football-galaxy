@@ -29,7 +29,7 @@ export function ResultsTimeline({ matches, team }: { matches: Match[]; team?: Te
         const opponent = isHome ? match.awayTeam : match.homeTeam
         const goalsFor = isHome ? match.homeScore : match.awayScore
         const goalsAgainst = isHome ? match.awayScore : match.homeScore
-        const hasScore = match.status !== 'SCHEDULED' && typeof goalsFor === 'number' && typeof goalsAgainst === 'number'
+        const hasScore = (match.status === 'LIVE' || match.status === 'FINISHED') && typeof goalsFor === 'number' && typeof goalsAgainst === 'number'
         const result = !hasScore || match.status !== 'FINISHED'
           ? null
           : goalsFor > goalsAgainst ? 'W' : goalsFor === goalsAgainst ? 'D' : 'L'

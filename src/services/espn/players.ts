@@ -52,6 +52,7 @@ export function normalizePosition(position: string | undefined): Player['positio
   return 'FW'
 }
 
+/** Local flag for the most common nationalities; unknown ones get none rather than a wrong one. */
 function nationalityFlag(nationality: string | undefined) {
   const normalized = nationality?.toLowerCase() ?? ''
   if (normalized.includes('german')) return createFlag('germany')
@@ -61,25 +62,8 @@ function nationalityFlag(nationality: string | undefined) {
   if (normalized.includes('portugal') || normalized.includes('portuguese')) return createFlag('portugal')
   if (normalized.includes('netherlands') || normalized.includes('dutch')) return createFlag('netherlands')
   if (normalized.includes('brazil')) return createFlag('brazil')
-  return createFlag('england')
-}
-
-/**
- * Indicative 0–100 attribute profile derived from real season output. It is a
- * visual summary of the stats below it, not scouting data.
- */
-export function derivePlayerAttributes(position: Player['position'], stats: Player['stats']): Player['stats']['attributes'] {
-  const output = stats.goals + stats.assists
-  const shotSignal = Math.min(18, stats.trend[2] ?? 0)
-  const cardPenalty = Math.min(10, stats.yellowCards + stats.redCards * 3)
-  return {
-    pace: Math.min(95, 64 + (position === 'FW' ? 10 : position === 'DF' ? 3 : 6) + Math.min(12, stats.appearances)),
-    shooting: Math.min(96, 46 + stats.goals * 3 + shotSignal + (position === 'FW' ? 12 : 0)),
-    passing: Math.min(96, 50 + stats.assists * 4 + (position === 'MF' ? 14 : 4)),
-    dribbling: Math.min(94, 56 + output * 2 + (position === 'FW' || position === 'MF' ? 8 : 0)),
-    defending: Math.min(94, 45 + (position === 'DF' ? 25 : position === 'GK' ? 18 : 4) - cardPenalty),
-    physical: Math.min(94, 58 + Math.min(16, Math.round(stats.minutes / 180)) + (position === 'DF' ? 8 : 0)),
-  }
+  if (normalized.includes('england') || normalized.includes('english')) return createFlag('england')
+  return ''
 }
 
 export function mapRosterAthlete(record: ApiRecord, team: Team): Player | null {
@@ -92,23 +76,19 @@ export function mapRosterAthlete(record: ApiRecord, team: Team): Player | null {
   const subIns = statByName(record, 'subIns')
   const goals = statByName(record, 'totalGoals')
   const assists = statByName(record, 'goalAssists')
-  const starts = Math.max(0, appearances - subIns)
   const stats: Player['stats'] = {
     appearances,
+    starts: Math.max(0, appearances - subIns),
+    subAppearances: subIns,
     goals,
     assists,
     yellowCards: statByName(record, 'yellowCards'),
     redCards: statByName(record, 'redCards'),
-    // ESPN rosters carry starts/sub appearances but no minutes; this is an
-    // estimate (full games for starts, a typical cameo for subs).
-    minutes: appearances > 0 ? Math.max(1, starts * 86 + subIns * 24) : 0,
     trend: [goals, assists, statByName(record, 'totalShots'), statByName(record, 'shotsOnTarget'), statByName(record, 'saves')].map(
       (item) => Math.round(item),
     ),
-    attributes: { pace: 0, shooting: 0, passing: 0, dribbling: 0, defending: 0, physical: 0 },
   }
   const mappedPosition = normalizePosition(text(position, 'abbreviation') ?? text(position, 'displayName') ?? text(position, 'name'))
-  stats.attributes = derivePlayerAttributes(mappedPosition, stats)
 
   const flag = child(record, 'flag')
   const nationality = text(record, 'citizenship') ?? text(flag, 'alt') ?? ''

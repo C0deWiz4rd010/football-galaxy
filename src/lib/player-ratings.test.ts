@@ -24,12 +24,12 @@ describe('getFormScore', () => {
 
 describe('getFormScore calibration', () => {
   it('rates an elite striker (5 goals in 5 full games) as Top Form', () => {
-    const striker = makePlayer({ position: 'FW', stats: { appearances: 5, goals: 5, assists: 0, minutes: 430, yellowCards: 0 } })
+    const striker = makePlayer({ position: 'FW', stats: { appearances: 5, starts: 5, subAppearances: 0, goals: 5, assists: 0, yellowCards: 0 } })
     expect(getFormScore(striker).label).toBe('Top Form')
   })
 
   it('does not punish a regular defender for scoring little', () => {
-    const defender = makePlayer({ position: 'DF', stats: { appearances: 6, goals: 0, assists: 1, minutes: 516, yellowCards: 1 } })
+    const defender = makePlayer({ position: 'DF', stats: { appearances: 6, starts: 6, subAppearances: 0, goals: 0, assists: 1, yellowCards: 1 } })
     expect(getFormScore(defender).score).toBeGreaterThanOrEqual(45)
   })
 })

@@ -35,8 +35,8 @@ export function getWikidataPlayerImage(name: string): Promise<string | undefined
       `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(name)}&language=en&format=json&limit=5&origin=*`,
     )
     const rows = Array.isArray(search.search) ? (search.search as ApiRecord[]) : []
-    const candidate =
-      rows.find((item) => /football|soccer/i.test(text(item, 'description') ?? '')) ?? rows[0]
+    // Only a footballer counts: the first hit for a common name is often someone else.
+    const candidate = rows.find((item) => /football|soccer/i.test(text(item, 'description') ?? ''))
     const entityId = text(candidate, 'id')
     if (!entityId) return undefined
 

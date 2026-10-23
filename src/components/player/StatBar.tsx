@@ -9,7 +9,7 @@ export function StatBar({ player }: { player: Player }) {
     ['assists', player.stats.assists],
     ['yellowCards', player.stats.yellowCards],
     ['redCards', player.stats.redCards],
-    ['minutes', player.stats.minutes],
+    ['startsLabel', player.stats.starts],
   ] as const
   return (
     <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">

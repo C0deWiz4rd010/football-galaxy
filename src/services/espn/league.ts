@@ -154,8 +154,14 @@ export function mapEvent(event: EspnEvent, leagueId: LeagueId, teamsById: Map<st
 
   const type = (competition?.status ?? event.status)?.type
   const status: Match['status'] =
-    type?.state === 'in' ? 'LIVE' : type?.state === 'post' && type.completed !== false ? 'FINISHED' : 'SCHEDULED'
-  const hasScore = status !== 'SCHEDULED'
+    type?.state === 'in'
+      ? 'LIVE'
+      : type?.state === 'post'
+        ? type.completed === false
+          ? 'POSTPONED'
+          : 'FINISHED'
+        : 'SCHEDULED'
+  const hasScore = status === 'LIVE' || status === 'FINISHED'
 
   return {
     id: event.id,

@@ -39,7 +39,7 @@ function TeamCell({ team, align, emphasis }: { team: Team; align: 'left' | 'righ
 
 function MatchRow({ match, timeFormat }: { match: Match; timeFormat: Intl.DateTimeFormat }) {
   const { t } = useLocale()
-  const played = typeof match.homeScore === 'number' && typeof match.awayScore === 'number' && match.status !== 'SCHEDULED'
+  const played = typeof match.homeScore === 'number' && typeof match.awayScore === 'number' && (match.status === 'LIVE' || match.status === 'FINISHED')
   const homeWon = played && match.homeScore! > match.awayScore!
   const awayWon = played && match.awayScore! > match.homeScore!
   return (
@@ -51,7 +51,7 @@ function MatchRow({ match, timeFormat }: { match: Match; timeFormat: Intl.DateTi
           match.status === 'LIVE' ? 'bg-live/12 font-bold text-live' : played ? 'bg-foreground/5 font-bold' : 'text-xs text-muted-foreground',
         )}
       >
-        {played ? `${match.homeScore}:${match.awayScore}` : timeFormat.format(new Date(match.utcDate))}
+        {played ? `${match.homeScore}:${match.awayScore}` : match.status === 'POSTPONED' ? t('livePostponed') : timeFormat.format(new Date(match.utcDate))}
         {match.status === 'LIVE' ? <span className="sr-only"> ({t('liveShort')})</span> : null}
       </span>
       <TeamCell team={match.awayTeam} align="left" emphasis={!played || awayWon || !homeWon} />

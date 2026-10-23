@@ -35,6 +35,18 @@ export const playerMetrics: PlayerMetric[] = [
   { key: 'appearances', labelKey: 'appearancesLabel', pool: (p) => p.appearances, value: (p) => p.stats.appearances },
 ]
 
+/** Below this many comparable players a percentile says little, so none is shown. */
+export const MIN_POOL_SIZE = 8
+
+/**
+ * Leader rows without appearances would turn every per-game value into 0 and
+ * push anyone who scored to the 100th percentile; they are left out.
+ */
+export function comparablePool(pool: PlayerRef[]): PlayerRef[] {
+  const usable = pool.filter((player) => player.appearances > 0)
+  return usable.length >= MIN_POOL_SIZE ? usable : []
+}
+
 /** Ascending value lists per metric, built once per pool. */
 export function buildMetricPools(pool: PlayerRef[], metrics: PlayerMetric[] = playerMetrics): Map<string, number[]> {
   return new Map(metrics.map((metric) => [metric.key, pool.map(metric.pool).sort((a, b) => a - b)]))

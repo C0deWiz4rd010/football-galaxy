@@ -3,7 +3,7 @@ import type { Player } from '@/services/types'
 export type FormLabel = 'Top Form' | 'In Form' | 'Steady' | 'Cold'
 
 export interface FormScore {
-  /** 0–99 score derived from real season stats with recent-form weighting. */
+  /** 0–99 index derived from the real season totals (no per-match data in the feeds). */
   score: number
   label: FormLabel
   /** Short descriptors derived from the player's stat profile. */
@@ -16,7 +16,7 @@ function clamp(value: number, min: number, max: number) {
 
 function deriveTraits(player: Player): string[] {
   const traits: string[] = []
-  const { goals, assists, appearances, minutes, yellowCards, redCards } = player.stats
+  const { goals, assists, appearances, starts, yellowCards, redCards } = player.stats
   const apps = Math.max(1, appearances)
 
   if (goals / apps >= 0.6) traits.push('Clinical Finisher')
@@ -25,7 +25,7 @@ function deriveTraits(player: Player): string[] {
   if (assists / apps >= 0.4) traits.push('Chance Creator')
   else if (assists >= 6) traits.push('Provider')
 
-  if (minutes / apps >= 80) traits.push('Workhorse')
+  if (appearances >= 5 && starts / apps >= 0.9) traits.push('Workhorse')
   if (player.age !== undefined && player.age <= 21 && goals + assists >= 6) traits.push('Rising Star')
   if (player.position === 'DF' && yellowCards + redCards * 2 <= 3) traits.push('Composed Defender')
   if (player.position === 'GK' && appearances >= 10) traits.push('Reliable Keeper')
@@ -40,29 +40,28 @@ function labelFor(score: number): FormLabel {
   return 'Cold'
 }
 
-/** How much attacking output counts per position; the rest is availability. */
+/** How much attacking output counts per position; the rest is the starter share. */
 const OUTPUT_WEIGHT: Record<Player['position'], number> = { FW: 0.6, MF: 0.55, DF: 0.3, GK: 0.1 }
 
 /**
  * "Form Score" (0–99) from real season statistics:
- * - output: goals + 0.7 × assists per 90 minutes (≈1.2 per 90 is elite),
- * - availability: share of each appearance actually on the pitch,
+ * - output: goals + 0.7 × assists per appearance (≈1.2 is elite),
+ * - starter share: starts out of all appearances,
  * - experience: appearances so far (saturates after 10),
  * minus a discipline penalty. Output weighs less for defenders and keepers,
  * whose contribution these stats cannot capture.
  */
 export function getFormScore(player: Player): FormScore {
-  const { goals, assists, appearances, minutes, yellowCards, redCards } = player.stats
+  const { goals, assists, appearances, starts, yellowCards, redCards } = player.stats
   const apps = Math.max(1, appearances)
-  const nineties = Math.max(1, minutes / 90)
 
-  const output = clamp(((goals + assists * 0.7) / nineties) * 80, 0, 100)
-  const availability = appearances > 0 ? clamp((minutes / apps / 90) * 100, 0, 100) : 0
+  const output = clamp(((goals + assists * 0.7) / apps) * 80, 0, 100)
+  const starterShare = appearances > 0 ? clamp((starts / apps) * 100, 0, 100) : 0
   const experience = clamp((appearances / 10) * 100, 0, 100)
   const discipline = clamp(yellowCards * 1.5 + redCards * 6, 0, 20)
 
   const outputWeight = OUTPUT_WEIGHT[player.position]
-  const raw = output * outputWeight + availability * (0.85 - outputWeight) + experience * 0.15 - discipline
+  const raw = output * outputWeight + starterShare * (0.85 - outputWeight) + experience * 0.15 - discipline
   const score = Math.round(clamp(raw, 0, 99))
 
   return {

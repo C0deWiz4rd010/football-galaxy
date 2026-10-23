@@ -31,13 +31,13 @@ export function makePlayer(overrides: Omit<Partial<Player>, 'stats'> & { stats?:
     ...rest,
     stats: {
       appearances: 10,
+      starts: 9,
+      subAppearances: 1,
       goals: 5,
       assists: 2,
       yellowCards: 1,
       redCards: 0,
-      minutes: 800,
       trend: [1, 0, 2, 1, 1],
-      attributes: { pace: 70, shooting: 70, passing: 70, dribbling: 70, defending: 50, physical: 70 },
       ...stats,
     },
   }

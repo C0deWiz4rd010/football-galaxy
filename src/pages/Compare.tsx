@@ -16,7 +16,7 @@ import { MIN_SEARCH_LENGTH, useFootballSearch } from '@/hooks/queries/search'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { getCrestSources, getPlayerPhotoSources } from '@/lib/assetSources'
 import { getLeague, isLeagueId } from '@/lib/leagues'
-import { buildMetricPools, percentileRank, playerMetrics } from '@/lib/percentiles'
+import { buildMetricPools, comparablePool, percentileRank, playerMetrics } from '@/lib/percentiles'
 import { getFormScore } from '@/lib/player-ratings'
 import { cn } from '@/lib/utils'
 import { createPlayerAvatar, createTeamCrest, initialsFromName } from '@/lib/visualAssets'
@@ -276,7 +276,7 @@ export default function Compare() {
   const leagueIds = [...new Set([selection1?.leagueId, selection2?.leagueId].filter((id): id is LeagueId => Boolean(id)))]
   const { summaries } = useLeagueSummaries(leagueIds)
   const teamsById = useMemo(() => new Map(summaries.flatMap((summary) => summary.teams).map((team) => [team.id, team])), [summaries])
-  const pool = useMemo(() => summaries.flatMap((summary) => summary.playerPool.map((entry) => entry.player)), [summaries])
+  const pool = useMemo(() => comparablePool(summaries.flatMap((summary) => summary.playerPool.map((entry) => entry.player))), [summaries])
 
   const pools = useMemo(() => buildMetricPools(pool), [pool])
 

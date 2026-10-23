@@ -110,10 +110,6 @@ export default function PlayerDetail() {
     player.stats.appearances > 0
       ? ((player.stats.goals + player.stats.assists) / player.stats.appearances).toFixed(2)
       : '0.00'
-  const availability =
-    player.stats.appearances > 0
-      ? `${Math.round((player.stats.minutes / (player.stats.appearances * 90)) * 100)}%`
-      : '0%'
 
   return (
     <PageWrapper>
@@ -162,9 +158,9 @@ export default function PlayerDetail() {
                   icon={<Target className="h-4 w-4 text-orange-400" />}
                 />
                 <MetricTile
-                  label={t('availability')}
-                  value={availability}
-                  helper={t('availabilityHelper')}
+                  label={t('startsLabel')}
+                  value={`${player.stats.starts}/${player.stats.appearances}`}
+                  helper={t('startsHelper')}
                   icon={<Clock3 className="h-4 w-4 text-sky-400" />}
                 />
                 <MetricTile
@@ -191,15 +187,15 @@ export default function PlayerDetail() {
                 </div>
                 <div className="surface-soft rounded-lg p-3">
                   <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">
-                    {t('minutesPlayed')}
+                    {t('appearancesLabel')}
                   </p>
                   <p className="mt-2 text-lg font-semibold tabular-nums">
-                    {player.stats.minutes.toLocaleString()}
+                    {player.stats.appearances.toLocaleString()}
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {player.stats.appearances > 0
-                      ? t('minutesPerAppearance', { value: Math.round(player.stats.minutes / player.stats.appearances) })
-                      : t('noMinutesYet')}
+                      ? t('startsAndSubs', { starts: player.stats.starts, subs: player.stats.subAppearances })
+                      : t('noAppearancesYet')}
                   </p>
                 </div>
               </div>
