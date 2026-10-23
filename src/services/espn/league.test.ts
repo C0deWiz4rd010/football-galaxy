@@ -139,6 +139,18 @@ describe('ESPN league provider', () => {
     expect(fetchMock).toHaveBeenCalledTimes(4)
   })
 
+  it('flags a failed leaders feed instead of returning an empty leaderboard', async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.endsWith('/eng.1/statistics')) throw new LiveHttpError(503, url)
+      return routes(url) as never
+    })
+
+    const summary = await league.getLeagueSummary('premier-league')
+
+    expect(summary.topScorers).toEqual([])
+    expect(summary.unavailable).toEqual(['leaders'])
+  })
+
   it('derives form from club schedules', async () => {
     const matches = await league.getTeamMatches('premier-league', '359')
     expect(matches.map((match) => match.status)).toEqual(['FINISHED', 'FINISHED', 'SCHEDULED'])

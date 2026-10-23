@@ -192,7 +192,11 @@ export interface LeagueSummary {
   recentMatches: Match[]
   teams: Team[]
   lastUpdated?: string
+  /** Parts of the summary whose feed failed — shown as an error, not as "no data". */
+  unavailable?: LeagueSummaryPart[]
 }
+
+export type LeagueSummaryPart = 'fixtures' | 'leaders'
 
 export interface FootballQueryParams {
   leagueId?: LeagueId

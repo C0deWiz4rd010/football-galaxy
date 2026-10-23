@@ -18,7 +18,7 @@ import { emptyTeamMetaIndex, findTeamMeta, getTeamMetaIndex, type TeamMetaIndex 
 import { withWikidataPortrait } from '@/services/wikidata'
 
 import { NotFoundError } from '../errors'
-import type { Assist, FormResult, LeagueId, LeaguePlayer, LeagueSummary, Match, Player, Scorer, Squad, Standing, Team } from '../types'
+import type { Assist, FormResult, LeagueId, LeaguePlayer, LeagueSummary, LeagueSummaryPart, Match, Player, Scorer, Squad, Standing, Team } from '../types'
 
 import { espnAthleteId, mapLeader, mapRosterAthlete } from './players'
 import {
@@ -53,7 +53,11 @@ interface LeagueCore {
   topScorers: Scorer[]
   topAssists: Assist[]
   playerPool: LeaguePlayer[]
+  unavailable: LeagueSummaryPart[]
 }
+
+/** Marks an optional feed that failed, so the summary can say so instead of showing nothing. */
+const FAILED = Symbol('failed')
 
 const coreCache = createPromiseCache<LeagueId, LeagueCore>(2 * 60_000)
 const scheduleCache = createPromiseCache<string, Match[]>(10 * 60_000)
@@ -187,8 +191,8 @@ async function loadCore(leagueId: LeagueId): Promise<LeagueCore> {
     const [teamsRaw, standingsRaw, scoreboardRaw, statisticsRaw, metaIndex] = await Promise.all([
       fetchLiveJson<unknown>(`${SITE}/${slug}/teams`),
       fetchLiveJson<unknown>(`${WEB}/${slug}/standings`),
-      fetchLiveJson<unknown>(`${SITE}/${slug}/scoreboard`).catch(() => ({})),
-      fetchLiveJson<unknown>(`${SITE}/${slug}/statistics`).catch(() => ({})),
+      fetchLiveJson<unknown>(`${SITE}/${slug}/scoreboard`).catch(() => FAILED),
+      fetchLiveJson<unknown>(`${SITE}/${slug}/statistics`).catch(() => FAILED),
       metaWithin(league, META_WAIT_MS),
     ])
 
@@ -241,6 +245,10 @@ async function loadCore(leagueId: LeagueId): Promise<LeagueCore> {
       teams: [...teamsById.values()],
       standings,
       fixtures,
+      unavailable: [
+        ...(scoreboardRaw === FAILED ? (['fixtures'] as const) : []),
+        ...(statisticsRaw === FAILED ? (['leaders'] as const) : []),
+      ],
       playerPool: [...playerPool.values()],
       topScorers: goalLeaders.slice(0, 15).map(({ player, team }) => ({
         id: `${player.id}-scorer`,
@@ -343,6 +351,7 @@ export async function getLeagueSummary(leagueId: LeagueId): Promise<LeagueSummar
     recentMatches: core.fixtures,
     teams: core.teams,
     lastUpdated: new Date().toISOString(),
+    unavailable: core.unavailable.length ? core.unavailable : undefined,
   }
 }
 

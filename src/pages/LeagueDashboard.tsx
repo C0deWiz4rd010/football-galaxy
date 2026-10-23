@@ -28,10 +28,11 @@ import { StaggerGrid, StaggerGridItem } from '@/components/shared/StaggerGrid'
 import { Badge } from '@/components/ui/badge'
 import { useLocale } from '@/contexts/LocaleContext'
 import { useLeagueSummary, useMatches } from '@/hooks/queries/football'
+import { useNow } from '@/hooks/useNow'
 import { withRecentForm } from '@/services/footballData'
 import { getPlayerPhotoSources } from '@/lib/assetSources'
 import { getLeague, isLeagueId } from '@/lib/leagues'
-import { cn, formatRelativeTime } from '@/lib/utils'
+import { cn, formatDateTime, formatRelativeTime } from '@/lib/utils'
 import { createLeagueLogo, createPlayerAvatar, initialsFromName } from '@/lib/visualAssets'
 import type { Standing } from '@/services/types'
 
@@ -85,6 +86,9 @@ function SummaryStat({
   )
 }
 
+/** Data younger than this counts as current; older reads "as of <time>". */
+const FRESH_MS = 5 * 60_000
+
 export default function LeagueDashboard() {
   const { leagueId: routeLeagueId } = useParams()
   const validLeague = isLeagueId(routeLeagueId)
@@ -92,6 +96,7 @@ export default function LeagueDashboard() {
   const { t } = useLocale()
   const { data, isPending, error, refetch, dataUpdatedAt } = useLeagueSummary(validLeague ? leagueId : undefined)
   const fetchedAt = dataUpdatedAt || null
+  const now = useNow()
   // Season results (one schedule per club) load after the table and only
   // enrich it with the form column, so they never delay the first paint.
   const { data: seasonMatches } = useMatches(validLeague ? leagueId : undefined)
@@ -139,10 +144,15 @@ export default function LeagueDashboard() {
   const topAssists = data.topAssists ?? []
   const recentMatches = data.recentMatches ?? []
   const liveUpdatedAt = data.lastUpdated
-  const isLiveSummary = Boolean(liveUpdatedAt)
+  const leadersUnavailable = Boolean(data.unavailable?.includes('leaders'))
   // Prefer the actual client fetch time (cache-aware) for the freshness label,
   // falling back to the payload's server timestamp.
   const freshnessAt: number | string | null = fetchedAt ?? liveUpdatedAt ?? null
+  const freshnessMs = freshnessAt === null ? Number.NaN : new Date(freshnessAt).getTime()
+  // Data restored from the persisted cache keeps its original fetch time, so an
+  // old table reads "as of 14:02" instead of pretending to be live.
+  const isCurrent = Number.isFinite(freshnessMs) && now - freshnessMs < FRESH_MS
+  const freshnessLabel = isCurrent ? t('freshCurrent') : t('freshAsOf', { time: formatDateTime(new Date(freshnessMs).toISOString()) })
   const leader = standings[0]
   const topAttack = standings.length > 0
     ? [...standings].sort((left, right) => right.goalsFor - left.goalsFor)[0]
@@ -183,10 +193,9 @@ export default function LeagueDashboard() {
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline">{league.country}</Badge>
-                  <DataSourceBadge
-                    freshness={isLiveSummary ? 'live' : 'offline'}
-                    label={t('liveProxy')}
-                  />
+                  {Number.isFinite(freshnessMs) ? (
+                    <DataSourceBadge freshness={isCurrent ? 'live' : 'official'} label={freshnessLabel} />
+                  ) : null}
                 </div>
                 <h1 className="mt-1 text-2xl font-semibold tracking-tight">{league.name}</h1>
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -201,7 +210,7 @@ export default function LeagueDashboard() {
                 <Badge variant="outline">{t('matchday')} {data.season.currentMatchday}</Badge>
               ) : null}
               {freshnessAt ? (
-                <span>{t('updated')} {formatRelativeTime(freshnessAt)}</span>
+                <span>{t('updated')} {formatRelativeTime(freshnessAt, now)}</span>
               ) : null}
             </div>
           </div>
@@ -301,8 +310,8 @@ export default function LeagueDashboard() {
               )}
             </div>
 
-            <TopScorersCard title={t('topScorers')} items={topScorers} compact />
-            <TopAssistsCard items={topAssists} compact />
+            <TopScorersCard title={t('topScorers')} items={topScorers} compact unavailable={leadersUnavailable} />
+            <TopAssistsCard items={topAssists} compact unavailable={leadersUnavailable} />
             <MatchOfTheDay match={recentMatches[0]} />
 
             <div className="stat-card p-3">
@@ -310,13 +319,13 @@ export default function LeagueDashboard() {
                 <div>
                   <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">{t('dataFreshness')}</p>
                   <h2 className="mt-1 text-sm font-semibold tracking-tight">
-                    {t('liveProxy')}
+                    {Number.isFinite(freshnessMs) ? freshnessLabel : t('liveProxy')}
                   </h2>
                 </div>
-                <span className={isLiveSummary ? 'h-2.5 w-2.5 rounded-full bg-emerald-400' : 'h-2.5 w-2.5 rounded-full bg-slate-400'} />
+                <span className={isCurrent ? 'h-2.5 w-2.5 rounded-full bg-emerald-400' : 'h-2.5 w-2.5 rounded-full bg-slate-400'} />
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                {freshnessAt ? `${t('updated')} ${formatRelativeTime(freshnessAt)}` : t('tableFirstSubtitle')}
+                {freshnessAt ? `${t('updated')} ${formatRelativeTime(freshnessAt, now)}` : t('tableFirstSubtitle')}
               </p>
             </div>
           </aside>

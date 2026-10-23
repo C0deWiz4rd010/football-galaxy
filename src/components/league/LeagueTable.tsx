@@ -19,19 +19,27 @@ import { useLocale } from '@/contexts/LocaleContext'
 import { useFavorites } from '@/hooks/useFavorites'
 import { DESKTOP_QUERY, useMediaQuery } from '@/hooks/useMediaQuery'
 import { getCrestSources } from '@/lib/assetSources'
+import type { MessageKey } from '@/i18n/de'
+import { type Zone, zoneOf, zonesIn } from '@/lib/tableZones'
 import { cn } from '@/lib/utils'
 import { createTeamCrest } from '@/lib/visualAssets'
 import type { Standing } from '@/services/types'
 
-type Zone = 'ucl' | 'rel' | undefined
-
-function zoneOf(position: number, total: number): Zone {
-  if (position <= 4) return 'ucl'
-  if (position >= total - 2) return 'rel'
-  return undefined
+const zoneBar: Record<Zone, string> = {
+  ucl: 'bg-zone-ucl',
+  'ucl-q': 'bg-zone-ucl/50',
+  playoff: 'bg-zone-rel/50',
+  rel: 'bg-zone-rel',
 }
 
-const zoneBar = { ucl: 'bg-zone-ucl', rel: 'bg-zone-rel' } as const
+const zoneLegend: Record<Zone, MessageKey> = {
+  ucl: 'championsLeagueLegend',
+  'ucl-q': 'championsLeagueQualifierLegend',
+  playoff: 'relegationPlayoffLegend',
+  rel: 'relegationLegend',
+}
+
+const zoneFor = (standing: Standing, total: number) => zoneOf(standing.leagueId, standing.position, total)
 
 function Crest({ standing, size }: { standing: Standing; size: number }) {
   return (
@@ -55,7 +63,7 @@ const teamHref = (standing: Standing) => `/${standing.leagueId}/team/${standing.
 const signed = (value: number) => (value > 0 ? `+${value}` : String(value))
 
 /** Phone row: one tappable link per club, zone bar, points prominent. */
-const MobileRow = memo(function MobileRow({ standing, zone, favorite }: { standing: Standing; zone: Zone; favorite: boolean }) {
+const MobileRow = memo(function MobileRow({ standing, zone, favorite }: { standing: Standing; zone?: Zone; favorite: boolean }) {
   const { t } = useLocale()
   return (
     <li>
@@ -189,7 +197,7 @@ function DesktopTable({ standings }: { standings: Standing[] }) {
         </TableHeader>
         <TableBody>
           {table.getRowModel().rows.map((row) => {
-            const zone = zoneOf(row.original.position, standings.length)
+            const zone = zoneFor(row.original, standings.length)
             return (
               <TableRow
                 key={row.id}
@@ -255,7 +263,7 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
                 <MobileRow
                   key={standing.id}
                   standing={standing}
-                  zone={zoneOf(standing.position, standings.length)}
+                  zone={zoneFor(standing, standings.length)}
                   favorite={favorites.isTeamFavorite(standing.team.id)}
                 />
               ))}
@@ -266,14 +274,12 @@ export function LeagueTable({ standings }: { standings: Standing[] }) {
               <span className="font-semibold text-foreground/80">{t('tableLegend')}: </span>
               {t('tableAbbrevLegend')}
             </p>
-            <p className="flex items-center gap-2">
-              <span aria-hidden className="h-4 w-1 rounded-full bg-zone-ucl" />
-              {t('championsLeagueLegend')}
-            </p>
-            <p className="flex items-center gap-2">
-              <span aria-hidden className="h-4 w-1 rounded-full bg-zone-rel" />
-              {t('relegationLegend')}
-            </p>
+            {zonesIn(standings[0]!.leagueId).map((zone) => (
+              <p key={zone} className="flex items-center gap-2">
+                <span aria-hidden className={cn('h-4 w-1 shrink-0 rounded-full', zoneBar[zone])} />
+                {t(zoneLegend[zone])}
+              </p>
+            ))}
             <p className="flex items-center gap-2">
               <Star className="h-3.5 w-3.5 fill-warning text-warning" aria-hidden />
               {t('favoriteLegend')}

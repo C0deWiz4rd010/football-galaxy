@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { AssetImage } from '@/components/shared/AssetImage'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { useLocale } from '@/contexts/LocaleContext'
 import { getPlayerPhotoSources } from '@/lib/assetSources'
 import { createPlayerAvatar, initialsFromName } from '@/lib/visualAssets'
 import type { Assist, Scorer } from '@/services/types'
@@ -75,22 +76,26 @@ export function TopScorersCard({
   items,
   type = 'goals',
   compact = false,
+  unavailable = false,
 }: {
   title: string
   items: Item[]
   type?: 'goals' | 'assists'
   compact?: boolean
+  /** The leaders feed failed: say so instead of "no leaders yet". */
+  unavailable?: boolean
 }) {
   const navigate = useNavigate()
+  const { t } = useLocale()
 
   return (
     <section className={compact ? 'surface-soft overflow-hidden rounded-lg p-3' : 'stat-card overflow-hidden'}>
       <div className={compact ? 'mb-2 flex items-center justify-between gap-3' : 'mb-3 flex items-center justify-between gap-3'}>
         <div>
-          <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">Leaders</p>
+          <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">{t('leadersEyebrow')}</p>
           <h2 className={compact ? 'mt-0.5 text-sm font-semibold tracking-tight' : 'mt-1 text-base font-semibold tracking-tight'}>{title}</h2>
         </div>
-        <span className="text-xs text-muted-foreground">Top 5</span>
+        <span className="text-xs text-muted-foreground">{t('topN', { count: compact ? 3 : 5 })}</span>
       </div>
       {items.length > 0 ? (
         <div className={compact ? 'divide-y divide-border/45' : 'space-y-2'}>
@@ -134,8 +139,8 @@ export function TopScorersCard({
         </div>
       ) : (
         <EmptyState
-          title={`No ${title.toLowerCase()} yet`}
-          description="This leaderboard will appear once player statistics are available."
+          title={unavailable ? t('leadersUnavailableTitle') : t('leadersEmptyTitle')}
+          description={unavailable ? t('leadersUnavailableBody') : t('leadersEmptyBody')}
           className="min-h-0 border-0 p-0"
         />
       )}
