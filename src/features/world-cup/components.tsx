@@ -467,7 +467,6 @@ export function WorldCupFeatureMatch({ fixture }: { fixture?: WorldCupFixture })
             {fixture.homeScore ?? '–'}:{fixture.awayScore ?? '–'}
           </p>
           {wc.decision(fixture) ? <p className="mt-1 text-xs font-medium text-muted-foreground">{wc.decision(fixture)}</p> : null}
-          {fixture.city ? <p className="mt-1 text-xs text-muted-foreground">{fixture.city}</p> : null}
         </div>
         <FeaturedTeam team={fixture.awayTeam} align="right" />
       </div>
@@ -578,7 +577,7 @@ export function WorldCupMatchCard({ fixture, compact = false }: { fixture: World
         <TeamRowLine team={fixture.awayTeam} score={fixture.awayScore} won={winnerSide(fixture) === 'away'} />
       </div>
       <p className="mt-2 truncate text-xs text-muted-foreground">
-        {[fixture.city, formatDateTime(fixture.utcDate)].filter(Boolean).join(' · ')}
+        {formatDateTime(fixture.utcDate)}
       </p>
     </Link>
   )
@@ -586,9 +585,13 @@ export function WorldCupMatchCard({ fixture, compact = false }: { fixture: World
 
 const hintKey: Record<WorldCupGroupStanding['qualificationHint'], MessageKey | undefined> = {
   'top-two': 'wcHintTop2',
+  'best-third': 'wcHintBestThird',
   'best-third-watch': 'wcHintThird',
   pending: undefined,
+  eliminated: undefined,
 }
+
+const isThirdHint = (hint: WorldCupGroupStanding['qualificationHint']) => hint === 'best-third' || hint === 'best-third-watch'
 
 /**
  * One group's table. Fixed layout so long names truncate instead of pushing
@@ -631,7 +634,7 @@ export function WorldCupGroupTable({ group, rows }: { group: string; rows: World
                 className={cn(
                   'relative border-b border-border/60 transition-colors last:border-0 focus-within:bg-foreground/5 hover:bg-foreground/5',
                   row.qualificationHint === 'top-two' && 'bg-info/5',
-                  row.qualificationHint === 'best-third-watch' && 'bg-warning/5',
+                  isThirdHint(row.qualificationHint) && 'bg-warning/5',
                 )}
               >
                 <td className="px-3 py-2">
@@ -705,7 +708,7 @@ export function WorldCupGroupsPreview({ grouped }: { grouped: Record<string, Wor
                         'size-1.5 rounded-full',
                         row.qualificationHint === 'top-two'
                           ? 'bg-info'
-                          : row.qualificationHint === 'best-third-watch'
+                          : isThirdHint(row.qualificationHint)
                             ? 'bg-warning'
                             : 'bg-foreground/20',
                       )}
@@ -1037,7 +1040,6 @@ export function WorldCupMatchFilters({
   const groups = uniqueOptions(fixtures.map((fixture) => fixture.group))
   const stageOrder = ['group', 'round-of-32', 'round-of-16', 'quarter-final', 'semi-final', 'third-place', 'final', 'unknown'] as const
   const stages = stageOrder.filter((stage) => fixtures.some((fixture) => fixture.stage === stage))
-  const cities = uniqueOptions(fixtures.map((fixture) => fixture.city))
   const teams = new Map<string, string>()
   for (const fixture of fixtures) {
     for (const team of [fixture.homeTeam, fixture.awayTeam]) {
@@ -1050,7 +1052,6 @@ export function WorldCupMatchFilters({
     filters.status !== 'all',
     filters.group !== 'all',
     filters.stage !== 'all',
-    filters.hostCity !== 'all',
     filters.teamId !== 'all',
   ].filter(Boolean).length
   const all = t('allOption')
@@ -1109,12 +1110,6 @@ export function WorldCupMatchFilters({
           value={filters.stage}
           options={[['all', all], ...stages.map((stage): [string, string] => [stage, wc.stage(stage)])]}
           onChange={(stage) => onChange({ ...filters, stage: stage as WorldCupFilterState['stage'] })}
-        />
-        <SelectFilter
-          label={t('wcCity')}
-          value={filters.hostCity}
-          options={[['all', all], ...cities.map((city): [string, string] => [city, city])]}
-          onChange={(hostCity) => onChange({ ...filters, hostCity })}
         />
       </div>
       <div className="mt-2 grid gap-2 lg:grid-cols-[minmax(160px,1fr)_auto]">

@@ -8,15 +8,31 @@
  * top scorers at 10 requests/minute.
  *
  * What the free tier does NOT expose — in-match event timelines, lineups with
- * formations, and possession-style statistics — is returned as empty arrays
- * with an explanatory `note`, so the UI degrades gracefully instead of inventing
- * data.
+ * formations, possession-style statistics and venues — is returned as empty,
+ * so the UI says so instead of inventing data. Every response is validated
+ * with Zod (`./schemas`).
  */
+
+import type { z } from 'zod'
 
 import { LiveHttpError, fetchLiveJson } from '@/services/net/liveClient'
 
 import { NotFoundError } from '../errors'
 
+import { rankGroup, type GroupResult } from './groupRanking'
+import {
+  type FdMatch,
+  type FdScore,
+  type FdScoreHalf,
+  type FdSquadPlayer,
+  type FdStandingRow,
+  type FdTeamRef,
+  fdMatchSchema,
+  fdMatchesResponseSchema,
+  fdStandingsResponseSchema,
+  fdTeamDetailSchema,
+  fdTeamsResponseSchema,
+} from './schemas'
 import { worldCupTournament } from './tournament'
 import type {
   DataQualityMeta,
@@ -43,114 +59,25 @@ const competition = 'WC'
 const competitionPath = (resource: string) => `/competitions/${competition}/${resource}?season=${worldCupTournament.season}`
 
 // ---------------------------------------------------------------------------
-// Raw football-data.org response shapes (only the fields we read)
-// ---------------------------------------------------------------------------
-
-export interface FdTeamRef {
-  id?: number
-  name?: string
-  shortName?: string
-  tla?: string
-  crest?: string
-}
-
-interface FdScoreHalf {
-  home?: number | null
-  away?: number | null
-}
-
-interface FdScore {
-  winner?: string | null
-  duration?: string
-  fullTime?: FdScoreHalf
-  halfTime?: FdScoreHalf
-  regularTime?: FdScoreHalf
-  extraTime?: FdScoreHalf
-  penalties?: FdScoreHalf
-}
-
-interface FdReferee {
-  id?: number
-  name?: string
-  type?: string
-  nationality?: string
-}
-
-export interface FdMatch {
-  id: number
-  utcDate: string
-  status: string
-  stage: string
-  group?: string | null
-  matchday?: number | null
-  venue?: string | null
-  lastUpdated?: string
-  homeTeam: FdTeamRef
-  awayTeam: FdTeamRef
-  score?: FdScore
-  referees?: FdReferee[]
-}
-
-interface FdStandingRow {
-  position: number
-  team: FdTeamRef
-  playedGames: number
-  won: number
-  draw: number
-  lost: number
-  points: number
-  goalsFor: number
-  goalsAgainst: number
-  goalDifference: number
-  form?: string | null
-}
-
-interface FdStandingGroup {
-  stage?: string
-  type?: string
-  group?: string | null
-  table: FdStandingRow[]
-}
-
-interface FdSquadPlayer {
-  id: number
-  name?: string
-  position?: string | null
-  dateOfBirth?: string | null
-  nationality?: string | null
-  shirtNumber?: number | null
-}
-
-interface FdCoach {
-  id?: number
-  name?: string | null
-  firstName?: string | null
-  lastName?: string | null
-  nationality?: string | null
-}
-
-interface FdTeamDetail extends FdTeamRef {
-  area?: { name?: string }
-  coach?: FdCoach | null
-  squad?: FdSquadPlayer[]
-}
-
-// ---------------------------------------------------------------------------
 // Fetch helper
 // ---------------------------------------------------------------------------
 
 // Shares the app-wide fetch client: dedupe, the football-data.org throttle
 // (the WC area and the leagues use the same 10 req/min key), timeouts, retries.
-async function getJson<T>(path: string): Promise<T> {
+async function getJson<S extends z.ZodType>(path: string, schema: S): Promise<z.infer<S>> {
+  let raw: unknown
   try {
-    return await fetchLiveJson<T>(`${apiBase}${path}`)
+    raw = await fetchLiveJson<unknown>(`${apiBase}${path}`)
   } catch (error) {
     if (error instanceof LiveHttpError && error.status === 404) {
       throw new NotFoundError(`World Cup resource ${path} not found.`)
     }
     throw error
   }
+  return schema.parse(raw)
 }
+
+const getMatches = async () => (await getJson(competitionPath('matches'), fdMatchesResponseSchema)).matches ?? []
 
 // ---------------------------------------------------------------------------
 // Mappers
@@ -227,7 +154,7 @@ function mapTeamRef(raw: FdTeamRef | undefined, group?: string): WorldCupTeam {
   }
 }
 
-function half(score?: FdScoreHalf) {
+function half(score?: FdScoreHalf | null) {
   if (!score) return undefined
   const home = typeof score.home === 'number' ? score.home : undefined
   const away = typeof score.away === 'number' ? score.away : undefined
@@ -242,7 +169,7 @@ function winnerOf(value?: string | null): WorldCupMatchWinner | undefined {
   return undefined
 }
 
-function decidedByOf(value?: string): WorldCupDecidedBy | undefined {
+function decidedByOf(value?: string | null): WorldCupDecidedBy | undefined {
   if (value === 'PENALTY_SHOOTOUT') return 'penalties'
   if (value === 'EXTRA_TIME') return 'extra-time'
   if (value === 'REGULAR') return 'regular'
@@ -254,7 +181,7 @@ function decidedByOf(value?: string): WorldCupDecidedBy | undefined {
  * a.e.t., 3:4 on penalties arrives as fullTime 4:5). The match score is
  * therefore fullTime minus penalties.
  */
-function matchScore(score?: FdScore): WorldCupScore | undefined {
+function matchScore(score?: FdScore | null): WorldCupScore | undefined {
   const fullTime = half(score?.fullTime)
   const penalties = half(score?.penalties)
   if (!fullTime || !penalties) return fullTime
@@ -297,7 +224,11 @@ export function mapFixture(raw: FdMatch): WorldCupFixture {
   }
 }
 
-function mapStandingRow(raw: FdStandingRow, group: string): WorldCupGroupStanding {
+function mapStandingRow(
+  raw: FdStandingRow,
+  group: string,
+  hint: WorldCupGroupStanding['qualificationHint'],
+): WorldCupGroupStanding {
   const form = (raw.form ?? '')
     .split(/[,\s]+/)
     .map((token) => token.trim().toUpperCase())
@@ -317,24 +248,28 @@ function mapStandingRow(raw: FdStandingRow, group: string): WorldCupGroupStandin
     goalDifference: raw.goalDifference,
     points: raw.points,
     form,
-    qualificationHint: raw.position <= 2 ? 'top-two' : raw.position === 3 ? 'best-third-watch' : 'pending',
+    qualificationHint: hint,
     quality: quality(),
   }
 }
 
-function ageFromDob(dob?: string | null): number | undefined {
+/** Age on the tournament's opening day — the archive must not age players. */
+export function ageAtTournamentStart(dob?: string | null): number | undefined {
   if (!dob) return undefined
   const birth = new Date(dob)
   if (Number.isNaN(birth.getTime())) return undefined
-  const diff = Date.now() - birth.getTime()
-  return Math.floor(diff / (365.25 * 24 * 3600 * 1000))
+  const start = new Date(worldCupTournament.startsAt)
+  const hadBirthday =
+    start.getUTCMonth() > birth.getUTCMonth() ||
+    (start.getUTCMonth() === birth.getUTCMonth() && start.getUTCDate() >= birth.getUTCDate())
+  return start.getUTCFullYear() - birth.getUTCFullYear() - (hadBirthday ? 0 : 1)
 }
 
 function mapSquadPlayer(raw: FdSquadPlayer): WorldCupSquadPlayer {
   return {
     id: `fd-${raw.id}`,
     name: raw.name?.trim() || 'Unknown',
-    age: ageFromDob(raw.dateOfBirth),
+    age: ageAtTournamentStart(raw.dateOfBirth),
     number: typeof raw.shirtNumber === 'number' ? raw.shirtNumber : undefined,
     position: raw.position?.trim() || undefined,
   }
@@ -354,8 +289,7 @@ function teamMatchesRoute(team: WorldCupTeam, route: string): boolean {
 // ---------------------------------------------------------------------------
 
 async function loadFixtures(): Promise<WorldCupFixture[]> {
-  const data = await getJson<{ matches?: FdMatch[] }>(competitionPath('matches'))
-  return (data.matches ?? [])
+  return (await getMatches())
     .map(mapFixture)
     .sort((left, right) => left.utcDate.localeCompare(right.utcDate))
 }
@@ -371,37 +305,74 @@ function groupsFromMatches(matches: FdMatch[]): Map<number, string> {
   return groupByTeam
 }
 
+function groupResults(matches: FdMatch[]): GroupResult[] {
+  return matches.flatMap((match) => {
+    const homeId = match.homeTeam.id
+    const awayId = match.awayTeam.id
+    const score = matchScore(match.score)
+    if (match.stage !== 'GROUP_STAGE' || statusOf(match.status) !== 'FINISHED') return []
+    if (typeof homeId !== 'number' || typeof awayId !== 'number') return []
+    if (score?.home === undefined || score.away === undefined) return []
+    return [{ homeId, awayId, homeGoals: score.home, awayGoals: score.away }]
+  })
+}
+
+/** Teams in the round of 32 once it is drawn — tells qualified thirds from eliminated ones. */
+function roundOf32Teams(matches: FdMatch[]): Set<number> | undefined {
+  const ids = matches
+    .filter((match) => match.stage === 'LAST_32')
+    .flatMap((match) => [match.homeTeam.id, match.awayTeam.id])
+    .filter((id): id is number => typeof id === 'number')
+  return ids.length ? new Set(ids) : undefined
+}
+
+function hintFor(rank: number, teamId: number | null | undefined, qualified?: Set<number>): WorldCupGroupStanding['qualificationHint'] {
+  if (rank <= 2) return 'top-two'
+  if (!qualified) return rank === 3 ? 'best-third-watch' : 'pending'
+  return rank === 3 && typeof teamId === 'number' && qualified.has(teamId) ? 'best-third' : 'eliminated'
+}
+
 async function loadGroups(rawMatches?: FdMatch[]): Promise<WorldCupGroupStanding[]> {
-  const data = await getJson<{ standings?: FdStandingGroup[] }>(competitionPath('standings'))
+  const data = await getJson(competitionPath('standings'), fdStandingsResponseSchema)
   const blocks = (data.standings ?? []).filter((block) => !block.type || block.type === 'TOTAL')
+  const matches = rawMatches ?? (await getMatches())
+  const qualified = roundOf32Teams(matches)
   const rows: WorldCupGroupStanding[] = []
 
   if (blocks.some((block) => normalizeGroup(block.group))) {
     for (const block of blocks) {
       const group = normalizeGroup(block.group) ?? '?'
-      for (const row of block.table ?? []) rows.push(mapStandingRow(row, group))
+      for (const row of block.table ?? []) rows.push(mapStandingRow(row, group, hintFor(row.position, row.team.id, qualified)))
     }
     return rows
   }
 
-  // Archived tournaments come back as one overall table without groups:
-  // split it by the teams' group-stage fixtures and rank within each group
-  // (the overall order already applies points, goal difference, goals).
-  const matches = rawMatches ?? (await getJson<{ matches?: FdMatch[] }>(competitionPath('matches'))).matches ?? []
+  // Archived tournaments come back as one overall table without groups (and
+  // possibly one TOTAL block per stage): take each team once, split by the
+  // group-stage fixtures and rank with the FIFA tiebreakers.
   const groupByTeam = groupsFromMatches(matches)
-  const rankInGroup = new Map<string, number>()
+  const byGroup = new Map<string, Array<FdStandingRow & { teamId: number; providerOrder: number }>>()
+  const seen = new Set<number>()
   for (const row of blocks.flatMap((block) => block.table ?? []).sort((a, b) => a.position - b.position)) {
-    const group = typeof row.team.id === 'number' ? groupByTeam.get(row.team.id) : undefined
-    if (!group) continue
-    const rank = (rankInGroup.get(group) ?? 0) + 1
-    rankInGroup.set(group, rank)
-    rows.push(mapStandingRow({ ...row, position: rank }, group))
+    const teamId = row.team.id
+    const group = typeof teamId === 'number' ? groupByTeam.get(teamId) : undefined
+    if (typeof teamId !== 'number' || !group || seen.has(teamId)) continue
+    seen.add(teamId)
+    byGroup.set(group, [...(byGroup.get(group) ?? []), { ...row, teamId, providerOrder: row.position }])
+  }
+
+  const results = groupResults(matches)
+  for (const [group, teams] of byGroup) {
+    rankGroup(teams, results).forEach((row, index) => {
+      const rank = index + 1
+      rows.push(mapStandingRow({ ...row, position: rank }, group, hintFor(rank, row.teamId, qualified)))
+    })
   }
   return rows.sort((a, b) => a.group.localeCompare(b.group) || a.rank - b.rank)
 }
 
 async function loadTeams(groups?: WorldCupGroupStanding[]): Promise<WorldCupTeam[]> {
-  const data = await getJson<{ teams?: FdTeamRef[] }>(competitionPath('teams'))
+  const data = await getJson(competitionPath('teams'), fdTeamsResponseSchema)
   const groupByTeamId = new Map<string, string>()
   for (const row of groups ?? []) {
     groupByTeamId.set(row.team.id, row.group)
@@ -445,10 +416,9 @@ function buildBracket(fixtures: WorldCupFixture[], rawStageByFixtureId: Map<stri
 // ---------------------------------------------------------------------------
 
 async function getDashboard(): Promise<WorldCupDashboard> {
-  const rawMatchesData = await getJson<{ matches?: FdMatch[] }>(competitionPath('matches'))
-  const groups = await loadGroups(rawMatchesData.matches).catch(() => [] as WorldCupGroupStanding[])
+  const rawMatches = await getMatches()
+  const groups = await loadGroups(rawMatches).catch(() => [] as WorldCupGroupStanding[])
 
-  const rawMatches = rawMatchesData.matches ?? []
   const rawStageByFixtureId = new Map<string, string>()
   for (const match of rawMatches) {
     rawStageByFixtureId.set(`fd-${match.id}`, match.stage)
@@ -487,8 +457,7 @@ async function getDashboard(): Promise<WorldCupDashboard> {
 }
 
 async function getBracket(): Promise<WorldCupBracketRound[]> {
-  const data = await getJson<{ matches?: FdMatch[] }>(competitionPath('matches'))
-  const rawMatches = data.matches ?? []
+  const rawMatches = await getMatches()
   const rawStageByFixtureId = new Map<string, string>()
   for (const match of rawMatches) {
     rawStageByFixtureId.set(`fd-${match.id}`, match.stage)
@@ -500,7 +469,7 @@ async function getBracket(): Promise<WorldCupBracketRound[]> {
 async function getTeam(teamId: string): Promise<{ team: WorldCupTeam; squad: WorldCupSquad; fixtures: WorldCupFixture[] }> {
   const numericId = teamId.replace(/^fd-/, '')
   const [detail, fixtures] = await Promise.all([
-    getJson<FdTeamDetail>(`/teams/${numericId}`),
+    getJson(`/teams/${numericId}`, fdTeamDetailSchema),
     loadFixtures().catch(() => [] as WorldCupFixture[]),
   ])
 
@@ -525,7 +494,7 @@ async function getTeam(teamId: string): Promise<{ team: WorldCupTeam; squad: Wor
 
 async function getFixture(matchId: string): Promise<WorldCupFixture> {
   const numericId = matchId.replace(/^fd-/, '')
-  const raw = await getJson<FdMatch>(`/matches/${numericId}`)
+  const raw = await getJson(`/matches/${numericId}`, fdMatchSchema)
   return mapFixture(raw)
 }
 

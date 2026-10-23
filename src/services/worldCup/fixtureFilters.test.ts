@@ -6,20 +6,17 @@ import { mapFixture } from './footballDataProvider'
 
 describe('World Cup fixture filters', () => {
   it('filters by status, group, team, and search query', () => {
-    const liveMexico = {
-      ...mapFixture({
-        id: 1,
-        utcDate: '2026-06-11T19:00:00Z',
-        status: 'IN_PLAY',
-        stage: 'GROUP_STAGE',
-        group: 'GROUP_A',
-        venue: 'Estadio Azteca',
-        homeTeam: { id: 26, name: 'Mexico', tla: 'MEX' },
-        awayTeam: { id: 27, name: 'Canada', tla: 'CAN' },
-        score: { fullTime: { home: 1, away: 0 } },
-      }),
-      city: 'Mexico City',
-    }
+    const liveMexico = mapFixture({
+      id: 1,
+      utcDate: '2026-06-11T19:00:00Z',
+      status: 'IN_PLAY',
+      stage: 'GROUP_STAGE',
+      group: 'GROUP_A',
+      venue: 'Estadio Azteca',
+      homeTeam: { id: 26, name: 'Mexico', tla: 'MEX' },
+      awayTeam: { id: 27, name: 'Canada', tla: 'CAN' },
+      score: { fullTime: { home: 1, away: 0 } },
+    })
 
     const scheduledUsa = mapFixture({
       id: 2,
@@ -36,7 +33,6 @@ describe('World Cup fixture filters', () => {
       status: 'live',
       group: 'A',
       stage: 'all',
-      hostCity: 'Mexico City',
       teamId: liveMexico.homeTeam.id,
     })
 

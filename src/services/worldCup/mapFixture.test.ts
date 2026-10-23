@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { worldCupKnockoutMatches } from '@/test/payloads/worldCupKnockout'
 import { winnerSide } from '@/features/world-cup/utils'
 
-import { mapFixture } from './footballDataProvider'
+import { ageAtTournamentStart, mapFixture } from './footballDataProvider'
 
 describe('mapFixture scores', () => {
   it('keeps the shoot-out out of the match score', () => {
@@ -43,5 +43,14 @@ describe('mapFixture scores', () => {
 
     expect(fixture.winner).toBeUndefined()
     expect(fixture.decidedBy).toBeUndefined()
+  })
+})
+
+describe('ageAtTournamentStart', () => {
+  it('counts birthdays up to the opening day, not today', () => {
+    // Opening day is 2026-06-11.
+    expect(ageAtTournamentStart('2000-06-11')).toBe(26)
+    expect(ageAtTournamentStart('2000-06-12')).toBe(25)
+    expect(ageAtTournamentStart('not a date')).toBeUndefined()
   })
 })

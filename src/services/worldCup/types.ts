@@ -97,7 +97,6 @@ export interface WorldCupFixture {
   referee?: string
   timezone?: string
   venue?: string
-  city?: string
   homeTeam: WorldCupTeam
   awayTeam: WorldCupTeam
   /** Goals after regular time plus extra time — never includes the shoot-out. */
@@ -134,7 +133,11 @@ export interface WorldCupGroupStanding {
   goalDifference: number
   points: number
   form: Array<'W' | 'D' | 'L'>
-  qualificationHint: 'top-two' | 'best-third-watch' | 'pending'
+  /**
+   * While the group stage runs third place is only a 'best-third-watch'; once
+   * the round of 32 is drawn it is either 'best-third' or 'eliminated'.
+   */
+  qualificationHint: 'top-two' | 'best-third' | 'best-third-watch' | 'pending' | 'eliminated'
   quality: DataQualityMeta
 }
 
@@ -214,6 +217,5 @@ export interface WorldCupFilterState {
   status: 'all' | 'live' | 'scheduled' | 'finished'
   group: string
   stage: 'all' | WorldCupStage
-  hostCity: string
   teamId: string
 }

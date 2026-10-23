@@ -71,4 +71,48 @@ describe('football-data.org World Cup provider', () => {
     ])
     expect(groups[0]?.qualificationHint).toBe('top-two')
   })
+
+  it('ranks archived groups by head-to-head, dedupes stage blocks and marks qualified thirds', async () => {
+    const scored = (id: number, home: [number, string], away: [number, string], h: number, a: number) => ({
+      ...groupMatch(id, 'GROUP_A', home, away),
+      score: { duration: 'REGULAR', fullTime: { home: h, away: a } },
+    })
+    const mex: [number, string] = [1, 'MEX']
+    const rsa: [number, string] = [2, 'RSA']
+    const kor: [number, string] = [3, 'KOR']
+    const cze: [number, string] = [4, 'CZE']
+    // MEX and RSA both finish on 6 points; RSA has the better goal difference but lost to MEX.
+    const overall = [
+      { ...row(1, 2, 'RSA', 6), goalDifference: 4 },
+      { ...row(2, 1, 'MEX', 6), goalDifference: 1 },
+      row(3, 3, 'KOR', 4),
+      row(4, 4, 'CZE', 1),
+    ]
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.includes('/standings')) {
+        return {
+          standings: [
+            { stage: 'GROUP_STAGE', type: 'TOTAL', group: null, table: overall },
+            { stage: 'LAST_32', type: 'TOTAL', group: null, table: overall },
+          ],
+        } as never
+      }
+      return {
+        matches: [
+          scored(1, mex, rsa, 1, 0),
+          scored(2, kor, cze, 1, 1),
+          { ...groupMatch(3, 'GROUP_A', kor, [9, 'BRA']), stage: 'LAST_32', group: null },
+        ],
+      } as never
+    })
+
+    const groups = await footballDataWorldCupProvider.getGroups()
+
+    expect(groups.map((entry) => [entry.rank, entry.team.code, entry.qualificationHint])).toEqual([
+      [1, 'MEX', 'top-two'],
+      [2, 'RSA', 'top-two'],
+      [3, 'KOR', 'best-third'],
+      [4, 'CZE', 'eliminated'],
+    ])
+  })
 })
