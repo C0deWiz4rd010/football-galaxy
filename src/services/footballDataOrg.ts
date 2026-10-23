@@ -6,10 +6,11 @@
  * The browser bundle therefore never sees the API key.
  *
  * Free tier covers the top-5 European leagues for standings, scorers, and
- * matches at 10 requests/minute. Endpoints that this tier does not cover
- * (squads, individual player details) are intentionally not implemented here
- * — the cascade in `footballData.ts` falls through to TheSportsDB and then
- * to local mock data.
+ * matches at 10 requests/minute. This module is the second source in the
+ * cascade in `footballData.ts` (ESPN → football-data.org → OpenLigaDB for the
+ * Bundesliga table). Squads and individual player details are not
+ * implemented here; they come from ESPN only. There is no mock fallback:
+ * when every source fails, the UI shows an error state.
  */
 
 import { z } from 'zod'

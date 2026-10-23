@@ -1,5 +1,7 @@
 # Live Player Stats Comparison
 
+> Historischer Stand (Mai 2026): Mock-Fallback, `src/services/theSportsDb.ts` und der Header-Tab „Lokal“ gibt es nicht mehr. Aktueller Stand: README.md und `docs/plans/20-data-correctness-and-release.md`.
+
 Generated: 2026-05-17T18:00:56.707Z
 
 Purpose: compare one representative team per top-five league against current ESPN roster statistics. Football Galaxy now maps these same ESPN roster values into live player profiles and squad tables, with TheSportsDB used only as an extra photo-source fallback.

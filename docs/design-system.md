@@ -138,8 +138,10 @@ dark.
 
 ## 5. Typography
 
-Font: **Inter**, self-hosted via `@fontsource/inter` (weights 400–700; there is
-no 900, so never use `font-black`). Tabular figures are on for every
+Font: **Inter Variable**, self-hosted via `@fontsource-variable/inter` (one
+variable file per subset, Latin + Latin Extended, declared in
+`src/shared/styles/fonts.css`; the Latin file is preloaded). The UI uses weights
+400–700; do not use `font-black`. Tabular figures are on for every
 `<table>`; elsewhere add `tabular-nums` to numbers that change or align.
 `font-mono` is the system UI mono stack (scores, KPI values).
 
@@ -168,7 +170,7 @@ All values live in `src/shared/styles/tokens.css`; Tailwind exposes them.
   (only allowed on media/club-colour backgrounds).
 - **Elevation** — `shadow-fg-1…5`. Cards rest at `fg-1`/`fg-2`; dialogs at
   `fg-4`/`fg-5`.
-- **Motion** — one scale, mirrored in `src/shared/motion/tokens.ts`:
+- **Motion** — one scale in `src/shared/styles/tokens.css` (`--fg-duration-*`, `--fg-ease-*`), exposed by Tailwind as
   `duration-fg-{instant 120, fast 180, base 240, slow 320, hero 420}`,
   `ease-fg-{standard, enter, soft, exit}`. All durations collapse to 0 under
   reduced motion. Route transitions are animated once by the shell; pages do
@@ -232,10 +234,12 @@ All fixed panels respect `env(safe-area-inset-*)`.
 The World Cup area is a **standalone command centre** at `/world-cup-2026`,
 intentionally separate from club leagues (national-team data only — its links
 never cross into club pages). Data comes from football-data.org (competition
-`WC`) with a labelled snapshot fallback. Free tier provides groups A–L, the 104
-fixtures (HT/FT scores, referees), 48 teams (official crests) and 26-player
-squads; it has **no** lineups/events/match-stats/photos/venues, so those areas
-show honest empty-state copy.
+`WC`) via the proxy — there is no snapshot fallback. The tournament ended on
+2026-07-19, so the area runs in **archive mode**: data is loaded once, stays
+fresh for 24 h and is not polled. Free tier provides groups A–L, the 104
+fixtures (HT/FT scores, extra time and penalties, referees), 48 teams (official
+crests) and 26-player squads; it has **no** lineups/events/match-stats/photos/
+venues, so those areas show honest empty-state copy.
 
 ### 9.1 Information priority (why the layout is ordered this way)
 
@@ -264,42 +268,50 @@ always visible (auto-scrolls into view).
 ### 9.4 Overview composition (top → bottom)
 
 1. **Hero** — tournament name; host flags USA / Canada / Mexico (host-accent
-   gradient band); start–end dates with a live countdown; host-city count; a
-   LIVE match-count badge; a data-quality badge (live / official / snapshot).
+   gradient band); start–end dates; a phase label (kicks off in N days /
+   day N / "Turnier beendet"); host-city count; live-match badge (only while
+   matches are live, otherwise "no live matches"); "updated at" time (lg+).
+   No countdown in archive mode.
    Mobile: stacked, centred. Desktop: horizontal band.
-2. **Tournament status** — stat tiles in a grid (`2-col` mobile →
-   `4-col` md+), equal height: **48 teams · 104 matches · 12 groups · host
-   cities · days-to-kickoff / live now**.
-3. **Priority rail** — three cards (1-col mobile → custom `xl` 3-track):
+2. **Priority rail** — three cards (1-col mobile → `2-col` md → custom `xl`
+   3-track):
    - **Feature match** — chooses live → else next scheduled → else latest
-     result. Shows both crests, score with HT/FT breakdown, a status pill
-     (LIVE+minute / kickoff time / FT), referee, and a "match centre" link.
-   - **Upcoming** — compact next-N list (date, time, crests).
-   - **Status detail** — countdown + quality reiterated for scanning.
-4. **Groups preview** — condensed A–L leaders, full width, links to Groups.
-5. **Secondary rail** (1-col mobile → `xl` 3-track): **Bracket preview** ·
-   **Host cities** (grouped by country) · **Team spotlight** (group leader).
-6. **Teams strip** — first 8 national teams (`2-col` sm → `4-col` xl).
+     result. Shows both crests, score (incl. "n. V." / "i. E."), a status pill,
+     referee, and a "match centre" link.
+   - **Upcoming / Letzte Ergebnisse** — compact list of the next matches; once
+     nothing is scheduled (finished tournament) it switches to the latest
+     results ("Archiv · Letzte Ergebnisse").
+   - **Tournament status** — stat tiles (teams · matches · host cities · live
+     now) with the phase label and the data source (football-data.org).
+3. **Groups preview** — condensed A–L leaders, full width, links to Groups.
+4. **Secondary rail** (1-col mobile → `2-col` md → `xl` 3-track): **Bracket
+   preview** · **Host cities** (grouped by country) · **Team spotlight** (group
+   leader).
+5. **Teams strip** — first 8 national teams (`2-col` sm → `4-col` xl).
 
 ### 9.5 Matches page
 
-Filter bar (status · team · group · round) + a "showing X of Y" counter + "live
-refreshes every 15s" note. Match cards in a grid (`1-col` mobile → `2-col` lg),
+Filter bar (search · status · group · round · team; no city filter — there is
+no venue data) + an active-filter counter. Match cards in a grid (`1-col` mobile → `2-col` lg),
 equal height. Empty/reset states when filters exclude everything or no fixtures
 are published.
 
 ### 9.6 Groups page
 
-Qualification legend (top-2 zone · best-third watch · pending) then the 12 group
+Qualification legend (top-2 zone · best third · eliminated once the round of 32
+is drawn; "best-third watch" only while the group stage is running) then the 12 group
 tables in a grid (`1-col` mobile → `3-col` xl). Each table: 4 teams, columns
 Rank · P · GD · Pts, with a colour hint for the qualification zone. Equal height
 across the row.
 
 ### 9.7 Bracket page
 
-Knockout board built **live** from group results (no placeholder fixtures).
-Mobile = vertical round-by-round scroll; desktop = horizontal columns
-(R32 → R16 → QF → SF → Final). Empty-state until results exist.
+Knockout board built from the archived fixtures (no invented pairings; open
+slots are counted as "to be decided"). Below **1440px** the rounds are switched
+with round tabs (`role="tablist"`, one round visible at a time, horizontally
+scrollable tab row); from 1440px all rounds are shown side by side
+(R32 → R16 → QF → SF → Final). Winners are highlighted, including
+extra-time/penalty decisions. Empty-state until fixtures exist.
 
 ### 9.8 Teams page
 
@@ -309,8 +321,10 @@ code, group) in a grid (`2-col` sm → `3/4-col`). National-team links only.
 
 ### 9.9 Match centre `/match/:id`
 
-Score breakdown (HT/FT), meta grid (date · venue · referee · round · group).
-Lineups / events / match-stats render honest empty-state copy on the free tier.
+Score breakdown (half time · regular time · extra time · penalties) and the
+decision line (e.g. "wins 4:3 on penalties"), meta grid (kick-off · venue ·
+referee · round · group). Timeline, statistics and lineups only render when the
+data exists; otherwise one honest note explains that the free tier has none.
 
 ### 9.10 Team profile `/team/:id`
 
@@ -319,9 +333,10 @@ generated avatar / empty-state.
 
 ### 9.11 Behaviour
 
-- Refetch: matches every **15s**, everything else every **60s**.
-- Live-first; snapshot fallback always labelled via the shared
-  `DataSourceBadge` (live / official / snapshot / offline).
+- Archive mode: one load per session, `staleTime` 24 h, **no polling** and no
+  refetch interval (the tournament ended on 2026-07-19).
+- No snapshot or mock fallback. Sub-page titles and the team data status show
+  the shared `DataSourceBadge` (live / official) plus the "updated at" time.
 - All pages standardise loading / empty / error.
 
 ---
@@ -329,8 +344,9 @@ generated avatar / empty-state.
 ## 10. Definition of done (per surface)
 
 - [ ] Mobile-first: authored base-up, no horizontal scroll at 360px.
-- [ ] Cards in a row share height, radius (`fg-lg`), padding (`fg-4`), baseline.
-- [ ] Only `fg-*` tokens for radius / spacing / elevation / motion.
+- [ ] Cards in a row share height, radius (`rounded-lg`), padding (`p-fg-4`), baseline.
+- [ ] Only design tokens: the radius scale from §6 (`rounded-xs … 2xl`, no `fg-`
+      prefix, no arbitrary radii) and `fg-*` tokens for spacing / elevation / motion.
 - [ ] Loading + empty + error states present.
 - [ ] ≥44px tap targets, visible focus ring, AA contrast in every theme.
 - [ ] Works in all six palettes × light/dark.

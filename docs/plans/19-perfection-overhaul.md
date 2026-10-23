@@ -1,6 +1,6 @@
 # 19 — Perfection Overhaul (Phasenplan)
 
-Status: aktiv · Erstellt: 2026-10-02 · Ersetzt die offenen Punkte aus Plan 18.
+Status: abgeschlossen bis Phase 6 (2026-10-09) · Phasen 7–10 weitergeführt in Plan 20 · Erstellt: 2026-10-02 · Ersetzt die offenen Punkte aus Plan 18.
 
 ## Context
 Komplette Analyse (Architektur, UI/Responsiveness, Code-Qualität/Performance) ergab: Die App funktioniert, hat aber

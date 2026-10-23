@@ -1,5 +1,7 @@
 # World Cup 2026 Live Dashboard Plan
 
+> Status: abgelöst durch Plan 19/20 (Stand 2026-10-23). Die WM nutzt nicht API-Football (entfernt), sondern das football-data.org-Archiv (Wettbewerb `WC`) über den Proxy; kein Mock-Fallback, kein 15-s-Polling — Archivmodus seit Turnierende (2026-07-19), 24 h frisch.
+
 ## Summary
 
 World Cup 2026 is a separate Football Galaxy product area. It must not be mixed into the top-five league dashboards. The league area keeps its current routes, data models, and UI focus, while the World Cup area gets its own navigation group, routes, data provider, pages, and fallback states.

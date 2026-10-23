@@ -68,3 +68,16 @@ export function uniqueTeamOptions(fixtures: WorldCupFixture[]) {
   }
   return [...teams.values()].sort((left, right) => left.name.localeCompare(right.name))
 }
+
+export const matchPath = (fixture: { id: string }) => `/world-cup-2026/match/${fixture.id}`
+
+const canadaHostCities = new Set(['Toronto', 'Vancouver'])
+
+const mexicoHostCities = new Set(['Guadalajara', 'Mexico City', 'Monterrey'])
+
+/** English host country of a 2026 host city (resolved to the UI language at render). */
+export function hostCountryOf(city: string) {
+  if (canadaHostCities.has(city)) return 'Canada'
+  if (mexicoHostCities.has(city)) return 'Mexico'
+  return 'United States'
+}

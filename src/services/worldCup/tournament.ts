@@ -1,8 +1,9 @@
 // Fixed reference facts about the FIFA World Cup 2026. These are not mock match
 // data — they are static tournament metadata (host nations, venue cities, the
 // official window and field size) that the live API does not return as a single
-// payload. Live fixtures, standings, teams and brackets always come from
-// API-Football; only this descriptive shell is hard-coded.
+// payload. Fixtures, standings, teams and brackets always come from the
+// football-data.org archive (via the proxy); only this descriptive shell is
+// hard-coded.
 export const worldCupTournament = {
   id: 'world-cup-2026' as const,
   name: 'World Cup 2026',

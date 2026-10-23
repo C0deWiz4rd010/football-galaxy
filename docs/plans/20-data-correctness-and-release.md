@@ -290,3 +290,14 @@ Gate grün; Browser: Spielerseite DE/EN (Länder, Form, Eigenschaften), Build oh
 - Ohne Service Worker (bewusst: Live-Daten, kein Offline-Modus gewünscht; die App ist trotzdem installierbar).
 
 Gate grün; Browser: Titel/Beschreibung auf Liga-, Spieler- und WM-Spielseite, Manifest lädt; Pages-Build mit Basis-Pfad erzeugt korrekte URLs.
+
+### Phase 7 – erledigt (2026-10-23)
+- **1** `features/world-cup/components.tsx` (1287 Z.) aufgeteilt in `components/{shared,overview,matches,groups,teams}.tsx` + `index.ts`. Helfer (`matchPath`, `hostCountryOf`) liegen in `utils.ts`. Kein `WorldCupQueryBoundary`: Die Lade-/Fehlerprüfung ist pro Seite zwei Zeilen mit den gemeinsamen `WorldCupLoading`/`WorldCupError`, ein Wrapper wäre nicht kürzer.
+- **2** Tote Dateien entfernt (`components/ui/tooltip.tsx`, `data/playerPhotoSources.ts`) und ungenutzte Pakete (`@radix-ui/react-tooltip`, `-dropdown-menu`, `-popover`, `class-variance-authority`).
+- **3** Neue Tests: Galaxy-Fortschritt (XP, Upgrade, Meilenstein, Persistenz, Level), Länder/Positionen, Wikidata (nur Fußballer), football-data-Fallback (Assists, verlegte Spiele), Team-Seite (Not-Found, Fehler), WM-Spielseite Ende-zu-Ende mit echtem Elfmeter-Payload. 99 Tests. Coverage 33,9 % → 51,2 % Zeilen; Schwellen: global 50/60/65/50, `services/espn` und `services/net` 90, `lib` 85.
+- **4** Playwright-Smoke: nicht umgesetzt. Die Installation des Chromium-Browsers wurde abgelehnt; `@playwright/test` ist wieder entfernt. Die Layout-Prüfung (kein horizontaler Überlauf, 375/1440) bleibt manuell im Browser-Pane.
+
+### Phase 8 – erledigt (2026-10-23)
+- README neu (Quellen-Kaskade, Skripte, Proxys, Hostinger, Struktur, Node 22), `AGENTS.md` (Code-Block geschlossen, Planungsabschnitt vervollständigt), `PLANS.md` (Markdown repariert, Plan 20 aktiv), `docs/memory.md` (Eintrag Plan 20, Überholtes markiert), `docs/design-system.md` (Font-Paket, WM-Archiv, Bracket-Tabs, Radien, Motion-Tokens in `tokens.css`).
+- Pläne 13/14/16/18 als abgelöst markiert, Plan 19 „abgeschlossen bis Phase 6“. Veraltete Kommentare in `tournament.ts` und `footballDataOrg.ts` korrigiert; Mai-Dokumente (QA, Feature) mit Hinweis versehen.
+- `deploy.yml` auf Node 22 (wie CI/Release). `.env.example` und `docs/deploy-hostinger.md` schon in Phase 3/6 aktualisiert.

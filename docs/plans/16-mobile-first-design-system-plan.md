@@ -1,5 +1,7 @@
 # 16 — Mobile-First Redesign, Design System & Multi-Theme
 
+> Status: abgelöst durch Plan 19/20 (Stand 2026-10-23). Die Annahme „football-data.org live + snapshot“ und der WM-Snapshot-Fallback gelten nicht mehr: Ligen kommen primär von ESPN, die WM ist ein Archiv ohne Snapshot und ohne Live-Refresh. Das Design-System lebt in `docs/design-system.md`.
+
 Status: in progress · Owner: Football Galaxy
 
 ## Goal

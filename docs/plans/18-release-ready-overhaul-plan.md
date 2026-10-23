@@ -1,5 +1,7 @@
 # Plan 18 — Release-Ready Overhaul
 
+> Status: abgelöst durch Plan 19/20 (Stand 2026-10-23). Die Kaskade TheSportsDB → ESPN → … und `mockData` in der Sidebar sind überholt: ESPN ist primär (ESPN → football-data.org → OpenLigaDB), TheSportsDB liefert nur Wappen/Metadaten, Mock-Daten wurden entfernt; offene Punkte gingen in Plan 19 bzw. 20 über.
+
 Status: In Umsetzung · Branch: `develop` · Datum: 2026-07-31
 
 ## Ziel

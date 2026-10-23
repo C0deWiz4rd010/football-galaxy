@@ -1,5 +1,7 @@
 # Free Sovereign Live Data + Cohesive UI/UX Plan
 
+> Status: abgelöst durch Plan 19/20 (Stand 2026-10-23). Die Kaskade footballDataOrg → theSportsDb → openFootball → mock, Snapshots und API-Football gibt es nicht mehr; heute gilt ESPN → football-data.org → OpenLigaDB (nur Bundesliga), live-only ohne Mock/Snapshot.
+
 Status: in progress
 Created: 2026-06-20
 

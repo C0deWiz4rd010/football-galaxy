@@ -1,7 +1,3 @@
-
-## `PLANS.md`
-
-```md
 # Football Galaxy — Planning Index
 
 This file tracks active and completed plans for the project.
@@ -22,13 +18,15 @@ The project should grow step by step:
 
 ## Active Plans
 
+The active plan is [`docs/plans/20-data-correctness-and-release.md`](docs/plans/20-data-correctness-and-release.md); its `Fortschritt` section records what is done.
+
 | Plan | Status | Description |
 |------|--------|-------------|
-| [`docs/plans/19-perfection-overhaul.md`](docs/plans/19-perfection-overhaul.md) | active | Phased overhaul: bugs, TanStack Query data layer, design system, responsiveness, performance, a11y, i18n, Hostinger deploy, SEO |
+| [`docs/plans/20-data-correctness-and-release.md`](docs/plans/20-data-correctness-and-release.md) | active | Data correctness, API efficiency, Node + PHP proxy, Hostinger deploy, performance, i18n, SEO, tests, docs (successor of plan 19) |
 
 ## Completed Plans
 
-Plans 00–18 are completed or superseded. See the full chronological index in
+Plans 00–19 are completed or superseded (plan 19's open phases moved to plan 20). See the full chronological index in
 [`docs/plans/README.md`](docs/plans/README.md).
 
 ## Planning Rules

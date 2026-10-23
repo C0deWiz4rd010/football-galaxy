@@ -149,8 +149,17 @@ export default defineConfig({
       include: ['src/**/*.{ts,tsx}'],
       exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/vite-env.d.ts'],
       reporter: ['text-summary', 'html'],
-      // Raised after Phase 2 (2026-10-02). Raised step by step; target in Phase 10.
-      thresholds: { lines: 30, functions: 58, branches: 62, statements: 30 },
+      // Floors just below the measured values (plan 20, phase 7: 51 % lines overall);
+      // the data and helper layers carry the logic and stay near full coverage.
+      thresholds: {
+        lines: 50,
+        functions: 60,
+        branches: 65,
+        statements: 50,
+        'src/services/espn/**': { lines: 90, statements: 90 },
+        'src/services/net/**': { lines: 90, statements: 90 },
+        'src/lib/**': { lines: 85, statements: 85 },
+      },
     },
   },
 })
