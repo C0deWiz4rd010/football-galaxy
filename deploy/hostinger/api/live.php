@@ -10,6 +10,11 @@
 
 declare(strict_types=1);
 
+// JSON compresses 10–25×; let PHP do it unless the server already does.
+if (extension_loaded('zlib') && !ini_get('zlib.output_compression')) {
+    ob_start('ob_gzhandler');
+}
+
 $rules = json_decode((string) @file_get_contents(__DIR__ . '/rules.json'), true);
 if (!is_array($rules)) {
     fg_error(500, 'Proxy rules are missing.');

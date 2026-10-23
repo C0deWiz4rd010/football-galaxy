@@ -35,18 +35,9 @@ import {
   type EspnStandingEntry,
   type EspnTeam,
 } from './schemas'
+import { COMMON, SITE, espnSlugByLeague, leagueCoreUrls } from './endpoints'
 
-const SITE = 'https://site.api.espn.com/apis/site/v2/sports/soccer'
-const WEB = 'https://site.web.api.espn.com/apis/v2/sports/soccer'
-const COMMON = 'https://site.web.api.espn.com/apis/common/v3/sports/soccer'
-
-export const espnSlugByLeague: Record<LeagueId, string> = {
-  'premier-league': 'eng.1',
-  bundesliga: 'ger.1',
-  'la-liga': 'esp.1',
-  'serie-a': 'ita.1',
-  'ligue-1': 'fra.1',
-}
+export { espnSlugByLeague }
 
 interface LeagueCore {
   teams: Team[]
@@ -178,12 +169,12 @@ async function loadCore(leagueId: LeagueId): Promise<LeagueCore> {
     const slug = espnSlugByLeague[leagueId]
     // Stadium and coach (TheSportsDB, football-data.org) are only shown on team
     // pages, so getTeam adds them there; the table never waits for them.
-    const standingsUrl = `${WEB}/${slug}/standings`
+    const urls = leagueCoreUrls(slug)
     const [teamsRaw, standingsRaw, scoreboardRaw, statisticsRaw] = await Promise.all([
-      fetchLiveJson<unknown>(`${SITE}/${slug}/teams`),
-      fetchLiveJson<unknown>(standingsUrl),
-      fetchLiveJson<unknown>(`${SITE}/${slug}/scoreboard`).catch(() => FAILED),
-      fetchLiveJson<unknown>(`${SITE}/${slug}/statistics`).catch(() => FAILED),
+      fetchLiveJson<unknown>(urls.teams),
+      fetchLiveJson<unknown>(urls.standings),
+      fetchLiveJson<unknown>(urls.scoreboard).catch(() => FAILED),
+      fetchLiveJson<unknown>(urls.statistics).catch(() => FAILED),
     ])
 
     const teamRows = teamsResponseSchema.parse(teamsRaw).sports?.[0]?.leagues?.[0]?.teams ?? []
@@ -233,7 +224,7 @@ async function loadCore(leagueId: LeagueId): Promise<LeagueCore> {
       teams: [...teamsById.values()],
       standings,
       fixtures,
-      servedStale: wasServedStale(standingsUrl),
+      servedStale: wasServedStale(urls.standings),
       unavailable: [
         ...(scoreboardRaw === FAILED ? (['fixtures'] as const) : []),
         ...(statisticsRaw === FAILED ? (['leaders'] as const) : []),
@@ -275,13 +266,19 @@ export function seasonMonths(startYear: number): string[] {
  * failing fails the whole load: an incomplete season would silently skew form
  * and rounds.
  */
-async function loadSeasonMatches(leagueId: LeagueId, teamsById: Map<string, Team>): Promise<Match[]> {
+async function loadSeasonMatches(leagueId: LeagueId): Promise<Match[]> {
   return seasonCache.get(leagueId, async () => {
     const slug = espnSlugByLeague[leagueId]
     const startYear = seasonStartYear()
-    const months = await Promise.all(
-      seasonMonths(startYear).map((month) => fetchLiveJson<unknown>(`${SITE}/${slug}/scoreboard?dates=${month}&limit=500`)),
-    )
+    // The months load alongside the league core instead of after it; the core
+    // only provides the team objects for mapping.
+    const [core, months] = await Promise.all([
+      loadCore(leagueId),
+      Promise.all(
+        seasonMonths(startYear).map((month) => fetchLiveJson<unknown>(`${SITE}/${slug}/scoreboard?dates=${month}&limit=500`)),
+      ),
+    ])
+    const teamsById = teamsMap(core)
     const byId = new Map<string, Match>()
     for (const raw of months) {
       for (const event of eventsResponseSchema.safeParse(raw).data?.events ?? []) {
@@ -388,8 +385,8 @@ export async function getTeam(leagueId: LeagueId, teamId: string | undefined): P
  * scoreboard window on top so live scores are as fresh as the dashboard's.
  */
 export async function getMatches(leagueId: LeagueId): Promise<Match[]> {
-  const core = await loadCore(leagueId)
-  const byId = new Map((await loadSeasonMatches(leagueId, teamsMap(core))).map((match) => [match.id, match]))
+  const [core, season] = await Promise.all([loadCore(leagueId), loadSeasonMatches(leagueId)])
+  const byId = new Map(season.map((match) => [match.id, match]))
   for (const match of core.fixtures) byId.set(match.id, match)
   return [...byId.values()].sort((a, b) => a.utcDate.localeCompare(b.utcDate))
 }

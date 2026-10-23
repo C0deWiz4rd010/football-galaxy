@@ -62,6 +62,7 @@ describe('live-data proxy contract', () => {
     assert.equal(second.status, 200)
     assert.equal(second.headers.get('x-proxy-cache'), 'hit')
     assert.match(second.headers.get('cache-control') ?? '', /max-age=\d+/)
+    assert.match(second.headers.get('content-encoding') ?? '', /^(br|gzip)$/)
   })
 
   // Last: it uses up this client's budget for the rest of the minute.

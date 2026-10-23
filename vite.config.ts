@@ -4,6 +4,9 @@ import { readFileSync } from 'node:fs'
 import type { Plugin } from 'vite'
 import { defineConfig } from 'vitest/config'
 
+import { DEV_PROXY_URL, normalizeProxyBase } from './src/services/config/proxyUrl'
+import { espnSlugByLeague, leagueCoreUrls } from './src/services/espn/endpoints'
+
 /** Preloads the Latin Inter file so text does not swap fonts after first paint. */
 function preloadMainFont(): Plugin {
   let base = '/'
@@ -24,6 +27,34 @@ function preloadMainFont(): Plugin {
   }
 }
 
+/**
+ * Starts the league dashboard's four data requests from index.html, while the
+ * JavaScript is still downloading: an inline script picks the league from the
+ * URL and adds `<link rel="preload" as="fetch">` for exactly the URLs the
+ * fetch client will request, so the app reuses those responses.
+ */
+function preloadLeagueData(): Plugin {
+  let script = ''
+  return {
+    name: 'fg-preload-league-data',
+    configResolved(config) {
+      const proxy = normalizeProxyBase(
+        config.env.VITE_LIVE_DATA_PROXY_URL ||
+          (config.command === 'serve' && config.env.VITE_DISABLE_DEV_LIVE_PROXY !== 'true' ? DEV_PROXY_URL : ''),
+      )
+      if (!proxy) return
+      const urls = Object.fromEntries(
+        Object.entries(espnSlugByLeague).map(([leagueId, slug]) => [leagueId, Object.values(leagueCoreUrls(slug))]),
+      )
+      // "/" redirects to the Premier League.
+      script = `(function(){var u=${JSON.stringify(urls)},b=${JSON.stringify(config.base)},p=${JSON.stringify(proxy)};var s=location.pathname.indexOf(b)===0?location.pathname.slice(b.length).split('/')[0]:'';var l=u[s||'premier-league'];if(!l)return;l.forEach(function(t){var e=document.createElement('link');e.rel='preload';e.as='fetch';e.crossOrigin='anonymous';e.href=p+'?target='+encodeURIComponent(t);document.head.appendChild(e)})})()`
+    },
+    transformIndexHtml() {
+      return script ? [{ tag: 'script', injectTo: 'head-prepend', children: script }] : []
+    },
+  }
+}
+
 const pkg = JSON.parse(readFileSync(fileURLToPath(new URL('./package.json', import.meta.url)), 'utf-8'))
 
 // https://vite.dev/config/
@@ -34,7 +65,7 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
-  plugins: [react(), preloadMainFont()],
+  plugins: [react(), preloadMainFont(), preloadLeagueData()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

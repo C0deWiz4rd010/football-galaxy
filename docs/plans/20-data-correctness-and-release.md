@@ -255,3 +255,15 @@ Gate: Lint, `tsc -b`, 79 Tests, Build grün.
 - Geprüft: CSP mit gebautem `index.html` ohne Verstöße (Theme-Skript läuft); Dev-App mit neuem Proxy (Liga, Team, WM).
 
 **Nicht lokal geprüft:** Der PHP-Proxy lief hier nicht (kein PHP installiert) — erste Ausführung im CI-Job `proxy` bei einem Pull Request bzw. auf Hostinger nach dem Upload (Prüfliste in `docs/deploy-hostinger.md`).
+
+### Phase 4 – erledigt (2026-10-23)
+**Ursache des langsamen LCP:** Der Node-Proxy lieferte unkomprimiert, und der Liga-Kern wartete auf die ESPN-Statistik (650 KB). Dazu kam ein Wasserfall: Die Daten starteten erst nach Entry-JS, Router und Seiten-Chunk.
+- **1** Kompression in beiden Proxys (Node: Brotli q5/gzip, PHP: `ob_gzhandler`), `Vary: Accept-Encoding`. Kernantworten eines Dashboards ≈ 753 KB → ≈ 21 KB (Statistik 650 KB → 15 KB). Vertragstest prüft `content-encoding`.
+- **2** Daten-Preload aus `index.html` (Vite-Plugin `preloadLeagueData`): Ein Inline-Skript liest die Liga aus der URL und setzt `<link rel=preload as=fetch>` für genau die vier Kern-URLs (`src/services/espn/endpoints.ts`, gemeinsam mit dem Loader; Proxy-Basis aus `src/services/config/proxyUrl.ts`). Der Fetch-Client übernimmt die Antworten (keine Doppel-Requests). Die Hostinger-CSP enthält beide Inline-Hashes.
+- **3** Die 12 Monatsabrufe laufen parallel zum Liga-Kern statt danach.
+- **Kein Handlungsbedarf:** Recharts (101 KB gz) liegt nicht im Dashboard-Pfad; die Logos im Liga-Kopf haben bereits `priority`; Same-Origin-Proxy auf Hostinger braucht kein Preconnect.
+
+**Messung (Produktions-Build, lokal, ungedrosselt, leerer Cache):** Start der Tabellendaten 98 ms → 17 ms; Start der Monatsabrufe 577 ms → 213 ms; 0 doppelte Requests. Unter Mobilfunk wirkt der Preload um die gesamte JS-Ladezeit (≈ 130 KB gz Entry + React) und die Kompression um ≈ 730 KB auf dem kritischen Pfad.
+*Offen:* Lighthouse-Mobilmessung vorher/nachher auf der echten Hostinger-Seite (lokal ohne Lighthouse/Drosselung nicht reproduzierbar).
+
+**Befund GitHub Pages:** Die Pages-Seite zeigt keine Daten. Ohne Proxy ruft sie ESPN direkt auf, und ESPN erlaubt das Browsern nicht (CORS). Lösung: Hostinger-Deploy, oder die Repository-Variable `VITE_LIVE_DATA_PROXY_URL` auf den Hostinger-Proxy setzen und `https://c0dewiz4rd010.github.io` in `ALLOWED_ORIGINS` eintragen.

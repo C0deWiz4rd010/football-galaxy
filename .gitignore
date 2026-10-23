@@ -36,3 +36,4 @@ snap.txt
 
 # Hostinger build output
 dist-hostinger/
+dist-perf/

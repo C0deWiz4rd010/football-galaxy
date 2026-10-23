@@ -52,6 +52,7 @@ Both are tested by the same suite: `proxy/tests/proxy.test.mjs` (`PROXY_URL=… 
 
 - `Content-Type` from upstream (JSON); `Cache-Control: public, max-age=<remaining TTL>` on `hit`/`miss`, `no-store` on `stale` and errors.
 - `x-proxy-cache: hit | miss | stale`; `Retry-After` on `429`.
+- Bodies are compressed (`br`/`gzip`) when the client accepts it (`Vary: Accept-Encoding`); upstream JSON shrinks 10–25×.
 - CORS: `Access-Control-Allow-Origin` echoes an allowed `Origin` (never `*`), `Vary: Origin`, `Access-Control-Expose-Headers: x-proxy-cache, retry-after`.
 - Errors are `{"error": "<short message>"}` — never upstream bodies, stack traces, keys or file paths. Upstream `4xx` statuses (e.g. `404`) pass through so the app can show "not found".
 

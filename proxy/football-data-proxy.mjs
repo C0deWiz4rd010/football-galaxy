@@ -9,6 +9,7 @@
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { createServer } from 'node:http'
+import { brotliCompressSync, constants as zlib, gzipSync } from 'node:zlib'
 
 const rules = JSON.parse(readFileSync(new URL('./rules.json', import.meta.url), 'utf8'))
 
@@ -54,9 +55,29 @@ function cacheWrite(key, entry) {
   while (cache.size > MAX_CACHE_ENTRIES) cache.delete(cache.keys().next().value)
 }
 
+/**
+ * JSON compresses 10–25× (ESPN statistics: 650 KB → 25 KB), which decides the
+ * first paint on mobile networks. Brotli at a moderate level stays fast.
+ */
+function compress(request, body) {
+  const accepted = String(request.headers['accept-encoding'] ?? '')
+  if (body.length < 1024) return { body }
+  if (/\bbr\b/.test(accepted)) return { body: brotliCompressSync(body, { params: { [zlib.BROTLI_PARAM_QUALITY]: 5 } }), encoding: 'br' }
+  if (/\bgzip\b/.test(accepted)) return { body: gzipSync(body), encoding: 'gzip' }
+  return { body }
+}
+
+/** `body` as a Buffer is upstream data and gets compressed; strings are our own short JSON. */
 function send(response, status, body, headers) {
-  response.writeHead(status, { 'x-content-type-options': 'nosniff', ...headers })
-  response.end(body)
+  const compressible = Buffer.isBuffer(body)
+  const { body: payload, encoding } = compressible ? compress(response.req, body) : { body }
+  response.writeHead(status, {
+    'x-content-type-options': 'nosniff',
+    ...headers,
+    ...(compressible ? { vary: [headers.vary, 'Accept-Encoding'].filter(Boolean).join(', ') } : {}),
+    ...(encoding ? { 'content-encoding': encoding } : {}),
+  })
+  response.end(payload)
 }
 
 function sendError(response, status, message, headers = {}) {
