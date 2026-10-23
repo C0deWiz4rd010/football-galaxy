@@ -8,7 +8,7 @@ import type { LiveMatch, LiveMatchEvent, LiveMatchTeam } from '@/services/espn/l
 
 /** Small status pill: pulsing minute while live, FT/kickoff otherwise. */
 function LiveStatusPill({ match }: { match: LiveMatch }) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   if (match.state === 'live') {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-live/50 bg-live/12 px-2 py-0.5 text-2xs font-semibold text-live">
@@ -32,7 +32,13 @@ function LiveStatusPill({ match }: { match: LiveMatch }) {
         !isFinished && !isPostponed && 'border-info/40 bg-info/10 text-info-fg',
       )}
     >
-      {isPostponed ? t('livePostponed') : match.statusLabel}
+      {isPostponed
+        ? t('livePostponed')
+        : isFinished
+          ? t('wcFullTimeShort')
+          : match.kickoff
+            ? new Date(match.kickoff).toLocaleTimeString(locale === 'de' ? 'de-DE' : 'en-GB', { hour: '2-digit', minute: '2-digit' })
+            : t('liveScheduled')}
     </span>
   )
 }

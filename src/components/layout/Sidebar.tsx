@@ -2,7 +2,7 @@ import { Link, NavLink } from 'react-router-dom'
 
 import { exploreNav, toolsNav, worldCupNav } from '@/app/navigation'
 import { useLocale } from '@/contexts/LocaleContext'
-import { leagues } from '@/lib/leagues'
+import { leagueCountryKey, leagues } from '@/lib/leagues'
 import { cn } from '@/lib/utils'
 import { BrandLogo } from '@/shared/ui/brand-logo'
 
@@ -71,7 +71,7 @@ export function Sidebar() {
               <img src={league.logo} alt="" width={32} height={32} decoding="async" className="h-8 w-8 shrink-0 rounded-sm bg-white/90 object-contain p-1" />
               <span className="min-w-0 flex-1">
                 <span className="block truncate">{league.name}</span>
-                <span className="block truncate text-2xs text-muted-foreground">{league.country}</span>
+                <span className="block truncate text-2xs text-muted-foreground">{t(leagueCountryKey[league.id])}</span>
               </span>
             </NavLink>
           ))}

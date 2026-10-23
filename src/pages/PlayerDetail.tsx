@@ -24,7 +24,7 @@ import { isNotFoundError } from '@/services/errors'
 import { useFavorites } from '@/hooks/useFavorites'
 import { isLeagueId } from '@/lib/leagues'
 import type { Player } from '@/services/types'
-import { getFormScore } from '@/lib/player-ratings'
+import { formLabelKey, getFormScore, traitKey } from '@/lib/player-ratings'
 
 function FavoriteHeartButton({ player }: { player: Player }) {
   const { t } = useLocale()
@@ -148,7 +148,7 @@ export default function PlayerDetail() {
                 <MetricTile
                   label={t('formScore')}
                   value={String(card.score)}
-                  helper={t('formDerivedFromResults', { label: card.label })}
+                  helper={t('formDerivedFromResults', { label: t(formLabelKey[card.label]) })}
                   icon={<Award className="h-4 w-4 text-amber-400" />}
                 />
                 <MetricTile
@@ -223,12 +223,12 @@ export default function PlayerDetail() {
               </div>
               <div className="mt-4 space-y-3 text-sm text-muted-foreground">
                 <p>
-                  {t('playerFormSummary', { name: player.name, label: card.label, score: card.score })}
+                  {t('playerFormSummary', { name: player.name, label: t(formLabelKey[card.label]), score: card.score })}
                 </p>
                 {card.traits.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
                     {card.traits.map((trait) => (
-                      <Badge key={trait} variant="outline">{trait}</Badge>
+                      <Badge key={trait} variant="outline">{t(traitKey[trait])}</Badge>
                     ))}
                   </div>
                 ) : null}

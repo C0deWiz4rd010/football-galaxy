@@ -17,7 +17,7 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { getCrestSources, getPlayerPhotoSources } from '@/lib/assetSources'
 import { getLeague, isLeagueId } from '@/lib/leagues'
 import { buildMetricPools, comparablePool, percentileRank, playerMetrics } from '@/lib/percentiles'
-import { getFormScore } from '@/lib/player-ratings'
+import { getFormScore, traitKey } from '@/lib/player-ratings'
 import { cn } from '@/lib/utils'
 import { createPlayerAvatar, createTeamCrest, initialsFromName } from '@/lib/visualAssets'
 import { isNotFoundError } from '@/services/errors'
@@ -238,7 +238,7 @@ function CompareHeroCard({ player, team }: { player: Player; team?: Team }) {
         <FormBadge player={player} variant="label" />
         {form.traits.map((trait) => (
           <Badge key={trait} variant="outline">
-            {trait}
+            {t(traitKey[trait])}
           </Badge>
         ))}
       </div>

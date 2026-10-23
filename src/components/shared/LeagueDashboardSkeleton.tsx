@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useLocale } from '@/contexts/LocaleContext'
+import { leagueCountryKey } from '@/lib/leagues'
 import type { League } from '@/services/types'
 import { HIGH_FETCH_PRIORITY } from '@/lib/fetchPriority'
 
@@ -29,7 +30,7 @@ export function LeagueDashboardSkeleton({ league }: { league?: League }) {
                 className="h-14 w-14 rounded-lg bg-white/90 object-contain p-2 ring-1 ring-border"
               />
               <div className="min-w-0">
-                <Badge variant="outline">{league.country}</Badge>
+                <Badge variant="outline">{t(leagueCountryKey[league.id])}</Badge>
                 <h1 className="mt-1 text-2xl font-semibold tracking-tight">{league.name}</h1>
                 <p className="mt-1 text-sm text-muted-foreground">{t('tableFirstSubtitle')}</p>
               </div>
@@ -64,13 +65,13 @@ export function LeagueDashboardSkeleton({ league }: { league?: League }) {
           </div>
           <div className="rounded-lg border border-border/50">
             <div className="grid grid-cols-[3rem_minmax(0,1fr)_repeat(5,3.5rem)] gap-3 border-b border-border/50 px-4 py-3 text-xs uppercase tracking-eyebrow text-muted-foreground">
-              <span>Pos</span>
-              <span>Team</span>
-              <span>Sp</span>
-              <span>S</span>
-              <span>U</span>
-              <span>N</span>
-              <span>Pkt</span>
+              <span>{t('posShort')}</span>
+              <span>{t('team')}</span>
+              <span>{t('playedShort')}</span>
+              <span>{t('winsShort')}</span>
+              <span>{t('drawsShort')}</span>
+              <span>{t('lossesShort')}</span>
+              <span>{t('pointsShort')}</span>
             </div>
             <div className="space-y-1 p-2">
               {Array.from({ length: 10 }).map((_, index) => (

@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils'
-import { getFormScore, type FormLabel } from '@/lib/player-ratings'
+import { useLocale } from '@/contexts/LocaleContext'
+import { formLabelKey, getFormScore, type FormLabel } from '@/lib/player-ratings'
 import type { Player } from '@/services/types'
 
 const toneByLabel: Record<FormLabel, string> = {
@@ -24,6 +25,7 @@ interface FormBadgeProps {
  * Replaces the previous EA-FC-style overall rating card.
  */
 export function FormBadge({ player, variant = 'full', className }: FormBadgeProps) {
+  const { t } = useLocale()
   const { score, label } = getFormScore(player)
   const tone = toneByLabel[label]
 
@@ -35,7 +37,7 @@ export function FormBadge({ player, variant = 'full', className }: FormBadgeProp
           tone,
           className,
         )}
-        aria-label={`Form score ${score}`}
+        aria-label={t('formScoreAria', { score })}
       >
         {score}
       </span>
@@ -51,7 +53,7 @@ export function FormBadge({ player, variant = 'full', className }: FormBadgeProp
           className,
         )}
       >
-        {label}
+        {t(formLabelKey[label])}
       </span>
     )
   }
@@ -63,10 +65,10 @@ export function FormBadge({ player, variant = 'full', className }: FormBadgeProp
         tone,
         className,
       )}
-      title={`Form ${score} · ${label}`}
+      title={`${t('formScoreAria', { score })} · ${t(formLabelKey[label])}`}
     >
       <span className="font-semibold tabular-nums">{score}</span>
-      <span className="opacity-80">{label}</span>
+      <span className="opacity-80">{t(formLabelKey[label])}</span>
     </span>
   )
 }

@@ -132,7 +132,7 @@ export default function HandbookDialog({ open, onOpenChange }: { open: boolean; 
               <Badge variant="outline">football-data.org</Badge>
               <Badge variant="outline">TheSportsDB</Badge>
               <Badge variant="outline">ESPN</Badge>
-              <Badge variant="outline">Mock data</Badge>
+              <Badge variant="outline">OpenLigaDB</Badge>
             </div>
             <Tip tipLabel={t('tip')}>{t('handbookDataTip')}</Tip>
           </div>

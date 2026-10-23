@@ -7,7 +7,7 @@ import { router } from './router'
 
 export function App() {
   return (
-    <ErrorBoundary title="Football Galaxy hit an unexpected error">
+    <ErrorBoundary titleKey="errorBoundaryTitle">
       <AppProviders>
         <RouterProvider router={router} />
       </AppProviders>

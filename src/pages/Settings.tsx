@@ -84,7 +84,7 @@ export default function SettingsPage() {
         </div>
       </PageSection>
 
-      <PageSection eyebrow="About" title="Version">
+      <PageSection eyebrow={t('settingsAbout')} title={t('settingsVersion')}>
         <div className="surface-panel flex items-center justify-between rounded-lg p-fg-4">
           <p className="text-sm text-muted-foreground">Football Galaxy</p>
           <span className="rounded-sm border border-border/55 px-2.5 py-1 font-mono text-xs font-semibold text-foreground">

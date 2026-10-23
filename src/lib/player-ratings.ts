@@ -1,21 +1,50 @@
+import type { MessageKey } from '@/i18n/de'
 import type { Player } from '@/services/types'
 
 export type FormLabel = 'Top Form' | 'In Form' | 'Steady' | 'Cold'
+export type Trait =
+  | 'Clinical Finisher'
+  | 'Goal Threat'
+  | 'Chance Creator'
+  | 'Provider'
+  | 'Workhorse'
+  | 'Rising Star'
+  | 'Composed Defender'
+  | 'Reliable Keeper'
+
+/** Visible labels; the values above are stable ids (also used for styling). */
+export const formLabelKey: Record<FormLabel, MessageKey> = {
+  'Top Form': 'formTop',
+  'In Form': 'formIn',
+  Steady: 'formSteady',
+  Cold: 'formCold',
+}
+
+export const traitKey: Record<Trait, MessageKey> = {
+  'Clinical Finisher': 'traitClinical',
+  'Goal Threat': 'traitGoalThreat',
+  'Chance Creator': 'traitCreator',
+  Provider: 'traitProvider',
+  Workhorse: 'traitWorkhorse',
+  'Rising Star': 'traitRisingStar',
+  'Composed Defender': 'traitComposedDefender',
+  'Reliable Keeper': 'traitReliableKeeper',
+}
 
 export interface FormScore {
   /** 0–99 index derived from the real season totals (no per-match data in the feeds). */
   score: number
   label: FormLabel
   /** Short descriptors derived from the player's stat profile. */
-  traits: string[]
+  traits: Trait[]
 }
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
 }
 
-function deriveTraits(player: Player): string[] {
-  const traits: string[] = []
+function deriveTraits(player: Player): Trait[] {
+  const traits: Trait[] = []
   const { goals, assists, appearances, starts, yellowCards, redCards } = player.stats
   const apps = Math.max(1, appearances)
 

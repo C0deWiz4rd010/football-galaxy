@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { useLocale } from '@/contexts/LocaleContext'
 import { MIN_SEARCH_LENGTH, useFootballSearch } from '@/hooks/queries/search'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
-import { getLeague, leagues } from '@/lib/leagues'
+import { getLeague, leagueCountryKey, leagues } from '@/lib/leagues'
 import { exploreNav, toolsNav, worldCupNav } from '@/app/navigation'
 import { createPlayerAvatar, createTeamCrest, initialsFromName } from '@/lib/visualAssets'
 
@@ -42,7 +42,7 @@ export default function CommandPalette({ open, onOpenChange }: { open: boolean; 
 
   const matches = (text: string) => !normalized || text.toLowerCase().includes(normalized)
   const navItems = navigation.filter((item) => matches(item.label))
-  const leagueItems = leagues.filter((league) => matches(`${league.name} ${league.country}`))
+  const leagueItems = leagues.filter((league) => matches(`${league.name} ${league.country} ${t(leagueCountryKey[league.id])}`))
   const teams = normalized.length >= MIN_SEARCH_LENGTH ? (search.data?.teams ?? []).slice(0, 6) : []
   const players = normalized.length >= MIN_SEARCH_LENGTH ? (search.data?.players ?? []).slice(0, 8) : []
   const isSearching = normalized.length >= MIN_SEARCH_LENGTH && (search.isFetching || debouncedQuery.trim().toLowerCase() !== normalized)
@@ -94,7 +94,7 @@ export default function CommandPalette({ open, onOpenChange }: { open: boolean; 
                   <CommandItem key={league.id} value={`league-${league.id}`} onSelect={() => go(`/${league.id}`)}>
                     <AssetImage src={league.logo} fallbackSrc={createTeamCrest(league.abbreviation, league.color, "#f4f4f5", 0)} alt="" className="mr-2 h-6 w-6 object-contain" />
                     <span>{league.name}</span>
-                    <span className="ml-auto text-xs text-muted-foreground">{league.country}</span>
+                    <span className="ml-auto text-xs text-muted-foreground">{t(leagueCountryKey[league.id])}</span>
                   </CommandItem>
                 ))}
               </CommandGroup>

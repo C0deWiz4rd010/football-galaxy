@@ -1,29 +1,14 @@
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 import { axisTick, chartColors, chartPalette, legendStyle, tooltipProps, useChartMotion } from '@/components/charts/chartTheme'
+import { useLocale } from '@/contexts/LocaleContext'
+import { POSITION_ORDER, positionBucket, positionGroupKey } from '@/lib/positions'
 import type { WorldCupMatchStatistic, WorldCupSquadPlayer } from '@/services/worldCup/types'
 
 function toNumber(value: string | number): number {
   if (typeof value === 'number') return value
   const parsed = Number(String(value).replace('%', '').trim())
   return Number.isFinite(parsed) ? parsed : 0
-}
-
-const POSITION_BUCKETS: Record<string, string> = {
-  G: 'Goalkeepers',
-  Goalkeeper: 'Goalkeepers',
-  D: 'Defenders',
-  Defender: 'Defenders',
-  M: 'Midfielders',
-  Midfielder: 'Midfielders',
-  F: 'Forwards',
-  Forward: 'Forwards',
-  Attacker: 'Forwards',
-}
-
-function bucketPosition(position?: string): string {
-  if (!position) return 'Unassigned'
-  return POSITION_BUCKETS[position] ?? position
 }
 
 const legendProps = { wrapperStyle: legendStyle, iconType: 'circle', iconSize: 8 } as const
@@ -47,6 +32,7 @@ export function MatchStatsChart({
   homeName: string
   awayName: string
 }) {
+  const { t } = useLocale()
   const chartMotion = useChartMotion()
   const types = Array.from(new Set(statistics.map((stat) => stat.type)))
   const rows = types
@@ -61,7 +47,7 @@ export function MatchStatsChart({
   if (!rows.length) return null
 
   return (
-    <div role="img" aria-label={`Match statistics comparison between ${homeName} and ${awayName}`}>
+    <div role="img" aria-label={t('wcMatchStatsAria', { home: homeName, away: awayName })}>
       <ResponsiveContainer width="100%" height={Math.max(180, rows.length * 40 + 48)}>
         <BarChart data={rows} layout="vertical" margin={{ left: 0, right: 16 }} barGap={2}>
           <CartesianGrid horizontal={false} stroke={chartColors.grid} />
@@ -98,26 +84,32 @@ function Donut({ data, label, height }: { data: Array<{ name: string; value: num
 
 /** Squad composition donut grouped into goalkeeper/defender/midfielder/forward. */
 export function SquadPositionChart({ players }: { players: WorldCupSquadPlayer[] }) {
-  const counts = players.reduce<Record<string, number>>((acc, player) => {
-    const bucket = bucketPosition(player.position)
-    acc[bucket] = (acc[bucket] ?? 0) + 1
-    return acc
-  }, {})
-  const data = Object.entries(counts).map(([name, value], index) => ({ name, value, color: chartPalette[index % chartPalette.length] ?? chartColors.muted }))
+  const { t } = useLocale()
+  const counts = new Map<string, number>()
+  for (const player of players) {
+    const bucket = positionBucket(player.position)
+    const name = bucket ? t(positionGroupKey[bucket]) : t('posUnknown')
+    counts.set(name, (counts.get(name) ?? 0) + 1)
+  }
+  const order = [...POSITION_ORDER.map((code) => t(positionGroupKey[code])), t('posUnknown')]
+  const data = order
+    .filter((name) => counts.has(name))
+    .map((name, index) => ({ name, value: counts.get(name)!, color: chartPalette[index % chartPalette.length] ?? chartColors.muted }))
 
   if (!data.length) return null
-  return <Donut data={data} label="Squad composition by position" height={200} />
+  return <Donut data={data} label={t('wcSquadCompositionAria')} height={200} />
 }
 
 /** Overview pulse: live / upcoming / finished match distribution as a donut. */
 export function MatchStatePulse({ live, upcoming, recent }: { live: number; upcoming: number; recent: number }) {
+  const { t } = useLocale()
   const data = [
-    { name: 'Live', value: live, color: chartColors.live },
-    { name: 'Upcoming', value: upcoming, color: chartColors.secondary },
-    { name: 'Finished', value: recent, color: chartColors.muted },
+    { name: t('wcStateLive'), value: live, color: chartColors.live },
+    { name: t('wcStateUpcoming'), value: upcoming, color: chartColors.secondary },
+    { name: t('wcStateFinished'), value: recent, color: chartColors.muted },
   ].filter((entry) => entry.value > 0)
 
   // A single state (e.g. an archived, finished tournament) is a full ring: no information.
   if (data.length < 2) return null
-  return <Donut data={data} label="Match state distribution" height={200} />
+  return <Donut data={data} label={t('wcMatchStateAria')} height={200} />
 }

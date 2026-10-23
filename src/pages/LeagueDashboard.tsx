@@ -31,7 +31,7 @@ import { useLeagueSummary, useMatches } from '@/hooks/queries/football'
 import { useNow } from '@/hooks/useNow'
 import { withRecentForm } from '@/services/footballData'
 import { getPlayerPhotoSources } from '@/lib/assetSources'
-import { getLeague, isLeagueId } from '@/lib/leagues'
+import { getLeague, isLeagueId, leagueCountryKey } from '@/lib/leagues'
 import { cn, formatDateTime, formatRelativeTime } from '@/lib/utils'
 import { createLeagueLogo, createPlayerAvatar, initialsFromName } from '@/lib/visualAssets'
 import type { Standing } from '@/services/types'
@@ -196,7 +196,7 @@ export default function LeagueDashboard() {
               />
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline">{league.country}</Badge>
+                  <Badge variant="outline">{t(leagueCountryKey[league.id])}</Badge>
                   {Number.isFinite(freshnessMs) ? (
                     <DataSourceBadge freshness={data.servedStale ? 'offline' : isCurrent ? 'live' : 'official'} label={freshnessLabel} />
                   ) : null}

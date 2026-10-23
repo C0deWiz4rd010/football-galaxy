@@ -31,15 +31,23 @@ function readInitialLocale(): Locale {
     return 'de'
   }
 
-  const stored = window.localStorage.getItem(STORAGE_KEY)
-  return stored === 'en' ? 'en' : 'de'
+  // Storage can be blocked (private mode, strict cookie settings): default to German.
+  try {
+    return window.localStorage.getItem(STORAGE_KEY) === 'en' ? 'en' : 'de'
+  } catch {
+    return 'de'
+  }
 }
 
 export function LocaleProvider({ children }: PropsWithChildren) {
   const [locale, setLocale] = useState<Locale>(readInitialLocale)
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, locale)
+    try {
+      window.localStorage.setItem(STORAGE_KEY, locale)
+    } catch {
+      // Not persisted; the choice still applies for this visit.
+    }
     document.documentElement.lang = locale === 'de' ? 'de' : 'en'
   }, [locale])
 

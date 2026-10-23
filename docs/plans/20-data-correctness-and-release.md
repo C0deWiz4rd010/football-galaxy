@@ -267,3 +267,18 @@ Gate: Lint, `tsc -b`, 79 Tests, Build grün.
 *Offen:* Lighthouse-Mobilmessung vorher/nachher auf der echten Hostinger-Seite (lokal ohne Lighthouse/Drosselung nicht reproduzierbar).
 
 **Befund GitHub Pages:** Die Pages-Seite zeigt keine Daten. Ohne Proxy ruft sie ESPN direkt auf, und ESPN erlaubt das Browsern nicht (CORS). Lösung: Hostinger-Deploy, oder die Repository-Variable `VITE_LIVE_DATA_PROXY_URL` auf den Hostinger-Proxy setzen und `https://c0dewiz4rd010.github.io` in `ALLOWED_ORIGINS` eintragen.
+
+### Phase 5 – erledigt (2026-10-23)
+- **1** Übersetzt:
+  - Fehlerseite (auch oberhalb des Sprach-Providers, dann Englisch) und Einstellungen „Über/Version“.
+  - Tabellenkopf im Ladezustand und Länder der Ligen (`leagueCountryKey`).
+  - Formlabels und Spielereigenschaften (`formLabelKey`, `traitKey`).
+  - Live-Status (Ende/Anstoßzeit in UI-Sprache/Geplant/Verlegt), Freshness-Badges.
+  - WM-Diagramme (Positionsgruppen aus `lib/positions`, Statuslabels, ARIA).
+  - Handbuch: „Mock data“ ersetzt, Datenquellen-Text auf den aktuellen Stand.
+- **2** 75 tote Schlüssel entfernt (u. a. erfundene Attribute, Marktwert, Vertrag, „blendedEstimate“). Neuer Test `src/i18n/i18n.test.ts`: keine leeren Texte, gleiche Platzhalter in DE/EN, keine unbenutzten Schlüssel.
+- **3** `LocaleContext`: `localStorage` in try/catch.
+- **4** Galaxy-Demo-Buttons nur in DEV (schon in Phase 0).
+- **Neu:** Produktions-Hinweis, wenn kein Daten-Proxy konfiguriert ist („Keine Datenquelle verbunden“) oder er nicht antwortet. Das betrifft die GitHub-Pages-Seite, die vorher ohne Erklärung endlos lud.
+
+Gate grün; Browser: Spielerseite DE/EN (Länder, Form, Eigenschaften), Build ohne Proxy zeigt den Hinweis.
