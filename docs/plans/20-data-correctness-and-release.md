@@ -210,3 +210,26 @@ Wiederverwenden:
 - Gate: Lint, `tsc -b`, 57/57 Tests, Build grün. Browser: Galaxy (DE, Dialog), WM-Bracket/Teams (DE, EN mobil 375 px, kein Überlauf), Premier League Dashboard.
 
 **Bestätigt für Phase 1.1:** Das Bracket zeigt „Deutschland 4 : Paraguay 5“ und „Australien 3 : Ägypten 5“. `fullTime` enthält also offenbar die Elfmeter.
+
+### Phase 1 – erledigt (2026-10-23)
+**WM 2026**
+- **1** Elfmeter: `score.fullTime` enthält bei football-data v4 das Elfmeterschießen (Deutschland – Paraguay kam als 4:5). Spielstand = fullTime − penalties; `winner`, `decidedBy`, `penalties` separat. UI: „n. V.“, „i. E. 3:4“, Sieger im Turnierbaum hervorgehoben, Detailseite „Paraguay gewinnt 4:3 im Elfmeterschießen“. Tests mit echten Payloads (`src/test/payloads/worldCupKnockout.ts`).
+- **2** Zod-Schemas für alle WM-Antworten (`services/worldCup/schemas.ts`).
+- **3** Gruppentabellen aus dem Archiv: ein Eintrag pro Team auch bei mehreren TOTAL-Blöcken, FIFA-Reihenfolge mit direktem Vergleich (`groupRanking.ts`).
+- **4** Nach Auslosung des Sechzehntelfinales: „bester Dritter“ bzw. „ausgeschieden“ statt „Beobachtung“; Alter zum Eröffnungstag; Stadt-Filter entfernt (keine Venue-Daten).
+
+**Ligen**
+- **5** Formachse im Team-Radar aus den Ligaergebnissen aller Klubs (`withRecentForm`), ohne Daten ausgeblendet.
+- **6** Spieltag bleibt N, solange Runde N läuft; Nachholspiele zählen nicht.
+- **7** Live: verschobene Spiele „Verlegt“ ohne Ergebnis; Totalausfall = Fehler statt leerer Spieltag. Neuer Match-Status `POSTPONED` (ESPN + football-data).
+- **8** Keine geschätzten Minuten, keine erfundene „Verfügbarkeit“, keine abgeleiteten Attribute mehr: Startelf/Einwechslungen (echt), Werte pro Einsatz, Form-Score mit Startelf-Quote. Unbekannte Nationalität ohne Flagge; Wikidata-Foto nur für Fußballer.
+- **9** Perzentile ohne Spieler ohne Einsätze, erst ab 8 vergleichbaren Spielern.
+- **10** football-data-Fallback: Assists aus den Top-100-Torschützen; verlegte/abgesagte Spiele eigener Status.
+- **11** Tabellenzonen je Liga (`lib/tableZones.ts`): CL-Plätze (Ligue 1: 3 + Qualifikation), Relegation (Bundesliga/Ligue 1), Abstieg; Legende zeigt nur vorhandene Zonen.
+- **12** Frische-Badge „Aktuell“ nur < 5 min, sonst „Stand <Zeit>“. Teilausfälle von Scoreboard/Statistik werden gemeldet („Bestenliste nicht verfügbar“). *Offen:* Proxy-Stale-Header bis in die UI → Phase 3.
+- **13** Tabellen-Invarianten (`lib/dataInvariants.ts`) als Test und DEV-Warnung.
+- **14** `npm run verify:data`: ESPN und football-data.org in allen 5 Ligen identisch (96/96 Klubs) → `docs/qa/data-verification-2026-10.md`.
+
+Gate: Lint, `tsc -b`, Tests, Build grün. Browser: WM (Turnierbaum, Spiele, Gruppen, Detail), Bundesliga-Dashboard und -Teamseite, Premier-League-Spielerseite.
+
+**Notiert für spätere Phasen:** englisches Länder-Badge im Liga-Kopf („Germany“), Live-Statuslabels („FT“) und Formlabels („Top Form“) noch englisch → Phase 5.

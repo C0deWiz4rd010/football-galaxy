@@ -10,6 +10,7 @@
  * - player page: one athlete lookup plus that club's (cached) roster.
  */
 import { leagues } from '@/lib/leagues'
+import { standingsIssues } from '@/lib/dataInvariants'
 import { currentMatchdayFromTable, currentSeasonId, seasonInfo } from '@/lib/season'
 import { createTeamCrest } from '@/lib/visualAssets'
 import { LiveHttpError, fetchLiveJson } from '@/services/net/liveClient'
@@ -338,6 +339,10 @@ export function withRecentForm(standings: Standing[], matches: Match[] | undefin
 
 export async function getLeagueSummary(leagueId: LeagueId): Promise<LeagueSummary> {
   const core = await loadCore(leagueId)
+  if (import.meta.env.DEV) {
+    const issues = standingsIssues(leagueId, core.standings)
+    if (issues.length) console.warn(`[data] ${leagueId} table looks inconsistent:`, issues)
+  }
   return {
     league: leagueConfig(leagueId),
     season: {
