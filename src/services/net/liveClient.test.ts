@@ -143,4 +143,13 @@ describe('fetchLiveJson', () => {
     await fetchLiveJson('https://example.com/table', { fetchImpl: vi.fn(async () => jsonResponse({ ok: true })) })
     expect(wasServedStale('https://example.com/table')).toBe(false)
   })
+  it('does not count proxy cache hits against the football-data.org window', async () => {
+    vi.useFakeTimers()
+    const cached = () => ({ ...jsonResponse({ ok: true }), headers: new Headers({ 'x-proxy-cache': 'hit' }) }) as Response
+    const fetchImpl = vi.fn(async () => cached())
+    for (let index = 0; index < 15; index += 1) {
+      await fetchLiveJson(`https://api.football-data.org/v4/cached/${index}`, { fetchImpl })
+    }
+    expect(fetchImpl).toHaveBeenCalledTimes(15)
+  })
 })

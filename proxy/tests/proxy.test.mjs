@@ -44,6 +44,8 @@ describe('live-data proxy contract', () => {
     assert.equal((await call(target('https://example.com/x'))).status, 403)
     assert.equal((await call(target('https://site.api.espn.com:8443/x'))).status, 403)
     assert.equal((await call(target('https://user:pw@site.api.espn.com/x'))).status, 403)
+    // Allowed host, but outside the paths the app uses.
+    assert.equal((await call(target('https://site.api.espn.com/apis/other/endpoint'))).status, 403)
   })
 
   it('returns errors as short JSON without upstream details', async () => {

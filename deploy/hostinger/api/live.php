@@ -77,11 +77,21 @@ if (
     || !in_array($host, $rules['hosts'], true)
     || isset($parts['user'])
     || isset($parts['pass'])
-    || isset($parts['port'])
+    || (isset($parts['port']) && $parts['port'] !== 443)
 ) {
     fg_error(403, 'Target host is not allowed.', $corsHeaders);
 }
-$pathAndQuery = ($parts['path'] ?? '/') . (isset($parts['query']) ? '?' . $parts['query'] : '');
+$path = $parts['path'] ?? '/';
+$allowedPath = false;
+foreach ($rules['pathPrefixes'][$host] ?? [] as $prefix) {
+    $allowedPath = $allowedPath || str_starts_with($path, $prefix);
+}
+if (!$allowedPath) {
+    fg_error(403, 'Target path is not allowed.', $corsHeaders);
+}
+$pathAndQuery = $path . (isset($parts['query']) ? '?' . $parts['query'] : '');
+// The fragment never reaches the upstream, so it must not split the cache either.
+$target = explode('#', $target, 2)[0];
 $ttl = fg_ttl($rules, $host, $pathAndQuery);
 
 // --- Cache -------------------------------------------------------------------
@@ -115,8 +125,10 @@ if (is_array($budget)) {
 
 $upstream = fg_fetch($target, $host, $config, $rules);
 if ($upstream['status'] === 200) {
-    fg_cache_write($dataDir, $cacheKey, $upstream['body'], $upstream['contentType']);
-    fg_maybe_prune($dataDir, (int) $rules['maxStaleSeconds']);
+    if (strlen($upstream['body']) <= (int) $rules['maxCacheableBytes']) {
+        fg_cache_write($dataDir, $cacheKey, $upstream['body'], $upstream['contentType']);
+    }
+    fg_maybe_prune($dataDir, $rules);
     fg_send(200, $upstream['body'], array_merge($corsHeaders, [
         'Content-Type: ' . $upstream['contentType'],
         'Cache-Control: public, max-age=' . $ttl,
@@ -217,13 +229,38 @@ function fg_cache_write(string $dir, string $key, string $body, string $contentT
 }
 
 /** Roughly every 200th successful fetch removes cache files past the stale limit. */
-function fg_maybe_prune(string $dir, int $maxStaleSeconds): void
+/**
+ * Roughly every 50th miss: drop cache entries past the stale limit, keep at
+ * most `maxCacheEntries` (oldest first) and remove rate-limit state idle for a
+ * day, so disk and inode use stay bounded on shared hosting.
+ */
+function fg_maybe_prune(string $dir, array $rules): void
 {
-    if (random_int(1, 200) !== 1) {
+    if (random_int(1, 50) !== 1) {
         return;
     }
-    foreach (glob($dir . '/c-*') ?: [] as $file) {
-        if (@filemtime($file) < time() - $maxStaleSeconds) {
+    $now = time();
+    $entries = [];
+    foreach (glob($dir . '/c-*.meta') ?: [] as $meta) {
+        $mtime = (int) @filemtime($meta);
+        $base = substr($meta, 0, -strlen('.meta'));
+        if ($mtime < $now - (int) $rules['maxStaleSeconds']) {
+            @unlink($meta);
+            @unlink($base . '.body');
+            continue;
+        }
+        $entries[$base] = $mtime;
+    }
+    $excess = count($entries) - (int) $rules['maxCacheEntries'];
+    if ($excess > 0) {
+        asort($entries);
+        foreach (array_slice(array_keys($entries), 0, $excess) as $base) {
+            @unlink($base . '.meta');
+            @unlink($base . '.body');
+        }
+    }
+    foreach (array_merge(glob($dir . '/rl-*.json') ?: [], glob($dir . '/*.tmp') ?: []) as $file) {
+        if ((int) @filemtime($file) < $now - 86400) {
             @unlink($file);
         }
     }

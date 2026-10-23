@@ -1,6 +1,6 @@
 # 20 — Richtige Daten, stabil, performant
 
-Status: aktiv · Erstellt: 2026-10-23 · Nachfolger von Plan 19 (übernimmt dessen offene Phasen 7–10).
+Status: abgeschlossen (2026-10-23) · Erstellt: 2026-10-23 · Nachfolger von Plan 19 (übernimmt dessen offene Phasen 7–10).
 
 
 ## Context
@@ -301,3 +301,26 @@ Gate grün; Browser: Titel/Beschreibung auf Liga-, Spieler- und WM-Spielseite, M
 - README neu (Quellen-Kaskade, Skripte, Proxys, Hostinger, Struktur, Node 22), `AGENTS.md` (Code-Block geschlossen, Planungsabschnitt vervollständigt), `PLANS.md` (Markdown repariert, Plan 20 aktiv), `docs/memory.md` (Eintrag Plan 20, Überholtes markiert), `docs/design-system.md` (Font-Paket, WM-Archiv, Bracket-Tabs, Radien, Motion-Tokens in `tokens.css`).
 - Pläne 13/14/16/18 als abgelöst markiert, Plan 19 „abgeschlossen bis Phase 6“. Veraltete Kommentare in `tournament.ts` und `footballDataOrg.ts` korrigiert; Mai-Dokumente (QA, Feature) mit Hinweis versehen.
 - `deploy.yml` auf Node 22 (wie CI/Release). `.env.example` und `docs/deploy-hostinger.md` schon in Phase 3/6 aktualisiert.
+
+### Abschluss-Review (2026-10-23)
+Unabhängiges Review der riskanten Änderungen (Proxys, Fetch-Client, WM-Provider, ESPN-Loader, Vite-Plugins, Hostinger-Build). Behoben:
+- **Proxy (mittel):** Ein Client konnte über beliebige Ziel-URLs den Datei-Cache auf Hostinger füllen. Behoben mit:
+  - Pfad-Allowlist pro Host (`rules.pathPrefixes`);
+  - Cache-Schlüssel ohne Fragment;
+  - nur Antworten bis 2 MB im Cache, höchstens 1500 Einträge (älteste zuerst);
+  - Aufräumen alle ~50 Misses, Rate-Limit-Dateien nach einem Tag.
+- **Proxy (niedrig):** PHP akzeptiert jetzt `:443` wie Node und die Spezifikation.
+- **Fetch-Client:** Antworten aus dem Proxy-Cache (`hit`/`stale`) geben den reservierten Platz im football-data.org-Fenster frei; vorher konnten reine Cache-Treffer bis zu 60 s warten.
+- **WM (mittel):** Gruppentabellen nehmen nur noch den `GROUP_STAGE`-Block, keine Werte aus K.-o.-Tabellen. „Beste Dritte/ausgeschieden“ erst, wenn alle Gruppenspiele beendet sind; vorher „Gruppendritter“.
+
+Geprüft ohne Befund: Elfmeter-Mathematik, FIFA-Reihenfolge, Monatsliste, Preload-URLs (byte-gleich zum Fetch-Client), CSP-Hashes.
+Neue Tests: Pfadverbot (Proxy-Vertrag), Cache-Treffer und Fenster, WM mit abweichender K.-o.-Tabelle und laufender Gruppenphase. Echte Daten: weiterhin 12 Gruppen, 8 beste Dritte; Liga- und Team-Seite laden über die Allowlist.
+
+**Bundle (Produktions-Build):**
+- Startlast 141 KB gzip: Entry 60, React 68, CSS 13, dazu die vorgeladene Schrift.
+- Recharts (101 KB) lädt nur auf Seiten mit Diagrammen.
+
+**Plan 20 abgeschlossen.** Offen bleiben Schritte außerhalb des Repos:
+- Hostinger-Upload samt Config mit Schlüssel (`docs/deploy-hostinger.md`).
+- Danach Lighthouse mobil auf der echten Seite und Stichprobe gegen offizielle Ligaseiten.
+- Optional GitHub Pages an den Hostinger-Proxy anbinden.

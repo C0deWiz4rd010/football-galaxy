@@ -113,9 +113,9 @@ function releaseSlot(): void {
  * other, and the wait happens *before* a concurrency slot is taken so a
  * rate-limited host never blocks requests to other hosts.
  */
-async function respectHostThrottle(host: string): Promise<void> {
+async function respectHostThrottle(host: string): Promise<number | undefined> {
   const rule = HOST_RATE_LIMIT[host]
-  if (!rule) return
+  if (!rule) return undefined
   const now = Date.now()
   const starts = (hostStarts.get(host) ?? []).filter((start) => start > now - rule.windowMs)
   // With `limit` starts in the window, the next may begin one window after
@@ -125,6 +125,19 @@ async function respectHostThrottle(host: string): Promise<void> {
   starts.push(nextStart)
   hostStarts.set(host, starts)
   if (nextStart > now) await delay(nextStart - now)
+  return nextStart
+}
+
+/**
+ * The proxy answered from its own cache (`x-proxy-cache: hit | stale`), so no
+ * upstream request was spent: hand the reserved slot back. The proxy enforces
+ * the real, shared upstream budget.
+ */
+function releaseHostSlot(host: string, start: number | undefined): void {
+  if (start === undefined) return
+  const starts = hostStarts.get(host)
+  const index = starts?.indexOf(start) ?? -1
+  if (starts && index >= 0) starts.splice(index, 1)
 }
 
 function isAbortError(error: unknown): boolean {
@@ -193,10 +206,12 @@ async function runOnce<T>(
   for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
     // -1 means "do not retry"; a value >= 0 is the backoff delay before retry.
     let waitMs = -1
-    await respectHostThrottle(host)
+    const reserved = await respectHostThrottle(host)
     await acquireSlot()
     try {
       const response = await fetchWithTimeout(doFetch, requestUrl, options.init, timeoutMs)
+      const proxyCache = response.headers.get('x-proxy-cache')
+      if (proxyCache === 'hit' || proxyCache === 'stale') releaseHostSlot(host, reserved)
 
       if (response.ok) {
         if (response.headers.get('x-proxy-cache') === 'stale') staleTargets.add(targetUrl)

@@ -8,6 +8,14 @@
     "www.thesportsdb.com",
     "www.wikidata.org"
   ],
+  "pathPrefixes": {
+    "site.api.espn.com": ["/apis/site/v2/sports/soccer/"],
+    "site.web.api.espn.com": ["/apis/v2/sports/soccer/", "/apis/common/v3/"],
+    "api.football-data.org": ["/v4/"],
+    "api.openligadb.de": ["/getbltable/"],
+    "www.thesportsdb.com": ["/api/v1/json/123/"],
+    "www.wikidata.org": ["/w/api.php"]
+  },
   "ttl": [
     { "host": "site.api.espn.com", "path": "/scoreboard$", "seconds": 30 },
     { "host": "site.api.espn.com", "path": "/scoreboard\\?dates=", "seconds": 600 },
@@ -35,5 +43,7 @@
   "clientRateLimit": { "limit": 240, "windowSeconds": 60 },
   "timeoutSeconds": 10,
   "maxBodyBytes": 10485760,
+  "maxCacheableBytes": 2097152,
+  "maxCacheEntries": 1500,
   "exposedHeaders": ["x-proxy-cache", "retry-after"]
 }

@@ -317,8 +317,15 @@ function groupResults(matches: FdMatch[]): GroupResult[] {
   })
 }
 
-/** Teams in the round of 32 once it is drawn — tells qualified thirds from eliminated ones. */
+/**
+ * Teams in the round of 32 once every group match is finished. Group winners
+ * and runners-up enter the bracket as their group ends, but the best thirds
+ * are only assigned after all twelve groups — trusting a partial bracket would
+ * call every third place "eliminated" too early.
+ */
 function roundOf32Teams(matches: FdMatch[]): Set<number> | undefined {
+  const groupMatches = matches.filter((match) => match.stage === 'GROUP_STAGE')
+  if (!groupMatches.length || groupMatches.some((match) => statusOf(match.status) !== 'FINISHED')) return undefined
   const ids = matches
     .filter((match) => match.stage === 'LAST_32')
     .flatMap((match) => [match.homeTeam.id, match.awayTeam.id])
@@ -334,7 +341,11 @@ function hintFor(rank: number, teamId: number | null | undefined, qualified?: Se
 
 async function loadGroups(rawMatches?: FdMatch[]): Promise<WorldCupGroupStanding[]> {
   const data = await getJson(competitionPath('standings'), fdStandingsResponseSchema)
-  const blocks = (data.standings ?? []).filter((block) => !block.type || block.type === 'TOTAL')
+  const totals = (data.standings ?? []).filter((block) => !block.type || block.type === 'TOTAL')
+  // Archived tournaments also carry tables for later stages; group ranks and
+  // stats come from the group stage only.
+  const groupStage = totals.filter((block) => block.stage === 'GROUP_STAGE')
+  const blocks = groupStage.length ? groupStage : totals
   const matches = rawMatches ?? (await getMatches())
   const qualified = roundOf32Teams(matches)
   const rows: WorldCupGroupStanding[] = []

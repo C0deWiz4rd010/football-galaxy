@@ -115,4 +115,45 @@ describe('football-data.org World Cup provider', () => {
       [4, 'CZE', 'eliminated'],
     ])
   })
+  it('ignores later-stage tables and keeps thirds "under watch" while groups are still running', async () => {
+    const scored = (id: number, home: [number, string], away: [number, string], h: number, a: number, status = 'FINISHED') => ({
+      ...groupMatch(id, 'GROUP_A', home, away),
+      status,
+      score: { duration: 'REGULAR', fullTime: { home: h, away: a } },
+    })
+    const mex: [number, string] = [1, 'MEX']
+    const rsa: [number, string] = [2, 'RSA']
+    const kor: [number, string] = [3, 'KOR']
+    const cze: [number, string] = [4, 'CZE']
+    const groupTable = [row(1, 1, 'MEX', 7), row(2, 2, 'RSA', 5), row(3, 3, 'KOR', 4), row(4, 4, 'CZE', 0)]
+    // In the knockout table KOR sits on top with knockout points — it must not leak into group A.
+    const knockoutTable = [{ ...row(1, 3, 'KOR', 12), playedGames: 5 }, row(2, 1, 'MEX', 9), row(3, 2, 'RSA', 5), row(4, 4, 'CZE', 0)]
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.includes('/standings')) {
+        return {
+          standings: [
+            { stage: 'LAST_32', type: 'TOTAL', group: null, table: knockoutTable },
+            { stage: 'GROUP_STAGE', type: 'TOTAL', group: null, table: groupTable },
+          ],
+        } as never
+      }
+      return {
+        matches: [
+          scored(1, mex, rsa, 1, 0),
+          scored(2, kor, cze, 0, 0, 'IN_PLAY'),
+          // Group winners already appear in the round of 32 while the groups still run.
+          { ...groupMatch(3, 'GROUP_A', mex, [9, 'BRA']), stage: 'LAST_32', group: null, status: 'TIMED' },
+        ],
+      } as never
+    })
+
+    const groups = await footballDataWorldCupProvider.getGroups()
+
+    expect(groups.map((entry) => [entry.rank, entry.team.code, entry.points, entry.played, entry.qualificationHint])).toEqual([
+      [1, 'MEX', 7, 3, 'top-two'],
+      [2, 'RSA', 5, 3, 'top-two'],
+      [3, 'KOR', 4, 3, 'best-third-watch'],
+      [4, 'CZE', 0, 3, 'pending'],
+    ])
+  })
 })

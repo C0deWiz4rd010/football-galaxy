@@ -24,7 +24,6 @@ const ALLOWED_ORIGINS = new Set(
     .filter(Boolean),
 )
 const HOSTS = new Set(rules.hosts)
-const MAX_CACHE_ENTRIES = 500
 
 /** target URL → { body: Buffer, contentType, storedAt (ms) } */
 const cache = new Map()
@@ -50,9 +49,10 @@ function takeSlot(key, limit, windowSeconds) {
 }
 
 function cacheWrite(key, entry) {
+  if (entry.body.length > rules.maxCacheableBytes) return
   cache.delete(key)
   cache.set(key, entry)
-  while (cache.size > MAX_CACHE_ENTRIES) cache.delete(cache.keys().next().value)
+  while (cache.size > rules.maxCacheEntries) cache.delete(cache.keys().next().value)
 }
 
 /**
@@ -154,10 +154,15 @@ async function handle(request, response) {
   if (parsed.protocol !== 'https:' || !HOSTS.has(parsed.hostname) || parsed.username || parsed.password || parsed.port) {
     return sendError(response, 403, 'Target host is not allowed.', cors)
   }
+  if (!(rules.pathPrefixes[parsed.hostname] ?? []).some((prefix) => parsed.pathname.startsWith(prefix))) {
+    return sendError(response, 403, 'Target path is not allowed.', cors)
+  }
+  // The fragment never reaches the upstream, so it must not split the cache either.
+  parsed.hash = ''
 
   const host = parsed.hostname
   const ttl = ttlSeconds(host, parsed.pathname + parsed.search)
-  const key = createHash('sha256').update(target).digest('hex')
+  const key = createHash('sha256').update(parsed.href).digest('hex')
   const cached = cache.get(key)
   const age = cached ? (Date.now() - cached.storedAt) / 1000 : Infinity
   if (cached && age < ttl) {
@@ -180,7 +185,7 @@ async function handle(request, response) {
     }
   }
 
-  const upstream = await fetchUpstream(target, host)
+  const upstream = await fetchUpstream(parsed.href, host)
   if (upstream.status === 200) {
     cacheWrite(key, { body: upstream.body, contentType: upstream.contentType, storedAt: Date.now() })
     return send(response, 200, upstream.body, {

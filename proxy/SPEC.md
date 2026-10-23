@@ -31,7 +31,7 @@ Both are tested by the same suite: `proxy/tests/proxy.test.mjs` (`PROXY_URL=… 
 1. **Method**: only `GET` / `OPTIONS`.
 2. **Origin**: a request carrying an `Origin` header not listed in `ALLOWED_ORIGINS` gets `403`. Requests without `Origin` (same-origin `GET`) pass.
 3. **Client rate limit**: `rules.clientRateLimit` per client IP (240 per minute; cache hits count too) → `429` with `Retry-After`.
-4. **Target**: must be present (`400`), an absolute `https:` URL (`400`) on a host in `rules.hosts` (`403`), without credentials or a non-default port (`403`).
+4. **Target**: must be present (`400`), an absolute `https:` URL (`400`) on a host in `rules.hosts` whose path starts with one of that host's `rules.pathPrefixes` (`403`), without credentials or a port other than 443 (`403`).
 
 ## Upstream call
 
@@ -42,7 +42,7 @@ Both are tested by the same suite: `proxy/tests/proxy.test.mjs` (`PROXY_URL=… 
 
 ## Cache
 
-- Key: the full target URL. Only `200` responses are stored.
+- Key: the target URL without fragment. Only `200` responses up to `rules.maxCacheableBytes` (2 MB) are stored, at most `rules.maxCacheEntries` (1500); the oldest go first. Entries past `maxStaleSeconds` and idle rate-limit state are pruned regularly.
 - TTL: the first `rules.ttl` entry whose `host` matches and whose `path` regex matches `pathname + search` of the target; otherwise `rules.defaultTtlSeconds`.
 - Fresh (age < TTL) → served without an upstream call: `x-proxy-cache: hit`.
 - Upstream `429`, `5xx`, timeout or network error with a cached copy younger than `rules.maxStaleSeconds` (7 days) → served with `x-proxy-cache: stale`.
