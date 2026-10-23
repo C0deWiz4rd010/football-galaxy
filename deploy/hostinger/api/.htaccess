@@ -1,0 +1,6 @@
+# Only the proxy script is reachable; its rules, cache files and an optional
+# config.php stay private.
+Options -Indexes
+<FilesMatch "^(?!live\.php$).*$">
+  Require all denied
+</FilesMatch>

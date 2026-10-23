@@ -19,9 +19,10 @@
  * - **Timeout** — every attempt is aborted after `timeoutMs` so a hung upstream
  *   cannot hold a concurrency slot forever.
  *
- * The proxy still owns the API keys and its own 60s stale-serving cache; this
- * client is the browser-side complement that prevents us from ever reaching the
- * proxy more often than we have to.
+ * The proxy owns the API keys, the shared upstream budget and a server cache
+ * (proxy/SPEC.md); this client is the browser-side complement that prevents us
+ * from reaching the proxy more often than we have to. When the proxy answers
+ * with a stored copy because the upstream failed, `wasServedStale` reports it.
  */
 
 import { buildLiveRequestUrl } from '@/services/config/liveProxy'
@@ -66,6 +67,8 @@ const HOST_RATE_LIMIT: Record<string, { limit: number; windowMs: number }> = {
 }
 
 const inFlight = new Map<string, Promise<unknown>>()
+/** Targets whose last answer was the proxy's stored copy (`x-proxy-cache: stale`). */
+const staleTargets = new Set<string>()
 /** Reserved start times per rate-limited host, oldest first. */
 const hostStarts = new Map<string, number[]>()
 
@@ -196,6 +199,8 @@ async function runOnce<T>(
       const response = await fetchWithTimeout(doFetch, requestUrl, options.init, timeoutMs)
 
       if (response.ok) {
+        if (response.headers.get('x-proxy-cache') === 'stale') staleTargets.add(targetUrl)
+        else staleTargets.delete(targetUrl)
         return (await response.json()) as T
       }
 
@@ -253,9 +258,15 @@ export function fetchLiveJson<T>(
   return promise
 }
 
+/** True when the last response for `targetUrl` was a stored copy because the upstream was unavailable. */
+export function wasServedStale(targetUrl: string): boolean {
+  return staleTargets.has(targetUrl)
+}
+
 /** Testing helper — clears dedupe + throttle state between test cases. */
 export function __resetLiveClientState(): void {
   inFlight.clear()
+  staleTargets.clear()
   hostStarts.clear()
   waiters.length = 0
   active = 0

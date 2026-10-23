@@ -243,3 +243,15 @@ Gate: Lint, `tsc -b`, Tests, Build grün. Browser: WM (Turnierbaum, Spiele, Grup
 **Messung (frischer Cache, Premier League):** Dashboard 16 Datenanfragen + Health-Check (vorher ≈ 46, davon 3 an football-data.org); Team-Seite danach 3 (Metadaten ×2, Kader), Spiele aus dem Cache.
 
 Gate: Lint, `tsc -b`, 79 Tests, Build grün.
+
+### Phase 3 – erledigt (2026-10-23)
+- **1** `proxy/SPEC.md` + gemeinsame Regeln `proxy/rules.json` (Hosts, TTL je Route, Limits) für beide Proxys. Allowlist auf die 6 Datenhosts verkleinert (Bilder lädt die App direkt), API-Football entfernt.
+- **2** PHP-Proxy `deploy/hostinger/api/live.php`: Origin-Check, 240 Anfragen/min pro IP, gemeinsames football-data.org-Budget (10/min für alle Besucher) mit Stale-Antwort statt 429, Datei-Cache mit TTL je Route und Stale-on-error (7 Tage), Timeout 10 s, 10 MB-Limit, keine Weiterleitungen, Fehler ohne Upstream-Details. Schlüssel aus Umgebung bzw. `football-galaxy-config.php` außerhalb von `public_html` (Vorlage `deploy/football-galaxy-config.sample.php`).
+- **3** Node-Proxy neu nach derselben Spezifikation (In-Memory), CORS nur für erlaubte Origins.
+- **4** `deploy/hostinger/.htaccess`: HTTPS, SPA-Fallback, `no-cache` für `index.html`, `immutable` für `assets/`, Kompression, HSTS/nosniff/Frame/Referrer/Permissions-Policy und CSP ohne `unsafe-inline` für Skripte (Hash wird beim Build eingesetzt). `api/.htaccess` sperrt alles außer `live.php`.
+- **5** `npm run build:hostinger` → `dist-hostinger/`; Release-Workflow hängt `football-galaxy-hostinger-vX.Y.Z.zip` an das GitHub-Release. Anleitung: `docs/deploy-hostinger.md`. `.env.example` bereinigt.
+- **6** Stale-Kopie des Proxys erreicht die UI: `wasServedStale()` im Fetch-Client → Dashboard-Badge „Gespeicherter Stand – Anbieter gerade nicht erreichbar“ (schließt 1.12).
+- **Tests:** Vertragstests `proxy/tests/proxy.test.mjs` (`npm run test:proxy`, `npm run test:proxy:php`): Node lokal 7/7 inkl. echtem Upstream-Durchlauf. CI-Job `proxy` testet Node **und** PHP (`php -l` + Vertrag); im Release läuft der Node-Vertrag.
+- Geprüft: CSP mit gebautem `index.html` ohne Verstöße (Theme-Skript läuft); Dev-App mit neuem Proxy (Liga, Team, WM).
+
+**Nicht lokal geprüft:** Der PHP-Proxy lief hier nicht (kein PHP installiert) — erste Ausführung im CI-Job `proxy` bei einem Pull Request bzw. auf Hostinger nach dem Upload (Prüfliste in `docs/deploy-hostinger.md`).

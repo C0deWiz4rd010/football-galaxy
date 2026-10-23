@@ -194,6 +194,8 @@ export interface LeagueSummary {
   lastUpdated?: string
   /** Parts of the summary whose feed failed — shown as an error, not as "no data". */
   unavailable?: LeagueSummaryPart[]
+  /** The table is the proxy's stored copy: the provider could not be reached. */
+  servedStale?: boolean
 }
 
 export type LeagueSummaryPart = 'fixtures' | 'leaders'

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { __resetLiveClientState, fetchLiveJson } from './liveClient'
+import { __resetLiveClientState, fetchLiveJson, wasServedStale } from './liveClient'
 
 function jsonResponse(body: unknown, status = 200): Response {
   return {
@@ -134,5 +134,13 @@ describe('fetchLiveJson', () => {
     await vi.advanceTimersByTimeAsync(60_000)
     await Promise.all(calls)
     expect(fetchImpl).toHaveBeenCalledTimes(11)
+  })
+  it('remembers when the proxy answered with its stored copy', async () => {
+    const stale = { ...jsonResponse({ ok: true }), headers: new Headers({ 'x-proxy-cache': 'stale' }) } as Response
+    await fetchLiveJson('https://example.com/table', { fetchImpl: vi.fn(async () => stale) })
+    expect(wasServedStale('https://example.com/table')).toBe(true)
+
+    await fetchLiveJson('https://example.com/table', { fetchImpl: vi.fn(async () => jsonResponse({ ok: true })) })
+    expect(wasServedStale('https://example.com/table')).toBe(false)
   })
 })

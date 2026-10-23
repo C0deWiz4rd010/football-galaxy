@@ -151,8 +151,12 @@ export default function LeagueDashboard() {
   const freshnessMs = freshnessAt === null ? Number.NaN : new Date(freshnessAt).getTime()
   // Data restored from the persisted cache keeps its original fetch time, so an
   // old table reads "as of 14:02" instead of pretending to be live.
-  const isCurrent = Number.isFinite(freshnessMs) && now - freshnessMs < FRESH_MS
-  const freshnessLabel = isCurrent ? t('freshCurrent') : t('freshAsOf', { time: formatDateTime(new Date(freshnessMs).toISOString()) })
+  const isCurrent = !data.servedStale && Number.isFinite(freshnessMs) && now - freshnessMs < FRESH_MS
+  const freshnessLabel = data.servedStale
+    ? t('freshSavedCopy')
+    : isCurrent
+      ? t('freshCurrent')
+      : t('freshAsOf', { time: formatDateTime(new Date(freshnessMs).toISOString()) })
   const leader = standings[0]
   const topAttack = standings.length > 0
     ? [...standings].sort((left, right) => right.goalsFor - left.goalsFor)[0]
@@ -194,7 +198,7 @@ export default function LeagueDashboard() {
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline">{league.country}</Badge>
                   {Number.isFinite(freshnessMs) ? (
-                    <DataSourceBadge freshness={isCurrent ? 'live' : 'official'} label={freshnessLabel} />
+                    <DataSourceBadge freshness={data.servedStale ? 'offline' : isCurrent ? 'live' : 'official'} label={freshnessLabel} />
                   ) : null}
                 </div>
                 <h1 className="mt-1 text-2xl font-semibold tracking-tight">{league.name}</h1>

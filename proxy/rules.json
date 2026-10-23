@@ -1,0 +1,39 @@
+{
+  "$comment": "Shared by proxy/football-data-proxy.mjs (dev) and deploy/hostinger/api/live.php (production). See proxy/SPEC.md.",
+  "hosts": [
+    "site.api.espn.com",
+    "site.web.api.espn.com",
+    "api.football-data.org",
+    "api.openligadb.de",
+    "www.thesportsdb.com",
+    "www.wikidata.org"
+  ],
+  "ttl": [
+    { "host": "site.api.espn.com", "path": "/scoreboard$", "seconds": 30 },
+    { "host": "site.api.espn.com", "path": "/scoreboard\\?dates=", "seconds": 600 },
+    { "host": "site.api.espn.com", "path": "/statistics", "seconds": 900 },
+    { "host": "site.api.espn.com", "path": "/roster", "seconds": 21600 },
+    { "host": "site.api.espn.com", "path": "/teams$", "seconds": 86400 },
+    { "host": "site.web.api.espn.com", "path": "/standings", "seconds": 300 },
+    { "host": "site.web.api.espn.com", "path": "/athletes/", "seconds": 21600 },
+    { "host": "site.web.api.espn.com", "path": "/search", "seconds": 3600 },
+    { "host": "api.football-data.org", "path": "/competitions/WC/", "seconds": 86400 },
+    { "host": "api.football-data.org", "path": "^/v4/(matches|teams)/", "seconds": 86400 },
+    { "host": "api.football-data.org", "path": "/teams", "seconds": 86400 },
+    { "host": "api.football-data.org", "path": "/standings", "seconds": 300 },
+    { "host": "api.football-data.org", "path": "/scorers", "seconds": 900 },
+    { "host": "api.football-data.org", "path": "/matches", "seconds": 600 },
+    { "host": "api.openligadb.de", "path": "", "seconds": 300 },
+    { "host": "www.thesportsdb.com", "path": "", "seconds": 86400 },
+    { "host": "www.wikidata.org", "path": "", "seconds": 604800 }
+  ],
+  "defaultTtlSeconds": 60,
+  "maxStaleSeconds": 604800,
+  "upstreamBudget": {
+    "api.football-data.org": { "limit": 10, "windowSeconds": 60 }
+  },
+  "clientRateLimit": { "limit": 240, "windowSeconds": 60 },
+  "timeoutSeconds": 10,
+  "maxBodyBytes": 10485760,
+  "exposedHeaders": ["x-proxy-cache", "retry-after"]
+}

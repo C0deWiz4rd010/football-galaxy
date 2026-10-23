@@ -34,6 +34,7 @@ export const de = {
   leadersUnavailableBody: 'Die Spielerstatistiken konnten gerade nicht geladen werden. Die Tabelle ist davon nicht betroffen.',
   freshCurrent: 'Aktuell',
   freshAsOf: 'Stand {time}',
+  freshSavedCopy: 'Gespeicherter Stand – Anbieter gerade nicht erreichbar',
   localFallback: 'Lokale Daten',
   localTooltip: 'Lokale 2025/26-Daten verwenden — keine Netzwerkaufrufe.',
   liveTooltip: 'Echtzeitdaten über den Proxy laden.',

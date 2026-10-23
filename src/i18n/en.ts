@@ -35,6 +35,7 @@ export const en: Messages = {
   leadersUnavailableBody: 'Player statistics could not be loaded right now. The table is not affected.',
   freshCurrent: 'Up to date',
   freshAsOf: 'As of {time}',
+  freshSavedCopy: 'Saved copy — provider unreachable right now',
   localFallback: 'Local Fallback',
   localTooltip: 'Use bundled 2025/26 data — no network calls.',
   liveTooltip: 'Fetch real-time data through the proxy.',

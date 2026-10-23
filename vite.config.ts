@@ -61,7 +61,8 @@ export default defineConfig({
     globals: true,
     setupFiles: './src/test/setup.ts',
     css: true,
-    exclude: ['node_modules/**', 'dist/**'],
+    // proxy/tests need a running proxy: `npm run test:proxy`.
+    exclude: ['node_modules/**', 'dist/**', 'dist-hostinger/**', 'proxy/**'],
     coverage: {
       provider: 'v8',
       include: ['src/**/*.{ts,tsx}'],

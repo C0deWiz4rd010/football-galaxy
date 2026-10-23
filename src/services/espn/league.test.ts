@@ -8,7 +8,7 @@ vi.mock('@/services/net/liveClient', () => {
       this.status = status
     }
   }
-  return { fetchLiveJson: vi.fn(), LiveHttpError }
+  return { fetchLiveJson: vi.fn(), LiveHttpError, wasServedStale: () => false }
 })
 vi.mock('@/services/thesportsdb/teams', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/services/thesportsdb/teams')>()),

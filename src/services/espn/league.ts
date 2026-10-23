@@ -15,7 +15,7 @@ import { leagues } from '@/lib/leagues'
 import { standingsIssues } from '@/lib/dataInvariants'
 import { currentMatchdayFromTable, currentSeasonId, seasonInfo, seasonStartYear } from '@/lib/season'
 import { createTeamCrest } from '@/lib/visualAssets'
-import { LiveHttpError, fetchLiveJson } from '@/services/net/liveClient'
+import { LiveHttpError, fetchLiveJson, wasServedStale } from '@/services/net/liveClient'
 import { createPromiseCache } from '@/services/net/promiseCache'
 import { emptyTeamMetaIndex, findTeamMeta, getTeamMetaIndex } from '@/services/thesportsdb/teams'
 import { withWikidataPortrait } from '@/services/wikidata'
@@ -57,6 +57,7 @@ interface LeagueCore {
   topAssists: Assist[]
   playerPool: LeaguePlayer[]
   unavailable: LeagueSummaryPart[]
+  servedStale: boolean
 }
 
 /** Marks an optional feed that failed, so the summary can say so instead of showing nothing. */
@@ -177,9 +178,10 @@ async function loadCore(leagueId: LeagueId): Promise<LeagueCore> {
     const slug = espnSlugByLeague[leagueId]
     // Stadium and coach (TheSportsDB, football-data.org) are only shown on team
     // pages, so getTeam adds them there; the table never waits for them.
+    const standingsUrl = `${WEB}/${slug}/standings`
     const [teamsRaw, standingsRaw, scoreboardRaw, statisticsRaw] = await Promise.all([
       fetchLiveJson<unknown>(`${SITE}/${slug}/teams`),
-      fetchLiveJson<unknown>(`${WEB}/${slug}/standings`),
+      fetchLiveJson<unknown>(standingsUrl),
       fetchLiveJson<unknown>(`${SITE}/${slug}/scoreboard`).catch(() => FAILED),
       fetchLiveJson<unknown>(`${SITE}/${slug}/statistics`).catch(() => FAILED),
     ])
@@ -231,6 +233,7 @@ async function loadCore(leagueId: LeagueId): Promise<LeagueCore> {
       teams: [...teamsById.values()],
       standings,
       fixtures,
+      servedStale: wasServedStale(standingsUrl),
       unavailable: [
         ...(scoreboardRaw === FAILED ? (['fixtures'] as const) : []),
         ...(statisticsRaw === FAILED ? (['leaders'] as const) : []),
@@ -357,6 +360,7 @@ export async function getLeagueSummary(leagueId: LeagueId): Promise<LeagueSummar
     teams: core.teams,
     lastUpdated: new Date().toISOString(),
     unavailable: core.unavailable.length ? core.unavailable : undefined,
+    servedStale: core.servedStale || undefined,
   }
 }
 
