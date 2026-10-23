@@ -12,7 +12,7 @@ import { renderRoute } from '@/test/renderWithProviders'
 vi.mock('@/services/footballData', () => ({
   getLeagueSummary: vi.fn(),
   getMatches: vi.fn(async () => []),
-  formFromMatches: () => [],
+  withRecentForm: (standings: unknown) => standings,
 }))
 
 const football = await import('@/services/footballData')

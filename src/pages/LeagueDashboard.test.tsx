@@ -9,6 +9,7 @@ import LeagueDashboard from './LeagueDashboard'
 
 vi.mock('@/services/footballData', () => ({
   getLeagueSummary: vi.fn(),
+  withRecentForm: (standings: unknown) => standings,
 }))
 
 const football = await import('@/services/footballData')
