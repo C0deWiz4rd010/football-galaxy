@@ -1,3 +1,4 @@
+@import "./shared/styles/fonts.css";
 @import "./shared/styles/tokens.css";
 
 @tailwind base;
@@ -25,7 +26,6 @@
     --border: 214 27% 84%;
     --input: 214 27% 84%;
     --ring: 155 65% 24%;
-    --radius: 1rem;
     --surface-canvas: #f3f6fb;
     --surface-panel: rgba(255, 255, 255, 0.8);
     --surface-elevated: rgba(255, 255, 255, 0.92);
@@ -36,13 +36,31 @@
     --shadow-card: 0 18px 42px rgba(15, 23, 42, 0.1);
     --league-accent: rgba(19, 177, 117, 1);
     --league-accent-soft: rgba(19, 177, 117, 0.16);
-    --motion-fast: 180ms;
-    --motion-base: 240ms;
-    --motion-slow: 320ms;
-    --motion-hero: 420ms;
-    --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
-    --ease-soft: cubic-bezier(0.45, 0, 0.55, 1);
-    --ease-exit: cubic-bezier(0.32, 0, 0.67, 0);
+
+    /* Semantic status colours — fixed across palettes (HSL triplets). */
+    --success: 152 62% 38%;
+    --warning: 38 92% 48%;
+    --info: 212 85% 44%;
+    --live: 350 85% 52%;
+    /* Readable text tones for status colours (>= 4.5:1 on card/background). */
+    --success-fg: 152 72% 24%;
+    --warning-fg: 30 90% 30%;
+    --info-fg: 212 85% 36%;
+    --danger-fg: 350 75% 38%;
+
+    /* Result chips (same in both modes; white/black text >= 4.5:1). */
+    --result-win: 152 68% 28%;
+    --result-draw: 42 96% 56%;
+    --result-loss: 355 72% 44%;
+
+    /* Table zones: Champions League places and relegation. */
+    --zone-ucl: 217 91% 58%;
+    --zone-rel: 0 80% 58%;
+
+    /* World Cup host-nation accents. */
+    --wc-host-usa: 213 70% 46%;
+    --wc-host-canada: 0 72% 50%;
+    --wc-host-mexico: 150 60% 35%;
   }
 
   .dark {
@@ -77,6 +95,90 @@
     --shadow-card: 0 22px 56px rgba(2, 6, 23, 0.32);
     --league-accent: rgba(122, 228, 168, 1);
     --league-accent-soft: rgba(122, 228, 168, 0.18);
+
+    --success: 152 58% 52%;
+    --warning: 40 96% 60%;
+    --info: 212 92% 66%;
+    --live: 350 90% 64%;
+    --success-fg: 152 62% 72%;
+    --warning-fg: 43 96% 72%;
+    --info-fg: 210 92% 80%;
+    --danger-fg: 350 90% 80%;
+  }
+
+  /* ---------------------------------------------------------------- Palettes
+   * Each palette overrides only the brand-facing tokens for light and dark so
+   * neutrals/surfaces stay shared. Selected via `data-palette` on <html>.
+   * "galaxy" is the default and needs no override block.
+   */
+  [data-palette='midnight'] {
+    --primary: 222 60% 42%;
+    --ring: 222 60% 42%;
+    --league-accent: rgba(79, 114, 255, 1);
+    --league-accent-soft: rgba(79, 114, 255, 0.16);
+  }
+  [data-palette='midnight'].dark {
+    --primary: 217 91% 68%;
+    --primary-foreground: 223 38% 10%;
+    --ring: 217 91% 68%;
+    --league-accent: rgba(129, 160, 255, 1);
+    --league-accent-soft: rgba(129, 160, 255, 0.18);
+  }
+
+  [data-palette='aurora'] {
+    --primary: 188 75% 32%;
+    --ring: 188 75% 32%;
+    --league-accent: rgba(20, 184, 180, 1);
+    --league-accent-soft: rgba(20, 184, 180, 0.16);
+  }
+  [data-palette='aurora'].dark {
+    --primary: 176 70% 55%;
+    --primary-foreground: 200 40% 8%;
+    --ring: 176 70% 55%;
+    --league-accent: rgba(94, 234, 212, 1);
+    --league-accent-soft: rgba(94, 234, 212, 0.18);
+  }
+
+  [data-palette='stadium'] {
+    --primary: 142 64% 30%;
+    --ring: 142 64% 30%;
+    --league-accent: rgba(34, 197, 94, 1);
+    --league-accent-soft: rgba(34, 197, 94, 0.16);
+  }
+  [data-palette='stadium'].dark {
+    --primary: 142 70% 55%;
+    --primary-foreground: 150 40% 8%;
+    --ring: 142 70% 55%;
+    --league-accent: rgba(74, 222, 128, 1);
+    --league-accent-soft: rgba(74, 222, 128, 0.18);
+  }
+
+  [data-palette='crimson'] {
+    --primary: 348 78% 42%;
+    --ring: 348 78% 42%;
+    --league-accent: rgba(244, 63, 94, 1);
+    --league-accent-soft: rgba(244, 63, 94, 0.16);
+  }
+  [data-palette='crimson'].dark {
+    --primary: 350 90% 65%;
+    --primary-foreground: 350 40% 10%;
+    --ring: 350 90% 65%;
+    --league-accent: rgba(251, 113, 133, 1);
+    --league-accent-soft: rgba(251, 113, 133, 0.18);
+  }
+
+  [data-palette='mono'] {
+    --primary: 220 14% 24%;
+    --ring: 220 14% 24%;
+    --league-accent: rgba(100, 116, 139, 1);
+    --league-accent-soft: rgba(100, 116, 139, 0.16);
+  }
+  [data-palette='mono'].dark {
+    --primary: 210 20% 90%;
+    --primary-foreground: 220 30% 12%;
+    --ring: 210 20% 90%;
+    --league-accent: rgba(203, 213, 225, 1);
+    --league-accent-soft: rgba(203, 213, 225, 0.18);
   }
 
   * {
@@ -94,20 +196,39 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "tnum";
     min-width: 320px;
+  }
+
+  /* Ambient backdrop on its own fixed layer: unlike background-attachment:
+   * fixed it does not repaint the page on every scroll frame (mobile). */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
     background-image:
       radial-gradient(circle at top left, rgba(244, 180, 56, 0.12), transparent 24%),
       radial-gradient(circle at top right, rgba(17, 134, 132, 0.12), transparent 30%),
       linear-gradient(180deg, rgba(247, 250, 253, 0.98), rgba(235, 241, 248, 1));
-    background-attachment: fixed;
   }
 
-  .dark body {
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dark body::before {
     background-image:
       radial-gradient(circle at top left, rgba(244, 180, 56, 0.12), transparent 22%),
       radial-gradient(circle at top right, rgba(46, 203, 163, 0.12), transparent 30%),
       linear-gradient(180deg, rgba(8, 17, 28, 1), rgba(8, 15, 25, 1));
+  }
+
+  /* Visible keyboard focus everywhere by default; components may refine it
+   * with focus-visible:ring utilities. */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
   }
 
   h1,
@@ -156,17 +277,18 @@
   }
 
   .stat-card {
-    @apply relative overflow-hidden rounded-[1.25rem] p-3.5 transition-all;
+    @apply relative overflow-hidden rounded-lg p-3.5;
     border: 1px solid hsl(var(--border) / 0.55);
     background:
       linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
       var(--surface-elevated);
     box-shadow: var(--shadow-card);
-    backdrop-filter: blur(18px);
+    /* No backdrop-filter: cards are near-opaque, and dozens of blur layers
+     * make scrolling janky on phones. Blur stays on floating chrome only. */
     transition:
-      box-shadow var(--motion-base) var(--ease-enter),
-      border-color var(--motion-fast) var(--ease-soft),
-      background-color var(--motion-fast) var(--ease-soft);
+      box-shadow var(--fg-duration-base) var(--fg-ease-enter),
+      border-color var(--fg-duration-fast) var(--fg-ease-soft),
+      background-color var(--fg-duration-fast) var(--fg-ease-soft);
   }
 
   .stat-card:hover {
@@ -177,10 +299,10 @@
     cursor: pointer;
     outline: none;
     transition:
-      transform var(--motion-base) var(--ease-enter),
-      box-shadow var(--motion-base) var(--ease-enter),
-      border-color var(--motion-fast) var(--ease-soft),
-      background-color var(--motion-fast) var(--ease-soft);
+      transform var(--fg-duration-base) var(--fg-ease-enter),
+      box-shadow var(--fg-duration-base) var(--fg-ease-enter),
+      border-color var(--fg-duration-fast) var(--fg-ease-soft),
+      background-color var(--fg-duration-fast) var(--fg-ease-soft);
   }
 
   .interactive-card:hover {
@@ -189,12 +311,54 @@
 
   .interactive-card:active {
     transform: scale(0.985) translateY(0);
-    transition-duration: 80ms;
+    transition-duration: var(--fg-duration-instant);
   }
 
   .interactive-card:focus-visible {
     outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;
+  }
+
+  /* Entrance motion in plain CSS (no JS animation library on the critical
+   * path). Fill mode "backwards" only applies the start frame during the delay, so
+   * nothing (e.g. a transform breaking sticky children) lingers afterwards. */
+  @keyframes fg-rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+
+  @keyframes fg-fade {
+    from {
+      opacity: 0;
+    }
+  }
+
+  .fg-page {
+    animation: fg-fade var(--fg-duration-fast) var(--fg-ease-enter) backwards;
+  }
+
+  .fg-stagger > * {
+    animation: fg-rise var(--fg-duration-base) var(--fg-ease-enter) backwards;
+  }
+
+  .fg-stagger > :nth-child(2) { animation-delay: 40ms; }
+  .fg-stagger > :nth-child(3) { animation-delay: 80ms; }
+  .fg-stagger > :nth-child(4) { animation-delay: 120ms; }
+  .fg-stagger > :nth-child(5) { animation-delay: 160ms; }
+  .fg-stagger > :nth-child(n + 6) { animation-delay: 200ms; }
+
+  .fg-reveal {
+    animation: fg-rise var(--fg-duration-base) var(--fg-ease-enter) backwards;
+  }
+
+  .fg-press {
+    transition: transform var(--fg-duration-instant) var(--fg-ease-standard);
+  }
+
+  .fg-press:active {
+    transform: scale(0.96);
   }
 
   /* Image loading shimmer — shown behind AssetImage while src loads */

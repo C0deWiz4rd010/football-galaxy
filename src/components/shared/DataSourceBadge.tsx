@@ -1,0 +1,84 @@
+import type { ReactNode } from 'react'
+
+import { useOptionalLocale } from '@/contexts/LocaleContext'
+import type { MessageKey } from '@/i18n/de'
+import { cn } from '@/lib/utils'
+
+/**
+ * Unified data-freshness vocabulary shared by every area of the app (leagues,
+ * players and the World Cup). Keeping one component means the live / official /
+ * snapshot / offline states always look and read the same wherever they appear.
+ */
+export type DataFreshness = 'live' | 'official' | 'snapshot' | 'offline'
+
+const FRESHNESS_STYLES: Record<
+  DataFreshness,
+  { dot: string; pill: string; pulse: boolean; labelKey: MessageKey; defaultLabel: string }
+> = {
+  live: {
+    dot: 'bg-emerald-300',
+    pill: 'border-success/50 bg-success/12 text-success-fg',
+    pulse: true,
+    labelKey: 'freshnessLive',
+    defaultLabel: 'Live',
+  },
+  official: {
+    dot: 'bg-sky-300',
+    pill: 'border-info/40 bg-info/10 text-info-fg',
+    pulse: false,
+    labelKey: 'freshnessOfficial',
+    defaultLabel: 'Official',
+  },
+  snapshot: {
+    dot: 'bg-amber-300',
+    pill: 'border-warning/40 bg-warning/10 text-warning-fg',
+    pulse: false,
+    labelKey: 'freshnessSnapshot',
+    defaultLabel: 'Snapshot',
+  },
+  offline: {
+    dot: 'bg-zinc-400',
+    pill: 'border-border bg-muted/60 text-muted-foreground',
+    pulse: false,
+    labelKey: 'freshnessOffline',
+    defaultLabel: 'Offline',
+  },
+}
+
+export function DataSourceBadge({
+  freshness,
+  label,
+  className,
+  icon,
+}: {
+  freshness: DataFreshness
+  label?: ReactNode
+  className?: string
+  icon?: ReactNode
+}) {
+  const style = FRESHNESS_STYLES[freshness]
+  const locale = useOptionalLocale()
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-lg border px-2 py-0.5 text-2xs font-medium tracking-tight',
+        style.pill,
+        className,
+      )}
+    >
+      <span className="relative flex size-1.5">
+        {style.pulse ? (
+          <span
+            className={cn(
+              'absolute inline-flex size-full animate-ping rounded-full opacity-75',
+              style.dot,
+            )}
+          />
+        ) : null}
+        <span className={cn('relative inline-flex size-1.5 rounded-full', style.dot)} />
+      </span>
+      {icon}
+      {label ?? locale?.t(style.labelKey) ?? style.defaultLabel}
+    </span>
+  )
+}

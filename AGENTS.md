@@ -70,4 +70,11 @@ For new features, use this workflow:
 Before implementing a new feature, create or update a plan in:
 
 ```txt
-docs/plans/
+docs/plans/NN-short-name.md
+```
+
+- Use the next free number `NN` (plans are numbered chronologically).
+- A plan covers requirements, affected files, data sources, risks, tests and success criteria.
+- Keep the plan's progress section (`## Fortschritt`) updated after each phase: what was done, how it was verified, what is still open.
+- Add the new plan to `docs/plans/README.md` and mark plans it replaces as superseded.
+- The currently active plan is also listed in `PLANS.md`.

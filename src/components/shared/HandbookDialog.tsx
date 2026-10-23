@@ -21,10 +21,8 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { useLocale } from '@/contexts/LocaleContext'
 import { cn } from '@/lib/utils'
 
@@ -38,14 +36,15 @@ function H({ children }: { children: React.ReactNode }) {
 
 function Tip({ tipLabel, children }: { tipLabel: string; children: React.ReactNode }) {
   return (
-    <div className="surface-soft rounded-fg-md border border-border/60 p-3 text-sm">
-      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{tipLabel}</p>
+    <div className="surface-soft rounded-md border border-border/60 p-3 text-sm">
+      <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{tipLabel}</p>
       <p className="mt-1 text-foreground">{children}</p>
     </div>
   )
 }
 
-export function HandbookDialog() {
+/** In-app manual; opened from the header or the mobile menu (lazy-loaded). */
+export default function HandbookDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { t } = useLocale()
   const sections = useMemo(
     () => [
@@ -133,7 +132,7 @@ export function HandbookDialog() {
               <Badge variant="outline">football-data.org</Badge>
               <Badge variant="outline">TheSportsDB</Badge>
               <Badge variant="outline">ESPN</Badge>
-              <Badge variant="outline">Mock data</Badge>
+              <Badge variant="outline">OpenLigaDB</Badge>
             </div>
             <Tip tipLabel={t('tip')}>{t('handbookDataTip')}</Tip>
           </div>
@@ -148,13 +147,13 @@ export function HandbookDialog() {
             <H>{t('handbookShortcutsTitle')}</H>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px]">Cmd</kbd>/
-                <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px]">Ctrl</kbd> +
-                <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px]">K</kbd>{' '}
+                <kbd className="rounded bg-muted px-1.5 py-0.5 text-2xs">Cmd</kbd>/
+                <kbd className="rounded bg-muted px-1.5 py-0.5 text-2xs">Ctrl</kbd> +
+                <kbd className="rounded bg-muted px-1.5 py-0.5 text-2xs">K</kbd>{' '}
                 — {t('shortcutOpenPalette')}
               </li>
               <li>
-                <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px]">Esc</kbd> —{' '}
+                <kbd className="rounded bg-muted px-1.5 py-0.5 text-2xs">Esc</kbd> —{' '}
                 {t('shortcutCloseDialog')}
               </li>
             </ul>
@@ -181,16 +180,11 @@ export function HandbookDialog() {
   const active = sections.find((section) => section.id === activeId) ?? fallback
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label={t('openHandbook')} title={t('handbook')}>
-          <BookOpen className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="grid max-w-4xl gap-0 overflow-hidden p-0 sm:grid-cols-[200px_minmax(0,1fr)]">
         <DialogTitle className="sr-only">{t('handbookTitle')}</DialogTitle>
         <nav className="border-b border-border bg-muted/30 p-3 sm:border-b-0 sm:border-r">
-          <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          <p className="px-2 pb-2 text-2xs font-semibold uppercase tracking-eyebrow text-muted-foreground">
             {t('handbookNav')}
           </p>
           <ul className="grid grid-cols-2 gap-1 sm:grid-cols-1">
@@ -202,8 +196,9 @@ export function HandbookDialog() {
                   <button
                     type="button"
                     onClick={() => setActiveId(section.id)}
+                    aria-current={isActive ? 'true' : undefined}
                     className={cn(
-                      'flex w-full items-center gap-2 rounded-fg-md px-3 py-2 text-left text-sm transition',
+                      'flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition',
                       isActive
                         ? 'bg-primary/12 text-foreground shadow-fg-1'
                         : 'text-muted-foreground hover:bg-background hover:text-foreground',
@@ -217,7 +212,7 @@ export function HandbookDialog() {
             })}
           </ul>
         </nav>
-        <article className="max-h-[70vh] overflow-y-auto p-6">{active.render()}</article>
+        <article className="max-h-[60dvh] overflow-y-auto p-5 sm:max-h-[70dvh] sm:p-6">{active.render()}</article>
       </DialogContent>
     </Dialog>
   )

@@ -1,17 +1,9 @@
-import { motion } from 'framer-motion'
 import type { ReactNode } from 'react'
 
-import { pageVariants } from '@/shared/motion/variants'
-
+/**
+ * Page root. Route transitions are animated once by the app shell
+ * (router.tsx); pages must not add a second entrance animation on top.
+ */
 export function PageWrapper({ children }: { children: ReactNode }) {
-  return (
-    <motion.div
-      variants={pageVariants}
-      initial="hidden"
-      animate="show"
-      exit="exit"
-    >
-      {children}
-    </motion.div>
-  )
+  return <div className="min-w-0">{children}</div>
 }

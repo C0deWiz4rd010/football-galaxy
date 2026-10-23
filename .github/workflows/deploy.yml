@@ -24,13 +24,17 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
       - name: Build
+        env:
+          # vite.config.ts reads the base path from VITE_BASE (Hostinger builds use /).
+          VITE_BASE: /football-galaxy/
+          VITE_SITE_URL: https://c0dewiz4rd010.github.io/football-galaxy
         run: npm run build
 
       - name: Upload Pages artifact

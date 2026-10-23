@@ -1,149 +1,138 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { Loader2 } from 'lucide-react'
+
+import { AssetImage } from '@/components/shared/AssetImage'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command'
 import { useLocale } from '@/contexts/LocaleContext'
-import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
-import { searchIndex } from '@/services/footballData'
+import { MIN_SEARCH_LENGTH, useFootballSearch } from '@/hooks/queries/search'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
+import { getLeague, leagueCountryKey, leagues } from '@/lib/leagues'
+import { exploreNav, toolsNav, worldCupNav } from '@/app/navigation'
+import { createPlayerAvatar, createTeamCrest, initialsFromName } from '@/lib/visualAssets'
 
-export function CommandPalette({
-  open,
-  onOpenChange,
-}: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}) {
+export default function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const navigate = useNavigate()
-  const [query, setQuery] = useState('')
-  const results = useMemo(() => searchIndex.search(query), [query])
   const { t } = useLocale()
+  const [query, setQuery] = useState('')
+  const debouncedQuery = useDebouncedValue(query, 250)
+  const search = useFootballSearch(open ? debouncedQuery : '')
+  const normalized = query.trim().toLowerCase()
 
-  const toggle = useCallback(
-    (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
-        event.preventDefault()
-        onOpenChange(!open)
-      }
+
+  const go = useCallback(
+    (to: string) => {
+      navigate(to)
+      onOpenChange(false)
+      setQuery('')
     },
-    [onOpenChange, open],
+    [navigate, onOpenChange],
   )
 
-  useKeyboardShortcut(['k'], toggle)
+  const navigation = useMemo(
+    () =>
+      [...exploreNav, ...worldCupNav, ...toolsNav].map((item) => ({
+        to: item.to,
+        label: item.to.startsWith('/world-cup-2026') ? `${t('worldCup2026')} · ${t(item.labelKey)}` : t(item.labelKey),
+      })),
+    [t],
+  )
+
+  const matches = (text: string) => !normalized || text.toLowerCase().includes(normalized)
+  const navItems = navigation.filter((item) => matches(item.label))
+  const leagueItems = leagues.filter((league) => matches(`${league.name} ${league.country} ${t(leagueCountryKey[league.id])}`))
+  const teams = normalized.length >= MIN_SEARCH_LENGTH ? (search.data?.teams ?? []).slice(0, 6) : []
+  const players = normalized.length >= MIN_SEARCH_LENGTH ? (search.data?.players ?? []).slice(0, 8) : []
+  const isSearching = normalized.length >= MIN_SEARCH_LENGTH && (search.isFetching || debouncedQuery.trim().toLowerCase() !== normalized)
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="overflow-hidden border-border/70 bg-background/96 p-0 backdrop-blur-xl">
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        onOpenChange(next)
+        if (!next) setQuery('')
+      }}
+    >
+      <DialogContent className="top-[max(1rem,8dvh)] translate-y-0 overflow-hidden border-border/70 bg-background p-0 sm:top-1/2 sm:-translate-y-1/2">
         <div className="sr-only">
           <DialogTitle>{t('commandTitle')}</DialogTitle>
           <DialogDescription>{t('commandDescription')}</DialogDescription>
         </div>
-        <Command>
-          <CommandInput
-            value={query}
-            onValueChange={setQuery}
-            className="border-b bg-transparent px-4 py-4 outline-none"
-            placeholder={t('commandSearchPlaceholder')}
-          />
-          <CommandList className="max-h-[28rem] overflow-y-auto p-2">
-            <CommandEmpty className="p-4 text-sm text-muted-foreground">
-              {t('commandEmpty')}
-            </CommandEmpty>
+        {/* Results come from the server, so cmdk's own fuzzy filter is off. */}
+        <Command shouldFilter={false}>
+          <div className="flex items-center border-b pr-4">
+            <CommandInput
+              value={query}
+              onValueChange={setQuery}
+              className="w-full bg-transparent px-4 py-4 text-base outline-none sm:text-sm"
+              placeholder={t('commandSearchPlaceholder')}
+            />
+            {isSearching ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-label={t('loading')} /> : null}
+          </div>
+          <CommandList className="max-h-[min(28rem,70dvh)] overflow-y-auto p-2">
+            {!isSearching ? (
+              <CommandEmpty className="p-4 text-sm text-muted-foreground">
+                {search.isError ? t('searchUnavailable') : t('commandEmpty')}
+              </CommandEmpty>
+            ) : null}
 
-            <CommandGroup heading={t('quickNavigation')}>
-              <CommandItem
-                onSelect={() => {
-                  navigate('/players')
-                  onOpenChange(false)
-                }}
-              >
-                {t('playersExplorer')}
-              </CommandItem>
-              <CommandItem
-                onSelect={() => {
-                  navigate('/teams')
-                  onOpenChange(false)
-                }}
-              >
-                {t('teamsExplorer')}
-              </CommandItem>
-              <CommandItem
-                onSelect={() => {
-                  navigate('/compare')
-                  onOpenChange(false)
-                }}
-              >
-                {t('comparePlayers')}
-              </CommandItem>
-            </CommandGroup>
+            {navItems.length ? (
+              <CommandGroup heading={t('quickNavigation')}>
+                {navItems.map((item) => (
+                  <CommandItem key={item.to} value={item.to} onSelect={() => go(item.to)}>
+                    {item.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ) : null}
 
-            <CommandGroup heading={t('leaguesGroup', { count: results.leagues.slice(0, 5).length })}>
-              {results.leagues.slice(0, 5).map((league) => (
-                <CommandItem
-                  key={league.id}
-                  value={`${league.name} ${league.country}`}
-                  onSelect={() => {
-                    navigate(`/${league.id}`)
-                    onOpenChange(false)
-                  }}
-                >
-                  <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-border/60 text-[10px] font-semibold">
-                    {league.abbreviation}
-                  </span>
-                  <span>{league.name}</span>
-                  <span className="ml-auto text-xs text-muted-foreground">{league.country}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
+            {leagueItems.length ? (
+              <CommandGroup heading={t('leaguesGroup', { count: leagueItems.length })}>
+                {leagueItems.map((league) => (
+                  <CommandItem key={league.id} value={`league-${league.id}`} onSelect={() => go(`/${league.id}`)}>
+                    <AssetImage src={league.logo} fallbackSrc={createTeamCrest(league.abbreviation, league.color, "#f4f4f5", 0)} alt="" className="mr-2 h-6 w-6 object-contain" />
+                    <span>{league.name}</span>
+                    <span className="ml-auto text-xs text-muted-foreground">{t(leagueCountryKey[league.id])}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ) : null}
 
-            <CommandGroup heading={t('teamsGroup', { count: results.teams.slice(0, 8).length })}>
-              {results.teams.slice(0, 8).map(({ league, standing, team }) => (
-                <CommandItem
-                  key={team.id}
-                  value={`${team.name} ${league.name}`}
-                  onSelect={() => {
-                    navigate(`/${team.leagueId}/team/${team.id}`)
-                    onOpenChange(false)
-                  }}
-                >
-                  <span>{team.name}</span>
-                  <span className="ml-2 text-xs text-muted-foreground">{league.abbreviation}</span>
-                  {standing ? (
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      #{standing.position}
-                    </span>
-                  ) : null}
-                </CommandItem>
-              ))}
-            </CommandGroup>
+            {teams.length ? (
+              <CommandGroup heading={t('teamsGroup', { count: teams.length })}>
+                {teams.map((team) => (
+                  <CommandItem key={team.id} value={`team-${team.id}`} onSelect={() => go(`/${team.leagueId}/team/${team.id}`)}>
+                    <AssetImage
+                      src={team.image ?? ''}
+                      fallbackSrc={createTeamCrest(initialsFromName(team.name), getLeague(team.leagueId).color, '#f4f4f5', 0)}
+                      alt=""
+                      className="mr-2 h-6 w-6 object-contain"
+                    />
+                    <span>{team.name}</span>
+                    <span className="ml-auto text-xs text-muted-foreground">{getLeague(team.leagueId).name}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ) : null}
 
-            <CommandGroup heading={t('playersGroup', { count: results.players.slice(0, 8).length })}>
-              {results.players.slice(0, 8).map(({ formLabel, formScore, player, team }) => (
-                <CommandItem
-                  key={player.id}
-                  value={`${player.name} ${team.name} ${formLabel}`}
-                  onSelect={() => {
-                    navigate(`/${player.leagueId}/player/${player.id}`)
-                    onOpenChange(false)
-                  }}
-                >
-                  <span>{player.name}</span>
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    {player.position} - {team.shortName}
-                  </span>
-                  <span className="ml-auto text-xs text-muted-foreground">
-                    {t('formAbbrev')} {formScore}
-                  </span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
+            {players.length ? (
+              <CommandGroup heading={t('playersGroup', { count: players.length })}>
+                {players.map((player) => (
+                  <CommandItem key={player.id} value={`player-${player.id}`} onSelect={() => go(`/${player.leagueId}/player/${player.id}`)}>
+                    <AssetImage
+                      src={player.image ?? ''}
+                      fallbackSrc={createPlayerAvatar(initialsFromName(player.name), getLeague(player.leagueId).color)}
+                      alt=""
+                      className="mr-2 h-6 w-6 rounded-full object-cover"
+                    />
+                    <span>{player.name}</span>
+                    <span className="ml-auto truncate pl-2 text-xs text-muted-foreground">{player.subtitle ?? getLeague(player.leagueId).name}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ) : null}
           </CommandList>
         </Command>
       </DialogContent>

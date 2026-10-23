@@ -6,22 +6,25 @@
  * The browser bundle therefore never sees the API key.
  *
  * Free tier covers the top-5 European leagues for standings, scorers, and
- * matches at 10 requests/minute. Endpoints that this tier does not cover
- * (squads, individual player details) are intentionally not implemented here
- * — the cascade in `footballData.ts` falls through to TheSportsDB and then
- * to local mock data.
+ * matches at 10 requests/minute. This module is the second source in the
+ * cascade in `footballData.ts` (ESPN → football-data.org → OpenLigaDB for the
+ * Bundesliga table). Squads and individual player details are not
+ * implemented here; they come from ESPN only. There is no mock fallback:
+ * when every source fails, the UI shows an error state.
  */
 
+import { z } from 'zod'
+
 import { leagues } from '@/lib/leagues'
-import { createFlag, createPlayerAvatar, createTeamCrest, initialsFromName, normalizeImageSrc } from '@/lib/visualAssets'
-import { buildLiveRequestUrl } from '@/services/config/liveProxy'
+import { createPlayerAvatar, createTeamCrest, initialsFromName, normalizeImageSrc } from '@/lib/visualAssets'
+import { fetchLiveJson } from '@/services/net/liveClient'
 
 import type {
   Assist,
   FootballQueryParams,
   LeagueId,
   Match,
-  Player,
+  PlayerRef,
   Scorer,
   Standing,
   Team,
@@ -51,94 +54,85 @@ function normalizeSeason(season: string | undefined): string | undefined {
   return match ? match[1] : undefined
 }
 
-async function getJson<T>(url: string): Promise<T> {
-  const response = await fetch(buildLiveRequestUrl(url))
-  if (!response.ok) {
-    throw new Error(`football-data.org request failed (${response.status})`)
-  }
-  return (await response.json()) as T
+async function getJson<S extends z.ZodType>(url: string, schema: S): Promise<z.infer<S>> {
+  return schema.parse(await fetchLiveJson<unknown>(url))
 }
 
 // ---------------------------------------------------------------------------
-// Raw response shapes (only the fields we read)
+// Raw response schemas (only the fields we read; unknown fields are stripped)
 // ---------------------------------------------------------------------------
 
-interface FdArea {
-  name?: string
-  flag?: string
-}
+const nullishString = z.string().nullish()
 
-interface FdTeam {
-  id: number
-  name?: string
-  shortName?: string
-  tla?: string
-  crest?: string
-  venue?: string
-  coach?: { name?: string } | null
-  area?: FdArea
-}
+const fdTeamSchema = z.object({
+  id: z.number(),
+  name: nullishString,
+  shortName: nullishString,
+  tla: nullishString,
+  crest: nullishString,
+  venue: nullishString,
+  coach: z.object({ name: nullishString }).nullish(),
+})
+type FdTeam = z.infer<typeof fdTeamSchema>
 
-interface FdStandingRow {
-  position: number
-  team: FdTeam
-  playedGames: number
-  won: number
-  draw: number
-  lost: number
-  points: number
-  goalsFor: number
-  goalsAgainst: number
-  goalDifference: number
-  form?: string | null
-}
+const fdStandingsSchema = z.object({
+  standings: z.array(
+    z.object({
+      type: nullishString,
+      table: z.array(
+        z.object({
+          position: z.number(),
+          team: fdTeamSchema,
+          playedGames: z.number(),
+          won: z.number(),
+          draw: z.number(),
+          lost: z.number(),
+          points: z.number(),
+          goalsFor: z.number(),
+          goalsAgainst: z.number(),
+          goalDifference: z.number(),
+          form: nullishString,
+        }),
+      ),
+    }),
+  ),
+})
 
-interface FdStandingsResponse {
-  competition?: { currentSeason?: { currentMatchday?: number | null } }
-  season?: { currentMatchday?: number | null }
-  standings: Array<{ type?: string; stage?: string; table: FdStandingRow[] }>
-}
+const fdPlayerSchema = z.object({
+  id: z.number(),
+  name: nullishString,
+  firstName: nullishString,
+  lastName: nullishString,
+  nationality: nullishString,
+})
+type FdPlayer = z.infer<typeof fdPlayerSchema>
 
-interface FdPlayer {
-  id: number
-  name?: string
-  firstName?: string
-  lastName?: string
-  position?: string
-  dateOfBirth?: string
-  nationality?: string
-}
+const fdScorersSchema = z.object({
+  scorers: z.array(
+    z.object({
+      player: fdPlayerSchema,
+      team: fdTeamSchema,
+      playedMatches: z.number().nullish(),
+      goals: z.number().nullish(),
+      assists: z.number().nullish(),
+    }),
+  ),
+})
 
-interface FdScorerRow {
-  player: FdPlayer
-  team: FdTeam
-  playedMatches?: number
-  goals?: number
-  assists?: number | null
-  penalties?: number | null
-}
-
-interface FdScorersResponse {
-  scorers: FdScorerRow[]
-}
-
-interface FdMatch {
-  id: number
-  utcDate: string
-  status: string
-  matchday: number
-  homeTeam: FdTeam
-  awayTeam: FdTeam
-  score?: {
-    fullTime?: { home?: number | null; away?: number | null }
-    winner?: string | null
-  }
-  venue?: string
-}
-
-interface FdMatchesResponse {
-  matches: FdMatch[]
-}
+const fdMatchesSchema = z.object({
+  matches: z.array(
+    z.object({
+      id: z.number(),
+      utcDate: z.string(),
+      status: nullishString,
+      matchday: z.number().nullish(),
+      homeTeam: fdTeamSchema,
+      awayTeam: fdTeamSchema,
+      score: z.object({ fullTime: z.object({ home: z.number().nullish(), away: z.number().nullish() }).nullish() }).nullish(),
+      venue: nullishString,
+    }),
+  ),
+})
 
 // ---------------------------------------------------------------------------
 // Mappers
@@ -153,7 +147,7 @@ function mapTeam(raw: FdTeam, leagueId: LeagueId, index: number): Team {
     .join('')
     .slice(0, 3)
     .toUpperCase()
-  const primaryCrest = normalizeImageSrc(raw.crest)
+  const primaryCrest = normalizeImageSrc(raw.crest ?? undefined)
   // football-data.org serves crests as .svg via crests.football-data.org.
   // Some clubs only have .png; offer the .png variant as a secondary URL so
   // the image cascade can recover automatically.
@@ -177,57 +171,16 @@ function mapTeam(raw: FdTeam, leagueId: LeagueId, index: number): Team {
   }
 }
 
-function ageFromDob(dob: string | undefined): number {
-  if (!dob) return 25
-  const birth = Date.parse(dob)
-  if (!Number.isFinite(birth)) return 25
-  const years = (Date.now() - birth) / (365.25 * 24 * 3_600_000)
-  return Math.max(16, Math.round(years))
-}
-
-function mapPlayer(raw: FdPlayer, team: Team, stats: { goals: number; assists: number; appearances: number }): Player {
+function mapPlayerRef(raw: FdPlayer, team: Team, stats: { goals: number; assists: number; appearances: number }): PlayerRef {
   const name = raw.name?.trim() || [raw.firstName, raw.lastName].filter(Boolean).join(' ').trim() || 'Unknown Player'
-  const position = (() => {
-    const value = (raw.position ?? '').toLowerCase()
-    if (value.includes('goal')) return 'GK' as const
-    if (value.includes('back') || value.includes('defen')) return 'DF' as const
-    if (value.includes('mid')) return 'MF' as const
-    return 'FW' as const
-  })()
-  const nationality = raw.nationality ?? 'International'
-
   return {
     id: `fd-${raw.id}`,
     teamId: team.id,
     leagueId: team.leagueId,
     name,
-    number: 0,
-    position,
-    nationality,
-    flag: createFlag('england'),
-    age: ageFromDob(raw.dateOfBirth),
-    heightCm: 180,
-    weightKg: 75,
+    nationality: raw.nationality ?? undefined,
     photo: createPlayerAvatar(initialsFromName(name), team.primaryColor ?? '#0f766e'),
-    marketValueEurCents: 0,
-    contractUntil: '',
-    stats: {
-      appearances: stats.appearances,
-      goals: stats.goals,
-      assists: stats.assists,
-      yellowCards: 0,
-      redCards: 0,
-      minutes: stats.appearances * 90,
-      trend: [stats.goals, stats.goals + stats.assists, stats.assists, stats.goals, stats.assists].slice(0, 5),
-      attributes: {
-        pace: 70,
-        shooting: position === 'FW' ? 78 : 60,
-        passing: position === 'MF' ? 78 : 65,
-        dribbling: 70,
-        defending: position === 'DF' ? 78 : 50,
-        physical: 70,
-      },
-    },
+    ...stats,
   }
 }
 
@@ -255,7 +208,7 @@ export async function getStandings(params: FootballQueryParams = {}): Promise<St
   const league = leagueConfig(leagueId)
   const season = normalizeSeason(params.season)
   const url = `${apiBase}/competitions/${league.apiCode}/standings${season ? `?season=${season}` : ''}`
-  const data = await getJson<FdStandingsResponse>(url)
+  const data = await getJson(url, fdStandingsSchema)
   const totalTable = data.standings.find((entry) => entry.type === 'TOTAL' || !entry.type) ?? data.standings[0]
   if (!totalTable?.table?.length) {
     throw new Error('football-data.org returned no standings')
@@ -277,17 +230,17 @@ export async function getStandings(params: FootballQueryParams = {}): Promise<St
       goalDifference: row.goalDifference,
       points: row.points,
       form: mapStandingForm(row.form),
-      avgPossession: 50,
     }
   })
 }
 
-export async function getTopScorers(params: FootballQueryParams = {}): Promise<Scorer[]> {
+/** `limit` caps the list; the endpoint ranks by goals and has no assists ranking of its own. */
+async function fetchScorers(params: FootballQueryParams, limit: number): Promise<Scorer[]> {
   const leagueId = leagueOrDefault(params.leagueId)
   const league = leagueConfig(leagueId)
   const season = normalizeSeason(params.season)
-  const url = `${apiBase}/competitions/${league.apiCode}/scorers?limit=20${season ? `&season=${season}` : ''}`
-  const data = await getJson<FdScorersResponse>(url)
+  const url = `${apiBase}/competitions/${league.apiCode}/scorers?limit=${limit}${season ? `&season=${season}` : ''}`
+  const data = await getJson(url, fdScorersSchema)
   if (!data.scorers?.length) {
     throw new Error('football-data.org returned no scorers')
   }
@@ -296,7 +249,7 @@ export async function getTopScorers(params: FootballQueryParams = {}): Promise<S
     const team = mapTeam(row.team, leagueId, index)
     const goals = row.goals ?? 0
     const assists = row.assists ?? 0
-    const player = mapPlayer(row.player, team, { goals, assists, appearances: row.playedMatches ?? 0 })
+    const player = mapPlayerRef(row.player, team, { goals, assists, appearances: row.playedMatches ?? 0 })
     return {
       id: `${player.id}-scorer`,
       player,
@@ -307,8 +260,17 @@ export async function getTopScorers(params: FootballQueryParams = {}): Promise<S
   })
 }
 
+export function getTopScorers(params: FootballQueryParams = {}): Promise<Scorer[]> {
+  return fetchScorers(params, 20)
+}
+
+/**
+ * Assists ranked from the 100 best scorers — the widest list the free tier
+ * offers. Players who assist a lot but never score are missing, so this is
+ * only the fallback behind ESPN's real assists leaderboard.
+ */
 export async function getTopAssists(params: FootballQueryParams = {}): Promise<Assist[]> {
-  const scorers = await getTopScorers(params)
+  const scorers = await fetchScorers(params, 100)
   return scorers
     .filter((entry) => entry.assists > 0)
     .sort((a, b) => b.assists - a.assists)
@@ -332,7 +294,7 @@ export async function getMatches(params: FootballQueryParams = {}): Promise<Matc
   if (season) queryParts.push(`season=${season}`)
   if (params.matchday) queryParts.push(`matchday=${params.matchday}`)
   const url = `${apiBase}/competitions/${league.apiCode}/matches${queryParts.length ? `?${queryParts.join('&')}` : ''}`
-  const data = await getJson<FdMatchesResponse>(url)
+  const data = await getJson(url, fdMatchesSchema)
   if (!data.matches?.length) {
     throw new Error('football-data.org returned no matches')
   }
@@ -343,7 +305,8 @@ export async function getMatches(params: FootballQueryParams = {}): Promise<Matc
     const status = (() => {
       const value = raw.status?.toUpperCase()
       if (value === 'IN_PLAY' || value === 'PAUSED' || value === 'LIVE') return 'LIVE' as const
-      if (value === 'FINISHED') return 'FINISHED' as const
+      if (value === 'FINISHED' || value === 'AWARDED') return 'FINISHED' as const
+      if (value === 'POSTPONED' || value === 'SUSPENDED' || value === 'CANCELLED') return 'POSTPONED' as const
       return 'SCHEDULED' as const
     })()
 
@@ -351,14 +314,14 @@ export async function getMatches(params: FootballQueryParams = {}): Promise<Matc
       id: `fd-${raw.id}`,
       leagueId,
       season: season ?? '',
-      matchday: raw.matchday,
+      matchday: raw.matchday ?? 0,
       utcDate: raw.utcDate,
       status,
       homeTeam,
       awayTeam,
       homeScore: raw.score?.fullTime?.home ?? undefined,
       awayScore: raw.score?.fullTime?.away ?? undefined,
-      venue: raw.venue,
+      venue: raw.venue ?? undefined,
       events: [],
     }
   })

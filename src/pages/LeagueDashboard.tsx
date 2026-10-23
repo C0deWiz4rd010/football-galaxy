@@ -1,8 +1,7 @@
-﻿import type { ReactNode } from 'react'
+import { type ReactNode, useMemo } from 'react'
 
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import {
-  AlertCircle,
   ArrowRight,
   Flame,
   Shield,
@@ -15,24 +14,27 @@ import {
 import { FormTableCard } from '@/components/league/FormTableCard'
 import { LeagueTable } from '@/components/league/LeagueTable'
 import { MatchOfTheDay } from '@/components/league/MatchOfTheDay'
+import { MatchweekCard } from '@/components/league/MatchweekCard'
 import { TeamStatsCard } from '@/components/league/TeamStatsCard'
 import { TopAssistsCard } from '@/components/league/TopAssistsCard'
 import { TopScorersCard } from '@/components/league/TopScorersCard'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { AssetImage } from '@/components/shared/AssetImage'
+import { DataSourceBadge } from '@/components/shared/DataSourceBadge'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { ErrorState, NotFoundState } from '@/components/shared/StatusStates'
 import { LeagueDashboardSkeleton } from '@/components/shared/LeagueDashboardSkeleton'
 import { StaggerGrid, StaggerGridItem } from '@/components/shared/StaggerGrid'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { useDataSource } from '@/contexts/DataSourceContext'
 import { useLocale } from '@/contexts/LocaleContext'
-import { useFootballData } from '@/hooks/useFootballData'
+import { useLeagueSummary, useMatches } from '@/hooks/queries/football'
+import { useNow } from '@/hooks/useNow'
+import { withRecentForm } from '@/services/footballData'
 import { getPlayerPhotoSources } from '@/lib/assetSources'
-import { getLeague, isLeagueId } from '@/lib/leagues'
-import { formatDateTime } from '@/lib/utils'
+import { getLeague, isLeagueId, leagueCountryKey } from '@/lib/leagues'
+import { cn, formatDateTime, formatRelativeTime } from '@/lib/utils'
 import { createLeagueLogo, createPlayerAvatar, initialsFromName } from '@/lib/visualAssets'
-import type { LeagueSummary, Standing } from '@/services/types'
+import type { Standing } from '@/services/types'
 
 function getFormPoints(standing: Standing) {
   return standing.form.reduce((total, item) => {
@@ -48,52 +50,66 @@ function getFormPoints(standing: Standing) {
   }, 0)
 }
 
+const statTone = {
+  primary: { icon: 'bg-primary/12 text-primary', text: 'text-primary' },
+  warning: { icon: 'bg-warning/12 text-warning-fg', text: 'text-warning-fg' },
+  info: { icon: 'bg-info/12 text-info-fg', text: 'text-info-fg' },
+  success: { icon: 'bg-success/12 text-success-fg', text: 'text-success-fg' },
+} as const
+
 function SummaryStat({
   label,
-  value,
-  helper,
+  team,
+  stat,
   icon,
   tone,
 }: {
   label: string
-  value: string
-  helper: string
+  team: string
+  stat: string
   icon: ReactNode
-  tone: string
+  tone: keyof typeof statTone
 }) {
   return (
-    <div className="surface-soft rounded-[1rem] px-3 py-2.5">
-      <div className="flex items-center gap-2">
-        <span className="grid h-7 w-7 place-items-center rounded-lg bg-background/45" style={{ color: tone }}>
+    <div className="surface-soft min-w-0 rounded-lg p-3">
+      <div className="flex min-w-0 items-center gap-2">
+        <span aria-hidden className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-sm [&_svg]:h-3.5 [&_svg]:w-3.5', statTone[tone].icon)}>
           {icon}
         </span>
-        <p className="min-w-0 truncate text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
+        <p className="truncate text-2xs uppercase tracking-eyebrow text-muted-foreground">{label}</p>
       </div>
-      <div className="mt-1.5 flex items-end justify-between gap-3">
-        <p className="text-lg font-semibold leading-none tracking-tight">{value}</p>
-        <p className="truncate text-xs text-muted-foreground">{helper}</p>
+      <div className="mt-2 flex items-end justify-between gap-2">
+        <p className="min-w-0 truncate text-sm font-semibold leading-tight">{team}</p>
+        <p className={cn('shrink-0 font-mono text-lg font-bold leading-none tabular-nums', statTone[tone].text)}>{stat}</p>
       </div>
     </div>
   )
 }
 
+/** Data younger than this counts as current; older reads "as of <time>". */
+const FRESH_MS = 5 * 60_000
+
 export default function LeagueDashboard() {
   const { leagueId: routeLeagueId } = useParams()
-  const [searchParams] = useSearchParams()
-  const leagueId = isLeagueId(routeLeagueId) ? routeLeagueId : 'premier-league'
-  const { source } = useDataSource()
+  const validLeague = isLeagueId(routeLeagueId)
+  const leagueId = validLeague ? routeLeagueId : 'premier-league'
   const { t } = useLocale()
-  const matchday = Number(searchParams.get('matchday') ?? 0) || undefined
-  const { data, isLoading, error, refetch } = useFootballData<LeagueSummary>(
-    'getLeagueSummary',
-    { leagueId, matchday },
+  const { data, isPending, error, refetch, dataUpdatedAt } = useLeagueSummary(validLeague ? leagueId : undefined)
+  const fetchedAt = dataUpdatedAt || null
+  const now = useNow()
+  // Season results (one schedule per club) load after the table and only
+  // enrich it with the form column, so they never delay the first paint.
+  const { data: seasonMatches } = useMatches(validLeague ? leagueId : undefined)
+  const standingsWithForm = useMemo(
+    () => withRecentForm(data?.standings ?? [], seasonMatches),
+    [data?.standings, seasonMatches],
   )
   const league = data?.league ?? getLeague(leagueId)
 
-  if (isLoading && !data) {
+  if (!validLeague) {
     return (
       <PageWrapper>
-        <LeagueDashboardSkeleton />
+        <NotFoundState />
       </PageWrapper>
     )
   }
@@ -101,14 +117,15 @@ export default function LeagueDashboard() {
   if (error && !data) {
     return (
       <PageWrapper>
-        <div className="stat-card flex items-start gap-3 rounded-fg-lg p-fg-6 shadow-fg-2">
-          <AlertCircle className="mt-0.5 h-5 w-5 text-destructive" />
-          <div className="flex-1 space-y-fg-2">
-            <h2 className="text-base font-semibold tracking-tight">{t('couldNotLoadLeague')}</h2>
-            <p className="text-sm text-muted-foreground">{error}</p>
-          </div>
-          <Button onClick={refetch}>{t('retry')}</Button>
-        </div>
+        <ErrorState title={t('couldNotLoadLeague')} description={error.message} onRetry={() => void refetch()} />
+      </PageWrapper>
+    )
+  }
+
+  if (isPending) {
+    return (
+      <PageWrapper>
+        <LeagueDashboardSkeleton league={league} />
       </PageWrapper>
     )
   }
@@ -122,12 +139,24 @@ export default function LeagueDashboard() {
     )
   }
 
-  const standings = data.standings ?? []
+  const standings = standingsWithForm
   const topScorers = data.topScorers ?? []
   const topAssists = data.topAssists ?? []
   const recentMatches = data.recentMatches ?? []
-  const liveUpdatedAt = source === 'live' ? data.lastUpdated : undefined
-  const isLiveSummary = Boolean(liveUpdatedAt)
+  const liveUpdatedAt = data.lastUpdated
+  const leadersUnavailable = Boolean(data.unavailable?.includes('leaders'))
+  // Prefer the actual client fetch time (cache-aware) for the freshness label,
+  // falling back to the payload's server timestamp.
+  const freshnessAt: number | string | null = fetchedAt ?? liveUpdatedAt ?? null
+  const freshnessMs = freshnessAt === null ? Number.NaN : new Date(freshnessAt).getTime()
+  // Data restored from the persisted cache keeps its original fetch time, so an
+  // old table reads "as of 14:02" instead of pretending to be live.
+  const isCurrent = !data.servedStale && Number.isFinite(freshnessMs) && now - freshnessMs < FRESH_MS
+  const freshnessLabel = data.servedStale
+    ? t('freshSavedCopy')
+    : isCurrent
+      ? t('freshCurrent')
+      : t('freshAsOf', { time: formatDateTime(new Date(freshnessMs).toISOString()) })
   const leader = standings[0]
   const topAttack = standings.length > 0
     ? [...standings].sort((left, right) => right.goalsFor - left.goalsFor)[0]
@@ -149,7 +178,7 @@ export default function LeagueDashboard() {
     <PageWrapper>
       <StaggerGrid className="space-y-4">
         <StaggerGridItem as="section"
-          className="stat-card app-grid-lines overflow-hidden rounded-fg-xl p-4 shadow-fg-2 sm:p-5"
+          className="stat-card app-grid-lines overflow-hidden rounded-xl p-4 shadow-fg-2 sm:p-5"
           style={{
             backgroundImage: `radial-gradient(circle at top right, ${league.color}18, transparent 26%)`,
           }}
@@ -160,15 +189,17 @@ export default function LeagueDashboard() {
                 src={league.logo}
                 fallbackSrc={createLeagueLogo(league.abbreviation, league.color, league.name)}
                 alt={`${league.name} logo`}
-                className="h-14 w-14 rounded-[1rem] bg-white/90 object-contain p-2 ring-1 ring-white/10"
-                loading="lazy"
+                width={56}
+                height={56}
+                priority
+                className="h-14 w-14 rounded-lg bg-white/90 object-contain p-2 ring-1 ring-border"
               />
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline">{league.country}</Badge>
-                  <Badge className={isLiveSummary ? 'bg-emerald-500/15 text-emerald-200' : 'bg-slate-500/15 text-slate-200'}>
-                    {isLiveSummary ? t('liveProxy') : t('localFallback')}
-                  </Badge>
+                  <Badge variant="outline">{t(leagueCountryKey[league.id])}</Badge>
+                  {Number.isFinite(freshnessMs) ? (
+                    <DataSourceBadge freshness={data.servedStale ? 'offline' : isCurrent ? 'live' : 'official'} label={freshnessLabel} />
+                  ) : null}
                 </div>
                 <h1 className="mt-1 text-2xl font-semibold tracking-tight">{league.name}</h1>
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -182,40 +213,40 @@ export default function LeagueDashboard() {
               {typeof data.season.currentMatchday === 'number' ? (
                 <Badge variant="outline">{t('matchday')} {data.season.currentMatchday}</Badge>
               ) : null}
-              {liveUpdatedAt ? (
-                <span>{t('updated')} {formatDateTime(liveUpdatedAt)}</span>
+              {freshnessAt ? (
+                <span>{t('updated')} {formatRelativeTime(freshnessAt, now)}</span>
               ) : null}
             </div>
           </div>
 
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-4 grid grid-cols-2 gap-2 xl:grid-cols-4">
             <SummaryStat
               label={t('leader')}
-              value={leader ? leader.team.shortName : '-'}
-              helper={leader ? `${leader.points} ${t('points')}` : t('noStandings')}
+              team={leader ? leader.team.shortName : t('noStandings')}
+              stat={leader ? `${leader.points} Pts` : '-'}
               icon={<Star className="h-4 w-4" />}
-              tone={league.color}
+              tone="primary"
             />
             <SummaryStat
               label={t('bestAttack')}
-              value={topAttack ? String(topAttack.goalsFor) : '-'}
-              helper={topAttack ? topAttack.team.shortName : t('noScoringData')}
+              team={topAttack ? topAttack.team.shortName : t('noScoringData')}
+              stat={topAttack ? String(topAttack.goalsFor) : '-'}
               icon={<Target className="h-4 w-4" />}
-              tone="#f97316"
+              tone="warning"
             />
             <SummaryStat
               label={t('bestDefense')}
-              value={topDefense ? String(topDefense.goalsAgainst) : '-'}
-              helper={topDefense ? topDefense.team.shortName : t('noDefendingData')}
+              team={topDefense ? topDefense.team.shortName : t('noDefendingData')}
+              stat={topDefense ? String(topDefense.goalsAgainst) : '-'}
               icon={<Shield className="h-4 w-4" />}
-              tone="#38bdf8"
+              tone="info"
             />
             <SummaryStat
               label={t('formMonster')}
-              value={formLeader ? `${getFormPoints(formLeader)}/15` : '-'}
-              helper={formLeader ? formLeader.team.shortName : t('waitingTrendData')}
+              team={formLeader ? formLeader.team.shortName : t('waitingTrendData')}
+              stat={formLeader ? `${getFormPoints(formLeader)}/15` : '-'}
               icon={<Flame className="h-4 w-4" />}
-              tone="#14b8a6"
+              tone="success"
             />
           </div>
         </StaggerGridItem>
@@ -227,7 +258,7 @@ export default function LeagueDashboard() {
             <div className="stat-card overflow-hidden p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                  <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">
                     {t('spotlightPlayer')}
                   </p>
                   <h2 className="mt-1 truncate text-base font-semibold tracking-tight">
@@ -244,8 +275,8 @@ export default function LeagueDashboard() {
                       ...getPlayerPhotoSources(spotlightPlayer),
                       createPlayerAvatar(initialsFromName(spotlightPlayer.name), league.color),
                     ]}
-                    alt={spotlightPlayer.name}
-                    className="h-20 w-20 rounded-[0.9rem] object-cover ring-1 ring-white/10"
+                    alt=""
+                    className="h-20 w-20 rounded-lg object-cover ring-1 ring-border"
                     loading="lazy"
                   />
                 ) : (
@@ -256,21 +287,21 @@ export default function LeagueDashboard() {
                 <>
                   <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                     <div className="surface-soft rounded-lg px-2 py-2">
-                      <p className="font-mono text-lg font-bold">{spotlightPlayer.stats.appearances}</p>
-                      <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{t('games')}</p>
+                      <p className="font-mono text-lg font-bold">{spotlightPlayer.appearances}</p>
+                      <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">{t('games')}</p>
                     </div>
                     <div className="surface-soft rounded-lg px-2 py-2">
-                      <p className="font-mono text-lg font-bold">{spotlightPlayer.stats.goals}</p>
-                      <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{t('goals')}</p>
+                      <p className="font-mono text-lg font-bold">{spotlightPlayer.goals}</p>
+                      <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">{t('goals')}</p>
                     </div>
                     <div className="surface-soft rounded-lg px-2 py-2">
-                      <p className="font-mono text-lg font-bold">{spotlightPlayer.stats.assists}</p>
-                      <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{t('assists')}</p>
+                      <p className="font-mono text-lg font-bold">{spotlightPlayer.assists}</p>
+                      <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">{t('assists')}</p>
                     </div>
                   </div>
                   <Link
                     to={`/${spotlightPlayer.leagueId}/player/${spotlightPlayer.id}`}
-                    className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary"
+                    className="mt-3 inline-flex min-h-10 items-center gap-2 text-sm font-medium text-foreground hover:text-primary"
                   >
                     {t('openDetails')}
                     <ArrowRight className="h-4 w-4" />
@@ -283,25 +314,29 @@ export default function LeagueDashboard() {
               )}
             </div>
 
-            <TopScorersCard title={t('topScorers')} items={topScorers} compact />
-            <TopAssistsCard items={topAssists} compact />
+            <TopScorersCard title={t('topScorers')} items={topScorers} compact unavailable={leadersUnavailable} />
+            <TopAssistsCard items={topAssists} compact unavailable={leadersUnavailable} />
             <MatchOfTheDay match={recentMatches[0]} />
 
             <div className="stat-card p-3">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('dataFreshness')}</p>
+                  <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">{t('dataFreshness')}</p>
                   <h2 className="mt-1 text-sm font-semibold tracking-tight">
-                    {isLiveSummary ? t('liveProxy') : t('localFallback')}
+                    {Number.isFinite(freshnessMs) ? freshnessLabel : t('liveProxy')}
                   </h2>
                 </div>
-                <span className={isLiveSummary ? 'h-2.5 w-2.5 rounded-full bg-emerald-400' : 'h-2.5 w-2.5 rounded-full bg-slate-400'} />
+                <span className={isCurrent ? 'h-2.5 w-2.5 rounded-full bg-emerald-400' : 'h-2.5 w-2.5 rounded-full bg-slate-400'} />
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                {liveUpdatedAt ? `${t('updated')} ${formatDateTime(liveUpdatedAt)}` : t('tableFirstSubtitle')}
+                {freshnessAt ? `${t('updated')} ${formatRelativeTime(freshnessAt, now)}` : t('tableFirstSubtitle')}
               </p>
             </div>
           </aside>
+        </StaggerGridItem>
+
+        <StaggerGridItem>
+          <MatchweekCard matches={seasonMatches} />
         </StaggerGridItem>
 
         <StaggerGridItem className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(280px,0.8fr)]">
@@ -310,22 +345,22 @@ export default function LeagueDashboard() {
         </StaggerGridItem>
 
         <StaggerGridItem className="grid gap-2 sm:grid-cols-3">
-          <Link to="/teams" className="interactive-card surface-soft rounded-[1rem] px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
-            <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('explore')}</span>
+          <Link to="/teams" className="interactive-card surface-soft rounded-md px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
+            <span className="text-2xs uppercase tracking-eyebrow text-muted-foreground">{t('explore')}</span>
             <div className="mt-1 flex items-center justify-between gap-2">
               <span className="text-sm font-medium">{t('teamsExplorer')}</span>
               <Sparkles className="h-4 w-4 text-sky-400" />
             </div>
           </Link>
-          <Link to="/players" className="interactive-card surface-soft rounded-[1rem] px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
-            <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('explore')}</span>
+          <Link to="/players" className="interactive-card surface-soft rounded-md px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
+            <span className="text-2xs uppercase tracking-eyebrow text-muted-foreground">{t('explore')}</span>
             <div className="mt-1 flex items-center justify-between gap-2">
               <span className="text-sm font-medium">{t('playersExplorer')}</span>
               <Zap className="h-4 w-4 text-amber-400" />
             </div>
           </Link>
-          <Link to="/compare" className="interactive-card surface-soft rounded-[1rem] px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
-            <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('teamMatchups')}</span>
+          <Link to="/compare" className="interactive-card surface-soft rounded-md px-3 py-2.5 hover:border-border/70 hover:bg-background/60">
+            <span className="text-2xs uppercase tracking-eyebrow text-muted-foreground">{t('teamMatchups')}</span>
             <div className="mt-1 flex items-center justify-between gap-2">
               <span className="text-sm font-medium">{t('playerMatchups')}</span>
               <ArrowRight className="h-4 w-4 text-violet-400" />

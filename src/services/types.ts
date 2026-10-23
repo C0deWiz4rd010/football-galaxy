@@ -39,7 +39,8 @@ export interface Match {
   season: string
   matchday: number
   utcDate: string
-  status: 'SCHEDULED' | 'LIVE' | 'FINISHED'
+  /** POSTPONED covers postponed, suspended and cancelled games (no score). */
+  status: 'SCHEDULED' | 'LIVE' | 'FINISHED' | 'POSTPONED'
   homeTeam: Team
   awayTeam: Team
   homeScore?: number
@@ -48,22 +49,20 @@ export interface Match {
   events: MatchEvent[]
 }
 
+/**
+ * Season totals as the feeds report them. ESPN has no minutes played, so there
+ * is deliberately no minutes field: starts and sub appearances are the real
+ * measure of playing time.
+ */
 export interface PlayerStats {
   appearances: number
+  starts: number
+  subAppearances: number
   goals: number
   assists: number
   yellowCards: number
   redCards: number
-  minutes: number
   trend: number[]
-  attributes: {
-    pace: number
-    shooting: number
-    passing: number
-    dribbling: number
-    defending: number
-    physical: number
-  }
 }
 
 export interface Player {
@@ -75,9 +74,10 @@ export interface Player {
   position: 'GK' | 'DF' | 'MF' | 'FW'
   nationality: string
   flag: string
-  age: number
-  heightCm: number
-  weightKg: number
+  /** Bio fields are optional: never invent them when the source omits them. */
+  age?: number
+  heightCm?: number
+  weightKg?: number
   photo: string
   /**
    * Optional ordered list of additional photo URLs to attempt before falling
@@ -85,8 +85,9 @@ export interface Player {
    * so a single broken upstream URL never breaks the UI.
    */
   photoSources?: string[]
-  marketValueEurCents: number
-  contractUntil: string
+  /** No free source provides market values or contracts; only set when known. */
+  marketValueEurCents?: number
+  contractUntil?: string
   stats: PlayerStats
 }
 
@@ -114,7 +115,6 @@ export interface Team {
   capacity?: number
   primaryColor?: string
   secondaryColor?: string
-  squad?: Player[]
 }
 
 export interface FormResult {
@@ -137,13 +137,32 @@ export interface Standing {
   goalsAgainst: number
   goalDifference: number
   points: number
+  /** Last five results, oldest first. Empty until season results are loaded. */
   form: FormResult[]
-  avgPossession: number
+}
+
+/**
+ * Lightweight player reference used by league-wide leader lists, which carry
+ * season totals but no profile details (position, nationality, …).
+ */
+export interface PlayerRef {
+  id: string
+  teamId: string
+  leagueId: LeagueId
+  name: string
+  number?: number
+  photo: string
+  photoSources?: string[]
+  flag?: string
+  nationality?: string
+  appearances: number
+  goals: number
+  assists: number
 }
 
 export interface Scorer {
   id: string
-  player: Player
+  player: PlayerRef
   team: Team
   goals: number
   assists: number
@@ -151,10 +170,15 @@ export interface Scorer {
 
 export interface Assist {
   id: string
-  player: Player
+  player: PlayerRef
   team: Team
   assists: number
   goals: number
+}
+
+export interface LeaguePlayer {
+  player: PlayerRef
+  team: Team
 }
 
 export interface LeagueSummary {
@@ -163,20 +187,18 @@ export interface LeagueSummary {
   standings: Standing[]
   topScorers: Scorer[]
   topAssists: Assist[]
+  /** Every player in the league's goal and assist leader lists (deduped). */
+  playerPool: LeaguePlayer[]
   recentMatches: Match[]
   teams: Team[]
   lastUpdated?: string
+  /** Parts of the summary whose feed failed — shown as an error, not as "no data". */
+  unavailable?: LeagueSummaryPart[]
+  /** The table is the proxy's stored copy: the provider could not be reached. */
+  servedStale?: boolean
 }
 
-export type FootballQueryName =
-  | 'getStandings'
-  | 'getTopScorers'
-  | 'getTopAssists'
-  | 'getMatches'
-  | 'getTeam'
-  | 'getSquad'
-  | 'getPlayer'
-  | 'getLeagueSummary'
+export type LeagueSummaryPart = 'fixtures' | 'leaders'
 
 export interface FootballQueryParams {
   leagueId?: LeagueId

@@ -1,7 +1,3 @@
-
-## `PLANS.md`
-
-```md
 # Football Galaxy — Planning Index
 
 This file tracks active and completed plans for the project.
@@ -22,15 +18,16 @@ The project should grow step by step:
 
 ## Active Plans
 
+There is no active plan right now. The latest, [`docs/plans/20-data-correctness-and-release.md`](docs/plans/20-data-correctness-and-release.md), was completed on 2026-10-23; its `Fortschritt` section lists what is done and the remaining steps outside the repo (Hostinger upload, Lighthouse on the live site).
+
 | Plan | Status | Description |
 |------|--------|-------------|
-| `docs/plans/milestone-1-standings.md` | planned | First milestone: API research, stack decision, and standings dashboard plan |
-| `docs/plans/api-research.md` | planned | Compare free/freemium football APIs |
-| `docs/plans/ui-system.md` | planned | Define visual direction, components, layout, and interaction patterns |
+| [`docs/plans/20-data-correctness-and-release.md`](docs/plans/20-data-correctness-and-release.md) | completed (2026-10-23) | Data correctness, API efficiency, Node + PHP proxy, Hostinger deploy, performance, i18n, SEO, tests, docs (successor of plan 19) |
 
 ## Completed Plans
 
-No completed plans yet.
+Plans 00–19 are completed or superseded (plan 19's open phases moved to plan 20). See the full chronological index in
+[`docs/plans/README.md`](docs/plans/README.md).
 
 ## Planning Rules
 

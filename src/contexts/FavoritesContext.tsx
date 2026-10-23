@@ -1,47 +1,76 @@
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useReducer } from 'react'
 
+import type { LeagueId } from '@/services/types'
+
+/**
+ * A favorite stores a small display snapshot (name, image, league) so the
+ * sidebar can render it instantly on every route without loading league data.
+ */
+export interface FavoriteEntry {
+  id: string
+  leagueId: LeagueId
+  name: string
+  image?: string
+}
+
 interface FavoritesState {
-  teams: string[]
-  players: string[]
+  teams: FavoriteEntry[]
+  players: FavoriteEntry[]
 }
 
 type FavoritesAction =
-  | { type: 'TOGGLE_TEAM'; id: string }
-  | { type: 'TOGGLE_PLAYER'; id: string }
+  | { type: 'TOGGLE'; kind: keyof FavoritesState; entry: FavoriteEntry }
+  | { type: 'REMOVE'; kind: keyof FavoritesState; id: string }
 
 interface FavoritesContextValue extends FavoritesState {
-  toggleTeam: (id: string) => void
-  togglePlayer: (id: string) => void
+  toggleTeam: (entry: FavoriteEntry) => void
+  togglePlayer: (entry: FavoriteEntry) => void
+  removeTeam: (id: string) => void
+  removePlayer: (id: string) => void
   isTeamFavorite: (id: string) => boolean
   isPlayerFavorite: (id: string) => boolean
 }
 
-const storageKey = 'football-favorites'
+// v2 stores snapshots. v1 stored bare ids, most of which pointed at the old
+// mock catalog and cannot be resolved any more, so v1 data is discarded.
+const storageKey = 'football-favorites-v2'
+const legacyStorageKey = 'football-favorites'
 const FavoritesContext = createContext<FavoritesContextValue | undefined>(undefined)
+
+const isEntry = (value: unknown): value is FavoriteEntry =>
+  typeof value === 'object' &&
+  value !== null &&
+  typeof (value as FavoriteEntry).id === 'string' &&
+  typeof (value as FavoriteEntry).name === 'string' &&
+  typeof (value as FavoriteEntry).leagueId === 'string'
 
 function readInitialState(): FavoritesState {
   try {
+    localStorage.removeItem(legacyStorageKey)
     const stored = localStorage.getItem(storageKey)
-    if (!stored) {
-      return { teams: [], players: [] }
+    if (!stored) return { teams: [], players: [] }
+    const parsed = JSON.parse(stored) as Partial<Record<keyof FavoritesState, unknown[]>>
+    return {
+      teams: (parsed.teams ?? []).filter(isEntry),
+      players: (parsed.players ?? []).filter(isEntry),
     }
-    const parsed = JSON.parse(stored) as FavoritesState
-    return { teams: parsed.teams ?? [], players: parsed.players ?? [] }
   } catch {
     return { teams: [], players: [] }
   }
 }
 
-function toggle(list: string[], id: string) {
-  return list.includes(id) ? list.filter((item) => item !== id) : [...list, id]
-}
-
 function reducer(state: FavoritesState, action: FavoritesAction): FavoritesState {
+  const list = state[action.kind]
   switch (action.type) {
-    case 'TOGGLE_TEAM':
-      return { ...state, teams: toggle(state.teams, action.id) }
-    case 'TOGGLE_PLAYER':
-      return { ...state, players: toggle(state.players, action.id) }
+    case 'TOGGLE':
+      return {
+        ...state,
+        [action.kind]: list.some((item) => item.id === action.entry.id)
+          ? list.filter((item) => item.id !== action.entry.id)
+          : [...list, action.entry],
+      }
+    case 'REMOVE':
+      return { ...state, [action.kind]: list.filter((item) => item.id !== action.id) }
     default:
       return state
   }
@@ -51,16 +80,22 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, readInitialState)
 
   useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(state))
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(state))
+    } catch {
+      // Storage full or blocked: favorites stay for this session only.
+    }
   }, [state])
 
-  const value = useMemo(
+  const value = useMemo<FavoritesContextValue>(
     () => ({
       ...state,
-      toggleTeam: (id: string) => dispatch({ type: 'TOGGLE_TEAM', id }),
-      togglePlayer: (id: string) => dispatch({ type: 'TOGGLE_PLAYER', id }),
-      isTeamFavorite: (id: string) => state.teams.includes(id),
-      isPlayerFavorite: (id: string) => state.players.includes(id),
+      toggleTeam: (entry) => dispatch({ type: 'TOGGLE', kind: 'teams', entry }),
+      togglePlayer: (entry) => dispatch({ type: 'TOGGLE', kind: 'players', entry }),
+      removeTeam: (id) => dispatch({ type: 'REMOVE', kind: 'teams', id }),
+      removePlayer: (id) => dispatch({ type: 'REMOVE', kind: 'players', id }),
+      isTeamFavorite: (id) => state.teams.some((item) => item.id === id),
+      isPlayerFavorite: (id) => state.players.some((item) => item.id === id),
     }),
     [state],
   )

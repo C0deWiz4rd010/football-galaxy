@@ -1,9 +1,19 @@
-import bundesligaLogo from '@/assets/leagues/bundesliga.png'
-import laLigaLogo from '@/assets/leagues/la-liga.png'
-import ligue1Logo from '@/assets/leagues/ligue-1.png'
-import premierLeagueLogo from '@/assets/leagues/premier-league.png'
-import serieALogo from '@/assets/leagues/serie-a.png'
+import bundesligaLogo from '@/assets/leagues/bundesliga.webp'
+import laLigaLogo from '@/assets/leagues/la-liga.webp'
+import ligue1Logo from '@/assets/leagues/ligue-1.webp'
+import premierLeagueLogo from '@/assets/leagues/premier-league.webp'
+import serieALogo from '@/assets/leagues/serie-a.webp'
+import type { MessageKey } from '@/i18n/de'
 import type { League, LeagueId } from '@/services/types'
+
+/** Country names in the UI language (`League.country` stays English for search and APIs). */
+export const leagueCountryKey: Record<LeagueId, MessageKey> = {
+  'premier-league': 'countryEngland',
+  'la-liga': 'countrySpain',
+  bundesliga: 'countryGermany',
+  'serie-a': 'countryItaly',
+  'ligue-1': 'countryFrance',
+}
 
 export const leagues: League[] = [
   {

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { AssetImage } from '@/components/shared/AssetImage'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { useLocale } from '@/contexts/LocaleContext'
 import { getPlayerPhotoSources } from '@/lib/assetSources'
 import { createPlayerAvatar, initialsFromName } from '@/lib/visualAssets'
 import type { Assist, Scorer } from '@/services/types'
@@ -26,7 +27,7 @@ const ScorersItem = memo(function ScorersItem({
     <button
       type="button"
       onClick={() => navigate(`/${item.player.leagueId}/player/${item.player.id}`)}
-      className="interactive-card surface-soft flex w-full items-center gap-3 rounded-[1.15rem] px-3 py-2.5 text-left hover:border-border/70 hover:bg-background/60"
+      className="interactive-card surface-soft flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left hover:border-border/70 hover:bg-background/60"
     >
       <div className="relative h-11 w-11 shrink-0">
         <AssetImage
@@ -35,10 +36,10 @@ const ScorersItem = memo(function ScorersItem({
             ...getPlayerPhotoSources(item.player),
             createPlayerAvatar(
               initialsFromName(item.player.name),
-              item.team.primaryColor ?? '#0f766e',
+              item.team.primaryColor,
             ),
           ]}
-          alt={item.player.name}
+          alt=""
           className="h-11 w-11 rounded-full object-cover"
           loading="lazy"
         />
@@ -59,7 +60,7 @@ const ScorersItem = memo(function ScorersItem({
           </div>
           <div className="text-right">
             <p className="font-mono text-xl font-bold leading-none">{value}</p>
-            <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            <p className="mt-1 text-2xs uppercase tracking-eyebrow text-muted-foreground">
               {label}
             </p>
           </div>
@@ -75,22 +76,26 @@ export function TopScorersCard({
   items,
   type = 'goals',
   compact = false,
+  unavailable = false,
 }: {
   title: string
   items: Item[]
   type?: 'goals' | 'assists'
   compact?: boolean
+  /** The leaders feed failed: say so instead of "no leaders yet". */
+  unavailable?: boolean
 }) {
   const navigate = useNavigate()
+  const { t } = useLocale()
 
   return (
-    <section className={compact ? 'surface-soft overflow-hidden rounded-[1rem] p-3' : 'stat-card overflow-hidden'}>
+    <section className={compact ? 'surface-soft overflow-hidden rounded-lg p-3' : 'stat-card overflow-hidden'}>
       <div className={compact ? 'mb-2 flex items-center justify-between gap-3' : 'mb-3 flex items-center justify-between gap-3'}>
         <div>
-          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Leaders</p>
+          <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">{t('leadersEyebrow')}</p>
           <h2 className={compact ? 'mt-0.5 text-sm font-semibold tracking-tight' : 'mt-1 text-base font-semibold tracking-tight'}>{title}</h2>
         </div>
-        <span className="text-xs text-muted-foreground">Top 5</span>
+        <span className="text-xs text-muted-foreground">{t('topN', { count: compact ? 3 : 5 })}</span>
       </div>
       {items.length > 0 ? (
         <div className={compact ? 'divide-y divide-border/45' : 'space-y-2'}>
@@ -102,17 +107,17 @@ export function TopScorersCard({
                 onClick={() => navigate(`/${item.player.leagueId}/player/${item.player.id}`)}
                 className="flex w-full items-center gap-2.5 py-2 text-left text-sm transition-colors hover:text-primary"
               >
-                <span className="w-4 shrink-0 font-mono text-[10px] text-muted-foreground">{index + 1}</span>
+                <span className="w-4 shrink-0 font-mono text-2xs text-muted-foreground">{index + 1}</span>
                 <AssetImage
                   src={item.player.photo}
                   fallbackSrc={[
                     ...getPlayerPhotoSources(item.player),
                     createPlayerAvatar(
                       initialsFromName(item.player.name),
-                      item.team.primaryColor ?? '#0f766e',
+                      item.team.primaryColor,
                     ),
                   ]}
-                  alt={item.player.name}
+                  alt=""
                   className="h-8 w-8 shrink-0 rounded-full object-cover"
                   loading="lazy"
                 />
@@ -134,8 +139,8 @@ export function TopScorersCard({
         </div>
       ) : (
         <EmptyState
-          title={`No ${title.toLowerCase()} yet`}
-          description="This leaderboard will appear once player statistics are available."
+          title={unavailable ? t('leadersUnavailableTitle') : t('leadersEmptyTitle')}
+          description={unavailable ? t('leadersUnavailableBody') : t('leadersEmptyBody')}
           className="min-h-0 border-0 p-0"
         />
       )}

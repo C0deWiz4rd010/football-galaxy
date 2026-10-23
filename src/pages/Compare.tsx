@@ -1,181 +1,264 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
-import { motion } from 'framer-motion'
-import { ArrowRight, Sparkles, Swords, Target } from 'lucide-react'
-import {
-  PolarAngleAxis,
-  PolarGrid,
-  Radar,
-  RadarChart,
-  ResponsiveContainer,
-  Tooltip,
-} from 'recharts'
+import { ArrowRight, Gauge, Loader2, Sparkles, Swords, Target, X } from 'lucide-react'
 
+import { ProfileRadar } from '@/components/charts/ProfileRadar'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { AssetImage } from '@/components/shared/AssetImage'
 import { FormBadge } from '@/components/shared/FormBadge'
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { ErrorState, NotFoundState } from '@/components/shared/StatusStates'
 import { Badge } from '@/components/ui/badge'
 import { useLocale } from '@/contexts/LocaleContext'
-import { mockData } from '@/data/mock'
+import { useLeagueSummaries, usePlayer } from '@/hooks/queries/football'
+import { MIN_SEARCH_LENGTH, useFootballSearch } from '@/hooks/queries/search'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { getCrestSources, getPlayerPhotoSources } from '@/lib/assetSources'
-import { getFormScore } from '@/lib/player-ratings'
-import {
-  createPlayerAvatar,
-  createTeamCrest,
-  initialsFromName,
-} from '@/lib/visualAssets'
-import type { Player, Team } from '@/services/types'
+import { getLeague, isLeagueId } from '@/lib/leagues'
+import { buildMetricPools, comparablePool, percentileRank, playerMetrics } from '@/lib/percentiles'
+import { getFormScore, traitKey } from '@/lib/player-ratings'
+import { cn } from '@/lib/utils'
+import { createPlayerAvatar, createTeamCrest, initialsFromName } from '@/lib/visualAssets'
+import { isNotFoundError } from '@/services/errors'
+import type { SearchHit } from '@/services/espn/search'
+import type { LeagueId, Player, Team } from '@/services/types'
 
-function PlayerSearch({
+const formatMetric = (value: number) => (Number.isInteger(value) ? String(value) : value.toFixed(2))
+
+function PercentileRow({ label, leftPct, rightPct, leftValue, rightValue }: { label: string; leftPct: number; rightPct: number; leftValue: number; rightValue: number }) {
+  return (
+    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-2">
+        <span className="w-9 shrink-0 text-right font-mono text-xs tabular-nums text-muted-foreground">{formatMetric(leftValue)}</span>
+        <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-muted/50" role="img" aria-label={`${leftPct}%`}>
+          <div className="absolute inset-y-0 right-0 rounded-full bg-primary/70" style={{ width: `${leftPct}%` }} />
+        </div>
+      </div>
+      <span className="min-w-[5.5rem] text-center text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
+      <div className="flex items-center gap-2">
+        <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-muted/50" role="img" aria-label={`${rightPct}%`}>
+          <div className="absolute inset-y-0 left-0 rounded-full bg-info/70" style={{ width: `${rightPct}%` }} />
+        </div>
+        <span className="w-9 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">{formatMetric(rightValue)}</span>
+      </div>
+    </div>
+  )
+}
+
+interface Selection {
+  playerId: string
+  leagueId: LeagueId
+}
+
+function useSelection(key: 'p1' | 'p2', leagueKey: 'l1' | 'l2') {
+  const [params, setParams] = useSearchParams()
+  const playerId = params.get(key) ?? ''
+  const leagueParam = params.get(leagueKey) ?? undefined
+  const selection: Selection | null = playerId && isLeagueId(leagueParam) ? { playerId, leagueId: leagueParam } : null
+  const choose = (hit: { id: string; leagueId: LeagueId } | null) => {
+    setParams(
+      (previous) => {
+        const next = new URLSearchParams(previous)
+        if (hit) {
+          next.set(key, hit.id)
+          next.set(leagueKey, hit.leagueId)
+        } else {
+          next.delete(key)
+          next.delete(leagueKey)
+        }
+        return next
+      },
+      { replace: true },
+    )
+  }
+  return [selection, choose] as const
+}
+
+function PlayerPicker({
   label,
-  value,
-  onChange,
   placeholder,
+  selected,
+  isLoading,
+  onSelect,
 }: {
   label: string
-  value?: string
-  onChange: (player: Player) => void
   placeholder: string
+  selected?: Player
+  isLoading: boolean
+  onSelect: (hit: SearchHit | null) => void
 }) {
+  const { t } = useLocale()
   const [query, setQuery] = useState('')
-  const players = useMemo(
-    () =>
-      Object.values(mockData)
-        .flatMap((league) => league.teams)
-        .flatMap((team) => team.squad ?? []),
-    [],
-  )
-  const selected = players.find((player) => player.id === value)
-  const results =
-    query.length >= 1
-      ? players
-          .filter((player) => player.name.toLowerCase().includes(query.toLowerCase()))
-          .slice(0, 8)
-      : []
+  const debounced = useDebouncedValue(query, 250)
+  const search = useFootballSearch(debounced)
+  const results = query.trim().length >= MIN_SEARCH_LENGTH ? (search.data?.players ?? []).slice(0, 8) : []
+  const listId = `${label.replace(/\W+/g, '-')}-results`
+  const [active, setActive] = useState(-1)
+  const activeIndex = active < results.length ? active : -1
+
+  const choose = (hit: SearchHit) => {
+    onSelect(hit)
+    setQuery('')
+    setActive(-1)
+  }
+
+  // ARIA combobox: focus stays in the input, arrows move the active option.
+  const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'ArrowDown' && results.length) {
+      event.preventDefault()
+      setActive((activeIndex + 1) % results.length)
+    } else if (event.key === 'ArrowUp' && results.length) {
+      event.preventDefault()
+      setActive(activeIndex <= 0 ? results.length - 1 : activeIndex - 1)
+    } else if (event.key === 'Enter' && activeIndex >= 0) {
+      event.preventDefault()
+      choose(results[activeIndex]!)
+    } else if (event.key === 'Escape') {
+      setQuery('')
+      setActive(-1)
+    }
+  }
 
   return (
     <div className="stat-card">
-      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
-      <input
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder={placeholder}
-        className="mt-3 h-11 w-full rounded-xl border bg-background/70 px-3 text-sm"
-      />
-      {selected ? (
-        <div className="surface-soft mt-4 flex items-center gap-3 rounded-fg-lg p-3">
+      <label className="text-xs uppercase tracking-eyebrow text-muted-foreground" htmlFor={`${listId}-input`}>
+        {label}
+      </label>
+      <div className="relative mt-3">
+        <input
+          id={`${listId}-input`}
+          type="search"
+          role="combobox"
+          aria-expanded={results.length > 0}
+          aria-controls={listId}
+          aria-autocomplete="list"
+          aria-activedescendant={activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined}
+          value={query}
+          onChange={(event) => {
+            setQuery(event.target.value)
+            setActive(-1)
+          }}
+          onKeyDown={onKeyDown}
+          placeholder={placeholder}
+          autoComplete="off"
+          className="h-11 w-full rounded-md border bg-background/70 px-3 pr-9 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
+        />
+        {search.isFetching ? <Loader2 className="absolute right-3 top-3.5 h-4 w-4 animate-spin text-muted-foreground" aria-hidden /> : null}
+      </div>
+
+      {results.length ? (
+        <ul id={listId} role="listbox" aria-label={label} className="mt-3 space-y-1">
+          {results.map((hit, index) => (
+            <li
+              key={hit.id}
+              id={`${listId}-${index}`}
+              role="option"
+              aria-selected={index === activeIndex}
+              // mousedown keeps focus in the input; click selects.
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => choose(hit)}
+              onMouseEnter={() => setActive(index)}
+              className={cn(
+                'surface-soft flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-md p-2 text-left transition',
+                index === activeIndex ? 'bg-muted ring-2 ring-ring' : 'hover:bg-muted',
+              )}
+            >
+                <AssetImage
+                  src={hit.image ?? ''}
+                  fallbackSrc={createPlayerAvatar(initialsFromName(hit.name), getLeague(hit.leagueId).color)}
+                  alt=""
+                  className="h-8 w-8 rounded-full bg-muted object-cover"
+                />
+                <span className="min-w-0 flex-1 truncate">{hit.name}</span>
+                <span className="shrink-0 truncate text-xs text-muted-foreground">{hit.subtitle ?? getLeague(hit.leagueId).abbreviation}</span>
+            </li>
+          ))}
+        </ul>
+      ) : query.trim().length >= MIN_SEARCH_LENGTH && !search.isFetching && search.isSuccess ? (
+        <p className="mt-3 text-sm text-muted-foreground">{t('noPlayersFound')}</p>
+      ) : null}
+
+      {isLoading ? (
+        <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> {t('loading')}
+        </div>
+      ) : selected ? (
+        <div className="surface-soft mt-4 flex items-center gap-3 rounded-lg p-3">
           <AssetImage
             src={selected.photo}
-            fallbackSrc={[
-              ...getPlayerPhotoSources(selected),
-              createPlayerAvatar(initialsFromName(selected.name), '#0f766e'),
-            ]}
-            alt={selected.name}
-            className="h-12 w-12 rounded-full object-cover"
+            fallbackSrc={[...getPlayerPhotoSources(selected), createPlayerAvatar(initialsFromName(selected.name))]}
+            alt=""
+            className="h-12 w-12 rounded-full bg-muted object-cover"
           />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="truncate font-semibold">{selected.name}</p>
             <div className="mt-1 flex flex-wrap gap-2">
               <Badge>{selected.position}</Badge>
               <FormBadge player={selected} variant="full" />
             </div>
           </div>
-        </div>
-      ) : null}
-      <div className="mt-3 space-y-1">
-        {results.map((player) => (
           <button
             type="button"
-            key={player.id}
-            onClick={() => {
-              onChange(player)
-              setQuery('')
-            }}
-            className="surface-soft flex w-full items-center gap-2 rounded-xl p-2 text-left hover:bg-white/8"
+            onClick={() => onSelect(null)}
+            aria-label={t('removeSelection')}
+            className="flex size-11 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <AssetImage
-              src={player.photo}
-              fallbackSrc={[
-                ...getPlayerPhotoSources(player),
-                createPlayerAvatar(initialsFromName(player.name), '#0f766e'),
-              ]}
-              alt={player.name}
-              className="h-8 w-8 rounded-full object-cover"
-            />
-            <span className="truncate">{player.name}</span>
+            <X className="h-4 w-4" aria-hidden />
           </button>
-        ))}
-      </div>
+        </div>
+      ) : null}
     </div>
   )
 }
 
-function CompareHeroCard({
-  player,
-  team,
-}: {
-  player: Player
-  team?: Team
-}) {
+function CompareHeroCard({ player, team }: { player: Player; team?: Team }) {
   const { t } = useLocale()
   const form = getFormScore(player)
-
   return (
-    <div className="surface-soft rounded-fg-xl p-4 shadow-fg-2">
+    <div className="surface-soft rounded-xl p-4 shadow-fg-2">
       <div className="flex items-center gap-3">
         <AssetImage
           src={player.photo}
-          fallbackSrc={[
-            ...getPlayerPhotoSources(player),
-            createPlayerAvatar(initialsFromName(player.name), team?.primaryColor ?? '#0f766e'),
-          ]}
-          alt={player.name}
-          className="h-14 w-14 rounded-fg-md object-cover"
+          fallbackSrc={[...getPlayerPhotoSources(player), createPlayerAvatar(initialsFromName(player.name), team?.primaryColor)]}
+          alt=""
+          className="h-14 w-14 rounded-md bg-muted object-cover"
         />
         <div className="min-w-0 flex-1">
           <p className="truncate text-lg font-semibold">{player.name}</p>
-          <p className="truncate text-sm text-muted-foreground">
-            {team?.name ?? t('clubUnavailable')}
-          </p>
+          <p className="truncate text-sm text-muted-foreground">{team?.name ?? t('clubUnavailable')}</p>
         </div>
-        <div className="rounded-[1.1rem] border border-white/10 bg-white/5 px-3 py-2 text-center">
-          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{t('formLabel')}</p>
-          <p className="text-2xl font-black">{form.score}</p>
+        <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-center">
+          <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">{t('formLabel')}</p>
+          <p className="text-2xl font-bold tabular-nums">{form.score}</p>
         </div>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <Badge>{player.position}</Badge>
         <FormBadge player={player} variant="label" />
         {form.traits.map((trait) => (
-          <Badge key={trait} variant="outline">{trait}</Badge>
+          <Badge key={trait} variant="outline">
+            {t(traitKey[trait])}
+          </Badge>
         ))}
       </div>
       {team ? (
         <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
           <AssetImage
             src={team.crest}
-            fallbackSrc={[
-              ...getCrestSources(team),
-              createTeamCrest(
-                team.shortName,
-                team.primaryColor ?? '#0f766e',
-                team.secondaryColor ?? '#f8fafc',
-                0,
-              ),
-            ]}
-            alt={team.name}
-            className="h-6 w-6 rounded-lg object-cover"
+            fallbackSrc={[...getCrestSources(team), createTeamCrest(team.shortName, team.primaryColor, team.secondaryColor, 0)]}
+            alt=""
+            className="h-6 w-6 object-contain"
           />
           {team.shortName}
         </div>
       ) : null}
       <Link
         to={`/${player.leagueId}/player/${player.id}`}
-        className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary"
+        className="mt-4 inline-flex min-h-10 items-center gap-2 text-sm font-medium text-foreground hover:text-primary"
       >
         {t('openProfile')}
-        <ArrowRight className="h-4 w-4" />
+        <ArrowRight className="h-4 w-4" aria-hidden />
       </Link>
     </div>
   )
@@ -183,56 +266,46 @@ function CompareHeroCard({
 
 export default function Compare() {
   const { t } = useLocale()
-  const [params, setParams] = useSearchParams()
-  const teams = useMemo(
-    () => Object.values(mockData).flatMap((league) => league.teams),
-    [],
-  )
-  const players = useMemo(
-    () => teams.flatMap((team) => team.squad ?? []),
-    [teams],
-  )
-  const [p1, setP1] = useState(params.get('p1') ?? '')
-  const [p2, setP2] = useState(params.get('p2') ?? '')
-  const player1 = players.find((player) => player.id === p1)
-  const player2 = players.find((player) => player.id === p2)
-  const team1 = teams.find((team) => team.id === player1?.teamId)
-  const team2 = teams.find((team) => team.id === player2?.teamId)
+  const [selection1, choose1] = useSelection('p1', 'l1')
+  const [selection2, choose2] = useSelection('p2', 'l2')
+  const query1 = usePlayer(selection1?.leagueId, selection1?.playerId)
+  const query2 = usePlayer(selection2?.leagueId, selection2?.playerId)
+  const player1 = query1.data
+  const player2 = query2.data
 
-  const choose = (key: 'p1' | 'p2', player: Player) => {
-    const next = new URLSearchParams(params)
-    next.set(key, player.id)
-    setParams(next)
-    if (key === 'p1') {
-      setP1(player.id)
-    } else {
-      setP2(player.id)
-    }
-  }
+  const leagueIds = [...new Set([selection1?.leagueId, selection2?.leagueId].filter((id): id is LeagueId => Boolean(id)))]
+  const { summaries } = useLeagueSummaries(leagueIds)
+  const teamsById = useMemo(() => new Map(summaries.flatMap((summary) => summary.teams).map((team) => [team.id, team])), [summaries])
+  const pool = useMemo(() => comparablePool(summaries.flatMap((summary) => summary.playerPool.map((entry) => entry.player))), [summaries])
 
+  const pools = useMemo(() => buildMetricPools(pool), [pool])
+
+  const bothReady = Boolean(player1 && player2)
   const form1 = player1 ? getFormScore(player1) : null
   const form2 = player2 ? getFormScore(player2) : null
 
   const rows =
     player1 && player2 && form1 && form2
-      ? [
+      ? ([
           [t('goals'), player1.stats.goals, player2.stats.goals],
           [t('assists'), player1.stats.assists, player2.stats.assists],
-          [t('minutes'), player1.stats.minutes, player2.stats.minutes],
-          [t('sortForm'), form1.score, form2.score],
           [t('appearancesLabel'), player1.stats.appearances, player2.stats.appearances],
+          [t('sortForm'), form1.score, form2.score],
           [t('yellowCardsShort'), player1.stats.yellowCards, player2.stats.yellowCards],
-        ] as const
+        ] as const)
       : []
 
   const radar =
-    player1 && player2
-      ? Object.keys(player1.stats.attributes).map((key) => ({
-          name: key.toUpperCase(),
-          p1: player1.stats.attributes[key as keyof typeof player1.stats.attributes],
-          p2: player2.stats.attributes[key as keyof typeof player2.stats.attributes],
+    player1 && player2 && pool.length
+      ? playerMetrics.map((metric) => ({
+          name: t(metric.labelKey),
+          p1: percentileRank(pools.get(metric.key) ?? [], metric.value(player1)),
+          p2: percentileRank(pools.get(metric.key) ?? [], metric.value(player2)),
         }))
       : []
+
+  const failed = [query1, query2].find((query) => query.isError && !isNotFoundError(query.error))
+  const missing = [query1, query2].some((query) => isNotFoundError(query.error))
 
   return (
     <PageWrapper>
@@ -240,89 +313,62 @@ export default function Compare() {
         <section className="stat-card">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                {t('compareLab')}
-              </p>
+              <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('compareLab')}</p>
               <h1 className="mt-1 text-3xl font-semibold tracking-tight">{t('compareHeading')}</h1>
-              <p className="mt-2 max-w-2xl text-muted-foreground">
-                {t('compareLongSubtitle')}
-              </p>
+              <p className="mt-2 max-w-2xl text-muted-foreground">{t('compareLongSubtitle')}</p>
             </div>
             <Badge className="w-fit">{t('liveSeasonData')}</Badge>
           </div>
         </section>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <PlayerSearch
-            label={t('playerOne')}
-            value={p1}
-            onChange={(player) => choose('p1', player)}
-            placeholder={t('searchPlayer1')}
-          />
-          <PlayerSearch
-            label={t('playerTwo')}
-            value={p2}
-            onChange={(player) => choose('p2', player)}
-            placeholder={t('searchPlayer2')}
-          />
+          <PlayerPicker label={t('playerOne')} placeholder={t('searchPlayer1')} selected={player1} isLoading={Boolean(selection1) && query1.isPending} onSelect={choose1} />
+          <PlayerPicker label={t('playerTwo')} placeholder={t('searchPlayer2')} selected={player2} isLoading={Boolean(selection2) && query2.isPending} onSelect={choose2} />
         </div>
 
-        {player1 && player2 && form1 && form2 ? (
-          <motion.div
-            layout
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="grid gap-4"
-          >
+        {failed ? <ErrorState onRetry={() => void failed.refetch()} /> : null}
+        {missing ? <NotFoundState title={t('playerNotFound')} description={t('playerNotFoundDescription')} backTo="/compare" backLabel={t('compareHeading')} /> : null}
+        {(selection1 && query1.isPending) || (selection2 && query2.isPending) ? <LoadingSpinner /> : null}
+
+        {bothReady && player1 && player2 && form1 && form2 ? (
+          <div className="grid gap-4">
             <div className="grid gap-4 lg:grid-cols-2">
-              <CompareHeroCard player={player1} team={team1} />
-              <CompareHeroCard player={player2} team={team2} />
+              <CompareHeroCard player={player1} team={teamsById.get(player1.teamId)} />
+              <CompareHeroCard player={player2} team={teamsById.get(player2.teamId)} />
             </div>
 
             <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
               <section className="stat-card">
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      {t('attributeContrast')}
-                    </p>
+                    <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('attributeContrast')}</p>
                     <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('radarView')}</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">{t('percentileLeadersSubtitle')}</p>
                   </div>
-                  <Swords className="h-5 w-5 text-muted-foreground" />
+                  <Swords className="h-5 w-5 text-muted-foreground" aria-hidden />
                 </div>
-                <ResponsiveContainer width="100%" height={360}>
-                  <RadarChart data={radar}>
-                    <PolarGrid />
-                    <PolarAngleAxis dataKey="name" />
-                    <Tooltip />
-                    <Radar
-                      name={player1.name}
-                      dataKey="p1"
-                      stroke="hsl(var(--primary))"
-                      fill="hsl(var(--primary))"
-                      fillOpacity={0.32}
-                    />
-                    <Radar
-                      name={player2.name}
-                      dataKey="p2"
-                      stroke="#22c55e"
-                      strokeDasharray="4 4"
-                      fill="#22c55e"
-                      fillOpacity={0.14}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
+                {radar.length ? (
+                  <ProfileRadar
+                    data={radar}
+                    height={340}
+                    valueSuffix=" / 100"
+                    series={[
+                      { key: 'p1', name: player1.name, tone: 'primary' },
+                      { key: 'p2', name: player2.name, tone: 'secondary' },
+                    ]}
+                  />
+                ) : (
+                  <LoadingSpinner />
+                )}
               </section>
 
               <section className="stat-card">
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      {t('verdict')}
-                    </p>
+                    <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('verdict')}</p>
                     <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('quickRead')}</h2>
                   </div>
-                  <Sparkles className="h-5 w-5 text-muted-foreground" />
+                  <Sparkles className="h-5 w-5 text-muted-foreground" aria-hidden />
                 </div>
                 <div className="space-y-3 text-sm text-muted-foreground">
                   <p>
@@ -333,15 +379,12 @@ export default function Compare() {
                     <span className="font-medium text-foreground">{player2.name}</span>{' '}
                     {player2.stats.goals + player2.stats.assists >= player1.stats.goals + player1.stats.assists
                       ? t('leadsOnProduction')
-                      : t('behindOnGoalInvolvements')}.
+                      : t('behindOnGoalInvolvements')}
+                    .
                   </p>
-                  <div className="surface-soft rounded-[1.2rem] p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      {t('suggestedUsage')}
-                    </p>
-                    <p className="mt-2 text-sm">
-                      {t('suggestedUsageBody')}
-                    </p>
+                  <div className="surface-soft rounded-lg p-4">
+                    <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('suggestedUsage')}</p>
+                    <p className="mt-2 text-sm">{t('suggestedUsageBody')}</p>
                   </div>
                 </div>
               </section>
@@ -350,12 +393,10 @@ export default function Compare() {
             <section className="stat-card space-y-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                    {t('metricDiff')}
-                  </p>
+                  <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('metricDiff')}</p>
                   <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('headToHead')}</h2>
                 </div>
-                <Target className="h-5 w-5 text-muted-foreground" />
+                <Target className="h-5 w-5 text-muted-foreground" aria-hidden />
               </div>
               {rows.map(([label, left, right]) => {
                 const delta = left - right
@@ -364,17 +405,13 @@ export default function Compare() {
                     key={label}
                     className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 text-sm sm:grid-cols-[1fr_auto_1fr_auto] sm:items-center sm:gap-3"
                   >
-                    <span className="truncate text-right font-mono">{left}</span>
-                    <span className="text-center text-xs text-muted-foreground sm:text-sm">
-                      {label}
-                    </span>
-                    <span className="truncate font-mono">{right}</span>
+                    <span className="truncate text-right font-mono tabular-nums">{left}</span>
+                    <span className="text-center text-xs text-muted-foreground sm:text-sm">{label}</span>
+                    <span className="truncate font-mono tabular-nums">{right}</span>
                     <Badge
                       className={[
                         'justify-self-start sm:justify-self-auto',
-                        delta >= 0
-                          ? 'bg-green-500/15 text-green-700'
-                          : 'bg-red-500/15 text-red-400',
+                        delta >= 0 ? 'bg-success/15 text-emerald-700 dark:text-success-fg' : 'bg-danger/15 text-red-700 dark:text-danger-fg',
                       ].join(' ')}
                     >
                       {delta > 0 ? '+' : ''}
@@ -384,7 +421,41 @@ export default function Compare() {
                 )
               })}
             </section>
-          </motion.div>
+
+            {pool.length ? (
+              <section className="stat-card space-y-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('percentileEyebrow')}</p>
+                    <h2 className="mt-1 text-lg font-semibold tracking-tight">{t('percentileTitle')}</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">{t('percentileLeadersSubtitle')}</p>
+                  </div>
+                  <Gauge className="h-5 w-5 text-muted-foreground" aria-hidden />
+                </div>
+                <div className="flex items-center justify-between gap-2 text-xs font-medium">
+                  <span className="truncate text-primary">{player1.name}</span>
+                  <span className="truncate text-right text-info">{player2.name}</span>
+                </div>
+                <div className="space-y-3">
+                  {playerMetrics.map((metric) => {
+                    const sorted = pools.get(metric.key) ?? []
+                    const leftValue = metric.value(player1)
+                    const rightValue = metric.value(player2)
+                    return (
+                      <PercentileRow
+                        key={metric.key}
+                        label={t(metric.labelKey)}
+                        leftValue={leftValue}
+                        rightValue={rightValue}
+                        leftPct={percentileRank(sorted, leftValue)}
+                        rightPct={percentileRank(sorted, rightValue)}
+                      />
+                    )
+                  })}
+                </div>
+              </section>
+            ) : null}
+          </div>
         ) : null}
       </div>
     </PageWrapper>

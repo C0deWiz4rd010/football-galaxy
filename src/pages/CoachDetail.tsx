@@ -5,24 +5,52 @@ import { Briefcase, Building2, Trophy } from 'lucide-react'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { BackButton } from '@/components/shared/BackButton'
 import { SkeletonCard } from '@/components/shared/SkeletonCard'
+import { ErrorState, NotFoundState } from '@/components/shared/StatusStates'
 import { Badge } from '@/components/ui/badge'
 import { useLocale } from '@/contexts/LocaleContext'
-import { useFootballData } from '@/hooks/useFootballData'
-import type { LeagueSummary, Team } from '@/services/types'
+import { useLeagueSummary, useTeam } from '@/hooks/queries/football'
+import { isNotFoundError } from '@/services/errors'
+import { isLeagueId } from '@/lib/leagues'
+import { useEntityTitle } from '@/app/documentMeta'
 
 export default function CoachDetail() {
   const { t } = useLocale()
-  const { leagueId, teamId } = useParams()
-  const { data: team, isLoading } = useFootballData<Team>('getTeam', {
-    leagueId: leagueId as never,
-    teamId,
-  })
-  const { data: leagueSummary } = useFootballData<LeagueSummary>('getLeagueSummary', {
-    leagueId: leagueId as never,
-  })
+  const params = useParams()
+  const leagueId = isLeagueId(params.leagueId) ? params.leagueId : undefined
+  const teamId = params.teamId
+  const enabled = Boolean(leagueId && teamId)
+  const { data: team, isPending, error, refetch } = useTeam(leagueId, teamId)
+  useEntityTitle(team?.manager ?? team?.name)
+  const notFound = isNotFoundError(error)
+  const { data: leagueSummary } = useLeagueSummary(leagueId)
 
-  if (isLoading || !team) {
-    return <SkeletonCard />
+  if (!enabled || notFound) {
+    return (
+      <PageWrapper>
+        <NotFoundState
+          title={t('teamNotFound')}
+          description={t('teamNotFoundDescription')}
+          backTo={leagueId ? `/${leagueId}` : '/'}
+          backLabel={t(leagueId ? 'backToLeague' : 'goHome')}
+        />
+      </PageWrapper>
+    )
+  }
+
+  if (error && !team) {
+    return (
+      <PageWrapper>
+        <ErrorState onRetry={() => void refetch()} />
+      </PageWrapper>
+    )
+  }
+
+  if (isPending || !team) {
+    return (
+      <PageWrapper>
+        <SkeletonCard />
+      </PageWrapper>
+    )
   }
 
   const standing = leagueSummary?.standings.find((item) => item.team.id === team.id)
@@ -30,11 +58,11 @@ export default function CoachDetail() {
   return (
     <PageWrapper>
       <div className="space-y-4">
-        <BackButton />
+        <BackButton fallbackTo={`/${team.leagueId}/team/${team.id}`} />
         <section className="stat-card">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('coachProfile')}</p>
+              <p className="text-xs uppercase tracking-eyebrow text-muted-foreground">{t('coachProfile')}</p>
               <h1 className="mt-1 text-2xl font-semibold tracking-tight">
                 {team.manager ?? t('headCoachPending')}
               </h1>
@@ -46,10 +74,10 @@ export default function CoachDetail() {
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-3">
-            <div className="surface-soft rounded-[1rem] px-3 py-3">
+            <div className="surface-soft rounded-lg px-3 py-3">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Building2 className="h-4 w-4" />
-                <span className="text-xs uppercase tracking-[0.16em]">{t('club')}</span>
+                <span className="text-xs uppercase tracking-eyebrow">{t('club')}</span>
               </div>
               <Link
                 to={`/${team.leagueId}/team/${team.id}`}
@@ -58,19 +86,19 @@ export default function CoachDetail() {
                 {team.name}
               </Link>
             </div>
-            <div className="surface-soft rounded-[1rem] px-3 py-3">
+            <div className="surface-soft rounded-lg px-3 py-3">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Trophy className="h-4 w-4" />
-                <span className="text-xs uppercase tracking-[0.16em]">{t('tableContext')}</span>
+                <span className="text-xs uppercase tracking-eyebrow">{t('tableContext')}</span>
               </div>
               <p className="mt-2 text-base font-semibold">
                 {standing ? t('standingShort', { position: standing.position, points: standing.points }) : t('standingsPending')}
               </p>
             </div>
-            <div className="surface-soft rounded-[1rem] px-3 py-3">
+            <div className="surface-soft rounded-lg px-3 py-3">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Briefcase className="h-4 w-4" />
-                <span className="text-xs uppercase tracking-[0.16em]">{t('homeBase')}</span>
+                <span className="text-xs uppercase tracking-eyebrow">{t('homeBase')}</span>
               </div>
               <p className="mt-2 text-base font-semibold">{team.stadium ?? t('venueDataPending')}</p>
             </div>

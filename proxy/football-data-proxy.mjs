@@ -1,154 +1,221 @@
+/**
+ * Football Galaxy live-data proxy for local development.
+ *
+ * Implements proxy/SPEC.md with the shared rules in proxy/rules.json — the
+ * same contract as the production PHP proxy (deploy/hostinger/api/live.php),
+ * so the app behaves identically in development and on Hostinger. State
+ * (cache, rate limits) lives in memory.
+ */
+import { createHash } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 import { createServer } from 'node:http'
+import { brotliCompressSync, constants as zlib, gzipSync } from 'node:zlib'
 
-const PORT = Number(process.env.PORT ?? 8787)
+const rules = JSON.parse(readFileSync(new URL('./rules.json', import.meta.url), 'utf8'))
+
+// PROXY_PORT (not the generic PORT) so dev tooling that exports PORT for Vite
+// cannot make both servers fight over the same port.
+const PORT = Number(process.env.PROXY_PORT ?? 8787)
 const FOOTBALL_DATA_API_KEY = process.env.FOOTBALL_DATA_API_KEY?.trim() ?? ''
+const ALLOWED_ORIGINS = new Set(
+  (process.env.ALLOWED_ORIGINS ?? 'http://localhost:5173,http://127.0.0.1:5173')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+)
+const HOSTS = new Set(rules.hosts)
 
-// Hosts the proxy is allowed to fetch from. Add new domains here as the data
-// pipeline grows. Keep the list small: every entry widens the SSRF surface.
-const ALLOWED_HOSTS = new Set([
-  'www.thesportsdb.com',
-  'site.api.espn.com',
-  'site.web.api.espn.com',
-  'api.football-data.org',
-  'commons.wikimedia.org',
-  'upload.wikimedia.org',
-  'www.wikidata.org',
-  'crests.football-data.org',
-])
+/** target URL → { body: Buffer, contentType, storedAt (ms) } */
+const cache = new Map()
+/** window key → start timestamps (ms) */
+const windows = new Map()
 
-function writeJson(response, statusCode, payload) {
-  response.writeHead(statusCode, {
-    'access-control-allow-origin': '*',
-    'access-control-allow-methods': 'GET,OPTIONS',
-    'access-control-allow-headers': 'content-type',
-    'content-type': 'application/json; charset=utf-8',
+function ttlSeconds(host, pathAndQuery) {
+  const rule = rules.ttl.find((entry) => entry.host === host && new RegExp(entry.path).test(pathAndQuery))
+  return rule ? rule.seconds : rules.defaultTtlSeconds
+}
+
+/** Sliding window: 0 when a slot was taken, otherwise seconds until one frees up. */
+function takeSlot(key, limit, windowSeconds) {
+  const now = Date.now()
+  const stamps = (windows.get(key) ?? []).filter((stamp) => stamp > now - windowSeconds * 1000)
+  if (stamps.length >= limit) {
+    windows.set(key, stamps)
+    return Math.max(1, Math.ceil((stamps[stamps.length - limit] + windowSeconds * 1000 - now) / 1000))
+  }
+  stamps.push(now)
+  windows.set(key, stamps)
+  return 0
+}
+
+function cacheWrite(key, entry) {
+  if (entry.body.length > rules.maxCacheableBytes) return
+  cache.delete(key)
+  cache.set(key, entry)
+  while (cache.size > rules.maxCacheEntries) cache.delete(cache.keys().next().value)
+}
+
+/**
+ * JSON compresses 10–25× (ESPN statistics: 650 KB → 25 KB), which decides the
+ * first paint on mobile networks. Brotli at a moderate level stays fast.
+ */
+function compress(request, body) {
+  const accepted = String(request.headers['accept-encoding'] ?? '')
+  if (body.length < 1024) return { body }
+  if (/\bbr\b/.test(accepted)) return { body: brotliCompressSync(body, { params: { [zlib.BROTLI_PARAM_QUALITY]: 5 } }), encoding: 'br' }
+  if (/\bgzip\b/.test(accepted)) return { body: gzipSync(body), encoding: 'gzip' }
+  return { body }
+}
+
+/** `body` as a Buffer is upstream data and gets compressed; strings are our own short JSON. */
+function send(response, status, body, headers) {
+  const compressible = Buffer.isBuffer(body)
+  const { body: payload, encoding } = compressible ? compress(response.req, body) : { body }
+  response.writeHead(status, {
+    'x-content-type-options': 'nosniff',
+    ...headers,
+    ...(compressible ? { vary: [headers.vary, 'Accept-Encoding'].filter(Boolean).join(', ') } : {}),
+    ...(encoding ? { 'content-encoding': encoding } : {}),
   })
-  response.end(JSON.stringify(payload))
+  response.end(payload)
 }
 
-function copyHeaderIfPresent(response, upstream, headerName) {
-  const value = upstream.headers.get(headerName)
-
-  if (value) {
-    response.setHeader(headerName, value)
-  }
+function sendError(response, status, message, headers = {}) {
+  send(response, status, JSON.stringify({ error: message }), {
+    ...headers,
+    'content-type': 'application/json',
+    'cache-control': 'no-store',
+  })
 }
 
-const server = createServer(async (request, response) => {
-  if (!request.url) {
-    writeJson(response, 400, { error: 'Missing request URL.' })
-    return
-  }
+function sendStale(response, entry, cors) {
+  send(response, 200, entry.body, { ...cors, 'content-type': entry.contentType, 'cache-control': 'no-store', 'x-proxy-cache': 'stale' })
+}
 
-  if (request.method === 'OPTIONS') {
-    response.writeHead(204, {
-      'access-control-allow-origin': '*',
-      'access-control-allow-methods': 'GET,OPTIONS',
-      'access-control-allow-headers': 'content-type',
-    })
-    response.end()
-    return
-  }
-
-  if (request.method !== 'GET') {
-    writeJson(response, 405, { error: 'Only GET is supported.' })
-    return
-  }
-
-  const url = new URL(request.url, `http://${request.headers.host ?? 'localhost'}`)
-
-  if (url.pathname === '/health') {
-    writeJson(response, 200, {
-      status: 'ok',
-      allowedHosts: [...ALLOWED_HOSTS],
-    })
-    return
-  }
-
-  if (url.pathname !== '/api/live') {
-    writeJson(response, 404, { error: 'Unknown endpoint.' })
-    return
-  }
-
-  const target = url.searchParams.get('target')
-
-  if (!target) {
-    writeJson(response, 400, { error: 'Missing target query parameter.' })
-    return
-  }
-
-  let upstreamUrl
-
+async function fetchUpstream(target, host) {
+  const headers = { accept: 'application/json', 'user-agent': 'FootballGalaxyProxy/2.0' }
+  if (host === 'api.football-data.org' && FOOTBALL_DATA_API_KEY) headers['x-auth-token'] = FOOTBALL_DATA_API_KEY
   try {
-    upstreamUrl = new URL(target)
-  } catch {
-    writeJson(response, 400, { error: 'Target must be an absolute URL.' })
-    return
-  }
-
-  if (upstreamUrl.protocol !== 'https:' || !ALLOWED_HOSTS.has(upstreamUrl.host)) {
-    writeJson(response, 403, { error: 'Target host is not allowed.' })
-    return
-  }
-
-  try {
-    const upstreamHeaders = {
-      'user-agent': 'FootballGalaxyProxy/1.0 (+https://github.com/C0deWiz4rd010/football-galaxy)',
-      accept: 'application/json,image/*,text/plain;q=0.9,*/*;q=0.8',
-    }
-
-    // Inject the football-data.org API key when targeting that host. The key
-    // never leaves the proxy, so the browser bundle stays free of secrets.
-    if (upstreamUrl.host === 'api.football-data.org' && FOOTBALL_DATA_API_KEY) {
-      upstreamHeaders['x-auth-token'] = FOOTBALL_DATA_API_KEY
-    }
-
-    const upstream = await fetch(upstreamUrl, { headers: upstreamHeaders })
-
-    // football-data.org publishes its rate-limit state in response headers
-    // (`X-Requests-Available-Minute`, `X-RequestCounter-Reset`). Log when we
-    // approach the limit so we can spot throttling early instead of hitting
-    // 429s in the browser.
-    if (upstreamUrl.host === 'api.football-data.org') {
-      const remaining = upstream.headers.get('x-requests-available-minute')
-      const resetSeconds = upstream.headers.get('x-requestcounter-reset')
-      if (remaining !== null) {
-        const remainingNum = Number(remaining)
-        if (Number.isFinite(remainingNum) && remainingNum <= 2) {
-          console.warn(
-            `[fd] rate-limit low: ${remainingNum} req(s) remaining, resets in ${resetSeconds ?? '?'}s`,
-          )
-        }
-      }
-      // Forward both headers to the browser so client-side logic can react.
-      copyHeaderIfPresent(response, upstream, 'x-requests-available-minute')
-      copyHeaderIfPresent(response, upstream, 'x-requestcounter-reset')
-    }
-
+    const upstream = await fetch(target, {
+      headers,
+      redirect: 'manual',
+      signal: AbortSignal.timeout(rules.timeoutSeconds * 1000),
+    })
+    const length = Number(upstream.headers.get('content-length') ?? 0)
+    if (length > rules.maxBodyBytes) return { status: 0, error: 'Upstream response is too large.' }
     const body = Buffer.from(await upstream.arrayBuffer())
+    if (body.length > rules.maxBodyBytes) return { status: 0, error: 'Upstream response is too large.' }
+    const retryAfter = upstream.headers.get('retry-after') ?? upstream.headers.get('x-requestcounter-reset') ?? ''
+    return {
+      status: upstream.status,
+      body,
+      contentType: upstream.headers.get('content-type') ?? 'application/json',
+      retryAfter: /^\d+$/.test(retryAfter) ? retryAfter : '',
+    }
+  } catch {
+    return { status: 0 }
+  }
+}
 
-    response.statusCode = upstream.status
-    response.setHeader('access-control-allow-origin', '*')
-    response.setHeader('access-control-allow-methods', 'GET,OPTIONS')
-    response.setHeader('access-control-allow-headers', 'content-type')
-    copyHeaderIfPresent(response, upstream, 'content-type')
-    copyHeaderIfPresent(response, upstream, 'cache-control')
-    copyHeaderIfPresent(response, upstream, 'etag')
-    response.end(body)
-  } catch (error) {
-    writeJson(response, 502, {
-      error: 'Failed to reach upstream provider.',
-      detail: error instanceof Error ? error.message : 'Unknown proxy error.',
+async function handle(request, response) {
+  const origin = request.headers.origin ?? ''
+  const cors = { vary: 'Origin' }
+  if (origin) {
+    if (!ALLOWED_ORIGINS.has(origin)) return sendError(response, 403, 'Origin is not allowed.', cors)
+    Object.assign(cors, {
+      'access-control-allow-origin': origin,
+      'access-control-allow-methods': 'GET, OPTIONS',
+      'access-control-allow-headers': 'content-type',
+      'access-control-expose-headers': rules.exposedHeaders.join(', '),
     })
   }
-})
 
-server.listen(PORT, () => {
-  console.log(`Football Galaxy proxy listening on http://localhost:${PORT}`)
-  console.log('Proxy endpoint: /api/live?target=<encoded-https-url>')
-  if (FOOTBALL_DATA_API_KEY) {
-    console.log('football-data.org API key detected — requests to api.football-data.org will be authenticated.')
-  } else {
-    console.log('No FOOTBALL_DATA_API_KEY set — football-data.org requests will be unauthenticated (low rate limits, fewer fields).')
+  if (request.method === 'OPTIONS') return send(response, 204, '', cors)
+  if (request.method !== 'GET') return sendError(response, 405, 'Only GET is supported.', cors)
+
+  const url = new URL(request.url ?? '/', 'http://localhost')
+  if (url.pathname !== '/api/live') return sendError(response, 404, 'Unknown endpoint.', cors)
+  if (url.searchParams.has('health')) {
+    return send(response, 200, '{"status":"ok"}', { ...cors, 'content-type': 'application/json', 'cache-control': 'no-store' })
   }
+
+  const client = rules.clientRateLimit
+  const clientWait = takeSlot(`rl-${request.socket.remoteAddress ?? 'unknown'}`, client.limit, client.windowSeconds)
+  if (clientWait > 0) return sendError(response, 429, 'Too many requests.', { ...cors, 'retry-after': String(clientWait) })
+
+  const target = url.searchParams.get('target') ?? ''
+  if (!target) return sendError(response, 400, 'Missing target query parameter.', cors)
+  let parsed
+  try {
+    parsed = new URL(target)
+  } catch {
+    return sendError(response, 400, 'Target must be an absolute URL.', cors)
+  }
+  if (parsed.protocol !== 'https:' || !HOSTS.has(parsed.hostname) || parsed.username || parsed.password || parsed.port) {
+    return sendError(response, 403, 'Target host is not allowed.', cors)
+  }
+  if (!(rules.pathPrefixes[parsed.hostname] ?? []).some((prefix) => parsed.pathname.startsWith(prefix))) {
+    return sendError(response, 403, 'Target path is not allowed.', cors)
+  }
+  // The fragment never reaches the upstream, so it must not split the cache either.
+  parsed.hash = ''
+
+  const host = parsed.hostname
+  const ttl = ttlSeconds(host, parsed.pathname + parsed.search)
+  const key = createHash('sha256').update(parsed.href).digest('hex')
+  const cached = cache.get(key)
+  const age = cached ? (Date.now() - cached.storedAt) / 1000 : Infinity
+  if (cached && age < ttl) {
+    return send(response, 200, cached.body, {
+      ...cors,
+      'content-type': cached.contentType,
+      'cache-control': `public, max-age=${Math.max(0, Math.floor(ttl - age))}`,
+      'x-proxy-cache': 'hit',
+    })
+  }
+  const stale = cached && age < rules.maxStaleSeconds ? cached : undefined
+
+  const budget = rules.upstreamBudget[host]
+  if (budget) {
+    const budgetWait = takeSlot(`budget-${host}`, budget.limit, budget.windowSeconds)
+    if (budgetWait > 0) {
+      if (stale) return sendStale(response, stale, cors)
+      console.warn(`[proxy] ${host} budget exhausted, retry in ${budgetWait}s`)
+      return sendError(response, 429, 'Upstream rate limit reached.', { ...cors, 'retry-after': String(budgetWait) })
+    }
+  }
+
+  const upstream = await fetchUpstream(parsed.href, host)
+  if (upstream.status === 200) {
+    cacheWrite(key, { body: upstream.body, contentType: upstream.contentType, storedAt: Date.now() })
+    return send(response, 200, upstream.body, {
+      ...cors,
+      'content-type': upstream.contentType,
+      'cache-control': `public, max-age=${ttl}`,
+      'x-proxy-cache': 'miss',
+    })
+  }
+  const failed = upstream.status === 0 || upstream.status === 429 || upstream.status >= 500
+  if (failed && stale) {
+    console.warn(`[proxy] ${host} answered ${upstream.status || 'nothing'} — serving stale copy`)
+    return sendStale(response, stale, cors)
+  }
+  if (upstream.status === 0) return sendError(response, 502, upstream.error ?? 'Failed to reach the upstream provider.', cors)
+  return sendError(response, upstream.status, `Upstream returned ${upstream.status}.`, {
+    ...cors,
+    ...(upstream.retryAfter ? { 'retry-after': upstream.retryAfter } : {}),
+  })
+}
+
+createServer((request, response) => {
+  handle(request, response).catch(() => {
+    if (!response.headersSent) sendError(response, 500, 'Proxy error.')
+  })
+}).listen(PORT, () => {
+  console.log(`Football Galaxy proxy listening on http://localhost:${PORT}/api/live`)
+  console.log(
+    FOOTBALL_DATA_API_KEY
+      ? 'football-data.org key detected — requests to api.football-data.org are authenticated.'
+      : 'No FOOTBALL_DATA_API_KEY — football-data.org requests will be rejected upstream.',
+  )
 })

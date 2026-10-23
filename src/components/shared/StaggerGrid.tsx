@@ -1,53 +1,31 @@
 /**
- * `StaggerGrid` reveals its children with a smooth cascade so dashboards feel
- * alive on load without each section having to wire up motion props.
+ * `StaggerGrid` reveals its children with a short cascade on mount. Pure CSS
+ * (`.fg-stagger` in index.css): no animation library in the critical path,
+ * and the global reduced-motion rule turns it off.
  *
- * Wrap the parent grid in `<StaggerGrid>` and wrap each child you want to
- * animate in `<StaggerGridItem>`. Use the `as` prop to keep the rendered
- * element (`section`, `div`, …) sensible for accessibility.
+ * Wrap the parent in `<StaggerGrid>` and each animated child in
+ * `<StaggerGridItem>`; `as` keeps the rendered element semantic.
  */
 
-import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react'
+import type { ElementType, HTMLAttributes, ReactNode } from 'react'
 
-import { motion } from 'framer-motion'
+import { cn } from '@/lib/utils'
 
-import { fadeUp, staggerParent } from '@/shared/motion/variants'
-
-type StaggerGridProps<E extends ElementType> = {
-  as?: E
+type StaggerProps = {
+  as?: 'div' | 'section' | 'article' | 'ul' | 'li'
   children: ReactNode
-} & Omit<ComponentPropsWithoutRef<E>, 'as' | 'children'>
+} & HTMLAttributes<HTMLElement>
 
-function StaggerGridRoot<E extends ElementType = 'div'>({
-  as,
-  children,
-  ...rest
-}: StaggerGridProps<E>) {
-  const Component = motion.create(as ?? 'div') as ElementType
+export function StaggerGrid({ as, children, className, ...rest }: StaggerProps) {
+  const Component: ElementType = as ?? 'div'
   return (
-    <Component
-      variants={staggerParent}
-      initial="hidden"
-      animate="show"
-      {...rest}
-    >
+    <Component className={cn('fg-stagger', className)} {...rest}>
       {children}
     </Component>
   )
 }
 
-function StaggerItem<E extends ElementType = 'div'>({
-  as,
-  children,
-  ...rest
-}: StaggerGridProps<E>) {
-  const Component = motion.create(as ?? 'div') as ElementType
-  return (
-    <Component variants={fadeUp} {...rest}>
-      {children}
-    </Component>
-  )
+export function StaggerGridItem({ as, children, ...rest }: StaggerProps) {
+  const Component: ElementType = as ?? 'div'
+  return <Component {...rest}>{children}</Component>
 }
-
-export const StaggerGrid = StaggerGridRoot
-export const StaggerGridItem = StaggerItem

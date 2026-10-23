@@ -32,3 +32,8 @@ snap.txt
 
 # Editor-specific
 .vscode/
+.claude/
+
+# Hostinger build output
+dist-hostinger/
+dist-perf/

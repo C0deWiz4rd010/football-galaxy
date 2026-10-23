@@ -1,5 +1,7 @@
 # Live Proxy, Player Data, And Compact UI
 
+> Historischer Stand (Mai 2026): Mock-Fallback, `src/services/theSportsDb.ts` und der Header-Tab „Lokal“ gibt es nicht mehr. Aktueller Stand: README.md und `docs/plans/20-data-correctness-and-release.md`.
+
 Date: 2026-05-17
 
 ## What Changed
