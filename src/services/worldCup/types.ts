@@ -54,6 +54,10 @@ export interface WorldCupScore {
   away?: number
 }
 
+export type WorldCupMatchWinner = 'home' | 'away' | 'draw'
+/** How a finished match was settled: after 90 minutes, extra time or a shoot-out. */
+export type WorldCupDecidedBy = 'regular' | 'extra-time' | 'penalties'
+
 export interface WorldCupLineupPlayer {
   id: string
   name: string
@@ -96,11 +100,17 @@ export interface WorldCupFixture {
   city?: string
   homeTeam: WorldCupTeam
   awayTeam: WorldCupTeam
+  /** Goals after regular time plus extra time — never includes the shoot-out. */
   homeScore?: number
   awayScore?: number
+  winner?: WorldCupMatchWinner
+  decidedBy?: WorldCupDecidedBy
+  penalties?: WorldCupScore
   scoreBreakdown?: {
     halftime?: WorldCupScore
-    fulltime?: WorldCupScore
+    /** Score after 90 minutes. */
+    regular?: WorldCupScore
+    /** Goals scored during extra time only. */
     extratime?: WorldCupScore
     penalty?: WorldCupScore
   }
@@ -135,6 +145,9 @@ export interface WorldCupBracketMatch {
   awayTeam?: WorldCupTeam
   homeScore?: number
   awayScore?: number
+  winner?: WorldCupMatchWinner
+  decidedBy?: WorldCupDecidedBy
+  penalties?: WorldCupScore
   placeholder: boolean
 }
 

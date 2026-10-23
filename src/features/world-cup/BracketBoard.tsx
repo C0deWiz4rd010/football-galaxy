@@ -9,15 +9,21 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { cn } from '@/lib/utils'
 import type { WorldCupBracketMatch, WorldCupBracketRound, WorldCupTeam } from '@/services/worldCup/types'
 
-import { TeamFlag } from './components'
+import { PenaltyScore, TeamFlag } from './components'
 import { useWorldCupLabels } from './labels'
+import { winnerSide } from './utils'
 
-function winnerSide(match: WorldCupBracketMatch): 'home' | 'away' | undefined {
-  if (typeof match.homeScore !== 'number' || typeof match.awayScore !== 'number' || match.homeScore === match.awayScore) return undefined
-  return match.homeScore > match.awayScore ? 'home' : 'away'
-}
-
-function TeamLine({ team, score, state }: { team?: WorldCupTeam; score?: number; state: 'winner' | 'loser' | 'open' }) {
+function TeamLine({
+  team,
+  score,
+  penalties,
+  state,
+}: {
+  team?: WorldCupTeam
+  score?: number
+  penalties?: number
+  state: 'winner' | 'loser' | 'open'
+}) {
   const wc = useWorldCupLabels()
   return (
     <span className={cn('flex items-center justify-between gap-2 px-2 py-1.5', state === 'loser' && 'text-muted-foreground')}>
@@ -31,7 +37,7 @@ function TeamLine({ team, score, state }: { team?: WorldCupTeam; score?: number;
           <span className="truncate italic text-muted-foreground">{wc.team(team)}</span>
         )}
       </span>
-      <span className={cn('font-mono tabular-nums', state === 'winner' ? 'font-bold' : 'font-medium')}>{score ?? '–'}</span>
+      <PenaltyScore score={score} penalties={penalties} className={state === 'winner' ? undefined : 'font-medium'} />
     </span>
   )
 }
@@ -40,9 +46,9 @@ function MatchCard({ match }: { match: WorldCupBracketMatch }) {
   const winner = winnerSide(match)
   const body = (
     <>
-      <TeamLine team={match.homeTeam} score={match.homeScore} state={winner ? (winner === 'home' ? 'winner' : 'loser') : 'open'} />
+      <TeamLine team={match.homeTeam} score={match.homeScore} penalties={match.penalties?.home} state={winner ? (winner === 'home' ? 'winner' : 'loser') : 'open'} />
       <span aria-hidden className="block h-px bg-border/60" />
-      <TeamLine team={match.awayTeam} score={match.awayScore} state={winner ? (winner === 'away' ? 'winner' : 'loser') : 'open'} />
+      <TeamLine team={match.awayTeam} score={match.awayScore} penalties={match.penalties?.away} state={winner ? (winner === 'away' ? 'winner' : 'loser') : 'open'} />
     </>
   )
   const className = 'block overflow-hidden rounded-md border border-border/60 bg-card text-xs'

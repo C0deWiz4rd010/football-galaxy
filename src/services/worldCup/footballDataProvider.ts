@@ -22,13 +22,16 @@ import type {
   DataQualityMeta,
   WorldCupBracketMatch,
   WorldCupBracketRound,
+  WorldCupDecidedBy,
   WorldCupDashboard,
   WorldCupFixture,
   WorldCupGroupStanding,
   WorldCupLineup,
   WorldCupMatchStatistic,
   WorldCupMatchStatus,
+  WorldCupMatchWinner,
   WorldCupProvider,
+  WorldCupScore,
   WorldCupSquad,
   WorldCupSquadPlayer,
   WorldCupTeam,
@@ -61,6 +64,7 @@ interface FdScore {
   duration?: string
   fullTime?: FdScoreHalf
   halfTime?: FdScoreHalf
+  regularTime?: FdScoreHalf
   extraTime?: FdScoreHalf
   penalties?: FdScoreHalf
 }
@@ -231,10 +235,40 @@ function half(score?: FdScoreHalf) {
   return { home, away }
 }
 
+function winnerOf(value?: string | null): WorldCupMatchWinner | undefined {
+  if (value === 'HOME_TEAM') return 'home'
+  if (value === 'AWAY_TEAM') return 'away'
+  if (value === 'DRAW') return 'draw'
+  return undefined
+}
+
+function decidedByOf(value?: string): WorldCupDecidedBy | undefined {
+  if (value === 'PENALTY_SHOOTOUT') return 'penalties'
+  if (value === 'EXTRA_TIME') return 'extra-time'
+  if (value === 'REGULAR') return 'regular'
+  return undefined
+}
+
+/**
+ * football-data.org v4 adds the shoot-out to `fullTime` (Germany–Paraguay 1:1
+ * a.e.t., 3:4 on penalties arrives as fullTime 4:5). The match score is
+ * therefore fullTime minus penalties.
+ */
+function matchScore(score?: FdScore): WorldCupScore | undefined {
+  const fullTime = half(score?.fullTime)
+  const penalties = half(score?.penalties)
+  if (!fullTime || !penalties) return fullTime
+  const minus = (total?: number, shootout?: number) =>
+    total === undefined ? undefined : total - (shootout ?? 0)
+  return { home: minus(fullTime.home, penalties.home), away: minus(fullTime.away, penalties.away) }
+}
+
 export function mapFixture(raw: FdMatch): WorldCupFixture {
   const group = normalizeGroup(raw.group)
   const status = statusOf(raw.status)
-  const fullTime = half(raw.score?.fullTime)
+  const score = matchScore(raw.score)
+  const decidedBy = decidedByOf(raw.score?.duration)
+  const penalties = half(raw.score?.penalties)
   const referee = raw.referees?.find((entry) => entry.type === 'REFEREE') ?? raw.referees?.[0]
 
   return {
@@ -247,13 +281,16 @@ export function mapFixture(raw: FdMatch): WorldCupFixture {
     venue: raw.venue?.trim() || undefined,
     homeTeam: mapTeamRef(raw.homeTeam, group),
     awayTeam: mapTeamRef(raw.awayTeam, group),
-    homeScore: fullTime?.home,
-    awayScore: fullTime?.away,
+    homeScore: score?.home,
+    awayScore: score?.away,
+    winner: status === 'FINISHED' ? winnerOf(raw.score?.winner) : undefined,
+    decidedBy: status === 'FINISHED' ? decidedBy : undefined,
+    penalties,
     scoreBreakdown: {
       halftime: half(raw.score?.halfTime),
-      fulltime: fullTime,
+      regular: half(raw.score?.regularTime) ?? (decidedBy === 'regular' ? score : undefined),
       extratime: half(raw.score?.extraTime),
-      penalty: half(raw.score?.penalties),
+      penalty: penalties,
     },
     events: [],
     quality: quality({ isLive: status === 'LIVE', lastUpdated: raw.lastUpdated ?? new Date().toISOString() }),
@@ -392,6 +429,9 @@ function buildBracket(fixtures: WorldCupFixture[], rawStageByFixtureId: Map<stri
       awayTeam: fixture.awayTeam,
       homeScore: fixture.homeScore,
       awayScore: fixture.awayScore,
+      winner: fixture.winner,
+      decidedBy: fixture.decidedBy,
+      penalties: fixture.penalties,
       placeholder: Boolean(fixture.homeTeam.placeholder || fixture.awayTeam.placeholder),
     }))
 

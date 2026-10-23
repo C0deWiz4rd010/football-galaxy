@@ -50,6 +50,14 @@ export function groupWorldCupStandings(groups: WorldCupGroupStanding[]) {
   }, {})
 }
 
+/** Winning side of a finished match; the provider's verdict beats comparing goals (shoot-outs). */
+export function winnerSide(match: Pick<WorldCupFixture, 'winner' | 'homeScore' | 'awayScore'>): 'home' | 'away' | undefined {
+  if (match.winner === 'home' || match.winner === 'away') return match.winner
+  if (match.winner === 'draw') return undefined
+  if (typeof match.homeScore !== 'number' || typeof match.awayScore !== 'number' || match.homeScore === match.awayScore) return undefined
+  return match.homeScore > match.awayScore ? 'home' : 'away'
+}
+
 export function uniqueOptions(values: Array<string | undefined>) {
   return [...new Set(values.filter((value): value is string => Boolean(value)))].sort((left, right) => left.localeCompare(right))
 }

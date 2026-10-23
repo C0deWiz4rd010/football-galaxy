@@ -337,6 +337,7 @@ export function WorldCupMatchDetailPage() {
               {data.status === 'LIVE' ? `${data.elapsed ?? 0}'` : wc.status(data.status)}
             </Badge>
             <p className="mt-2 font-mono text-4xl font-bold">{data.homeScore ?? '–'}:{data.awayScore ?? '–'}</p>
+            <MatchDecision fixture={data} />
           </div>
           <TeamScore team={data.awayTeam} align="right" />
         </div>
@@ -406,6 +407,23 @@ export function WorldCupTeamDetailPage() {
       </div>
     </WorldCupShell>
   )
+}
+
+/** "Paraguay win 4–3 on penalties" under the score of a knockout decided after 90 minutes. */
+function MatchDecision({ fixture }: { fixture: WorldCupFixture }) {
+  const { t } = useLocale()
+  const wc = useWorldCupLabels()
+  const side = fixture.winner === 'home' || fixture.winner === 'away' ? fixture.winner : undefined
+  if (!side || !fixture.decidedBy || fixture.decidedBy === 'regular') return null
+  const team = wc.team(side === 'home' ? fixture.homeTeam : fixture.awayTeam)
+  // The sentence names the winner, so their shoot-out tally comes first.
+  const won = side === 'home' ? fixture.penalties?.home : fixture.penalties?.away
+  const lost = side === 'home' ? fixture.penalties?.away : fixture.penalties?.home
+  const text =
+    fixture.decidedBy === 'penalties'
+      ? t('wcWonOnPenalties', { team, won: won ?? '–', lost: lost ?? '–' })
+      : t('wcWonAfterExtraTime', { team })
+  return <p className="mt-1 text-center text-sm text-muted-foreground">{text}</p>
 }
 
 function hasMatchDetails(fixture: WorldCupFixture) {

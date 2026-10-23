@@ -41,7 +41,7 @@ import type {
 } from '@/services/worldCup/types'
 import { MatchStatePulse, SquadPositionChart } from './charts'
 import { useWorldCupLabels } from './labels'
-import { defaultWorldCupFilters, uniqueOptions } from './utils'
+import { defaultWorldCupFilters, uniqueOptions, winnerSide } from './utils'
 
 const matchPath = (fixture: { id: string }) => `/world-cup-2026/match/${fixture.id}`
 
@@ -466,6 +466,7 @@ export function WorldCupFeatureMatch({ fixture }: { fixture?: WorldCupFixture })
           <p className="font-mono text-4xl font-bold tabular-nums">
             {fixture.homeScore ?? '–'}:{fixture.awayScore ?? '–'}
           </p>
+          {wc.decision(fixture) ? <p className="mt-1 text-xs font-medium text-muted-foreground">{wc.decision(fixture)}</p> : null}
           {fixture.city ? <p className="mt-1 text-xs text-muted-foreground">{fixture.city}</p> : null}
         </div>
         <FeaturedTeam team={fixture.awayTeam} align="right" />
@@ -530,8 +531,8 @@ function WorldCupMatchRow({ fixture }: { fixture: WorldCupFixture }) {
   return (
     <Link to={matchPath(fixture)} className="surface-soft flex items-center gap-3 rounded-md p-2.5 transition hover:bg-background/60">
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <TeamRowLine team={fixture.homeTeam} score={fixture.homeScore} />
-        <TeamRowLine team={fixture.awayTeam} score={fixture.awayScore} />
+        <TeamRowLine team={fixture.homeTeam} score={fixture.homeScore} won={winnerSide(fixture) === 'home'} />
+        <TeamRowLine team={fixture.awayTeam} score={fixture.awayScore} won={winnerSide(fixture) === 'away'} />
       </div>
       <div className="shrink-0 text-right">
         <Badge variant={isLive ? 'soft' : 'outline'} className={cn('text-2xs', isLive && 'bg-success/15 text-success-fg')}>
@@ -543,12 +544,12 @@ function WorldCupMatchRow({ fixture }: { fixture: WorldCupFixture }) {
   )
 }
 
-function TeamRowLine({ team, score }: { team: WorldCupTeam; score?: number }) {
+function TeamRowLine({ team, score, won = false }: { team: WorldCupTeam; score?: number; won?: boolean }) {
   const wc = useWorldCupLabels()
   return (
     <div className="flex items-center gap-2">
       <TeamFlag team={team} className="h-4 w-6" />
-      <span className="min-w-0 flex-1 truncate text-sm font-medium">{wc.team(team)}</span>
+      <span className={cn('min-w-0 flex-1 truncate text-sm', won ? 'font-semibold' : 'font-medium')}>{wc.team(team)}</span>
       <span className="font-mono text-sm font-bold tabular-nums">{score ?? '–'}</span>
     </div>
   )
@@ -573,8 +574,8 @@ export function WorldCupMatchCard({ fixture, compact = false }: { fixture: World
         {!compact ? <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden /> : null}
       </div>
       <div className="mt-3 grid gap-2">
-        <TeamRowLine team={fixture.homeTeam} score={fixture.homeScore} />
-        <TeamRowLine team={fixture.awayTeam} score={fixture.awayScore} />
+        <TeamRowLine team={fixture.homeTeam} score={fixture.homeScore} won={winnerSide(fixture) === 'home'} />
+        <TeamRowLine team={fixture.awayTeam} score={fixture.awayScore} won={winnerSide(fixture) === 'away'} />
       </div>
       <p className="mt-2 truncate text-xs text-muted-foreground">
         {[fixture.city, formatDateTime(fixture.utcDate)].filter(Boolean).join(' · ')}
@@ -725,7 +726,29 @@ export function WorldCupGroupsPreview({ grouped }: { grouped: Record<string, Wor
   )
 }
 
-function BracketTeamLine({ placeholder, score, team }: { placeholder: boolean; score?: number; team?: WorldCupTeam }) {
+/** Goals, plus the shoot-out tally in small type when there was one ("1 ⁽³⁾"). */
+export function PenaltyScore({ score, penalties, className }: { score?: number; penalties?: number; className?: string }) {
+  return (
+    <span className={cn('font-mono font-bold tabular-nums', className)}>
+      {score ?? '–'}
+      {penalties !== undefined ? <span className="ml-0.5 align-super text-2xs font-medium text-muted-foreground">({penalties})</span> : null}
+    </span>
+  )
+}
+
+function BracketTeamLine({
+  placeholder,
+  score,
+  penalties,
+  won,
+  team,
+}: {
+  placeholder: boolean
+  score?: number
+  penalties?: number
+  won: boolean
+  team?: WorldCupTeam
+}) {
   const wc = useWorldCupLabels()
   return (
     <div className="flex items-center justify-between gap-2 rounded-lg border border-border/60 px-2 py-1.5">
@@ -735,11 +758,11 @@ function BracketTeamLine({ placeholder, score, team }: { placeholder: boolean; s
         ) : (
           <>
             <TeamFlag team={team} className="h-3.5 w-5" />
-            <span className="truncate">{wc.team(team)}</span>
+            <span className={cn('truncate', won && 'font-semibold text-foreground')}>{wc.team(team)}</span>
           </>
         )}
       </span>
-      <span className="font-mono font-bold">{score ?? '–'}</span>
+      <PenaltyScore score={score} penalties={penalties} />
     </div>
   )
 }
@@ -769,8 +792,8 @@ export function WorldCupBracketPreview({ rounds }: { rounds: WorldCupBracketRoun
                 <div className="grid gap-2">
                   {round.matches.slice(0, 3).map((match) => (
                     <div key={match.id} className="grid gap-1 rounded-lg border border-border/60 p-2 text-xs">
-                      <BracketTeamLine team={match.homeTeam} score={match.homeScore} placeholder={match.placeholder} />
-                      <BracketTeamLine team={match.awayTeam} score={match.awayScore} placeholder={match.placeholder} />
+                      <BracketTeamLine team={match.homeTeam} score={match.homeScore} penalties={match.penalties?.home} won={winnerSide(match) === 'home'} placeholder={match.placeholder} />
+                      <BracketTeamLine team={match.awayTeam} score={match.awayScore} penalties={match.penalties?.away} won={winnerSide(match) === 'away'} placeholder={match.placeholder} />
                     </div>
                   ))}
                 </div>
@@ -1180,7 +1203,7 @@ export function WorldCupScoreBreakdown({ fixture }: { fixture: WorldCupFixture }
   const { t } = useLocale()
   const scores: Array<{ label: string; score?: WorldCupScore }> = [
     { label: t('wcHalfTime'), score: fixture.scoreBreakdown?.halftime },
-    { label: t('wcRegularTime'), score: fixture.scoreBreakdown?.fulltime },
+    { label: t('wcRegularTime'), score: fixture.scoreBreakdown?.regular },
     { label: t('wcExtraTime'), score: fixture.scoreBreakdown?.extratime },
     { label: t('wcPenalties'), score: fixture.scoreBreakdown?.penalty },
   ].filter((item) => item.score?.home !== undefined || item.score?.away !== undefined)
