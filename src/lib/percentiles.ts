@@ -1,3 +1,4 @@
+import type { MessageKey } from '@/i18n/de'
 import type { Player, PlayerRef } from '@/services/types'
 
 /** Percentile rank (0–100) of `value` within an ascending-sorted pool. */
@@ -16,7 +17,7 @@ const perGame = (value: number, appearances: number) => (appearances > 0 ? value
 export interface PlayerMetric {
   key: string
   /** Locale key for the axis/row label. */
-  labelKey: string
+  labelKey: MessageKey
   pool: (player: PlayerRef) => number
   value: (player: Player) => number
 }

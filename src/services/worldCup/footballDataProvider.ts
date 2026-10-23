@@ -159,7 +159,6 @@ function quality(overrides: Partial<DataQualityMeta> = {}): DataQualityMeta {
     fetchedAt: now,
     lastUpdated: now,
     isLive: false,
-    confidence: 'official',
     ...overrides,
   }
 }
@@ -185,16 +184,6 @@ const STAGE_MAP: Record<string, WorldCupFixture['stage']> = {
   SEMI_FINALS: 'semi-final',
   THIRD_PLACE: 'third-place',
   FINAL: 'final',
-}
-
-const STAGE_LABEL: Record<string, string> = {
-  GROUP_STAGE: 'Group stage',
-  LAST_32: 'Round of 32',
-  LAST_16: 'Round of 16',
-  QUARTER_FINALS: 'Quarter-finals',
-  SEMI_FINALS: 'Semi-finals',
-  THIRD_PLACE: 'Third-place play-off',
-  FINAL: 'Final',
 }
 
 const KNOCKOUT_ORDER = ['LAST_32', 'LAST_16', 'QUARTER_FINALS', 'SEMI_FINALS', 'THIRD_PLACE', 'FINAL']
@@ -250,7 +239,6 @@ export function mapFixture(raw: FdMatch): WorldCupFixture {
 
   return {
     id: `fd-${raw.id}`,
-    round: STAGE_LABEL[raw.stage] ?? (group ? `Group ${group}` : 'World Cup'),
     group,
     stage: stageOf(raw.stage),
     utcDate: raw.utcDate,
@@ -399,7 +387,6 @@ function buildBracket(fixtures: WorldCupFixture[], rawStageByFixtureId: Map<stri
 
     const matches: WorldCupBracketMatch[] = stageFixtures.map((fixture) => ({
       id: fixture.id,
-      label: `${fixture.homeTeam.code} v ${fixture.awayTeam.code}`,
       utcDate: fixture.utcDate,
       homeTeam: fixture.homeTeam,
       awayTeam: fixture.awayTeam,
@@ -408,7 +395,7 @@ function buildBracket(fixtures: WorldCupFixture[], rawStageByFixtureId: Map<stri
       placeholder: Boolean(fixture.homeTeam.placeholder || fixture.awayTeam.placeholder),
     }))
 
-    rounds.push({ id: stageKey.toLowerCase(), label: STAGE_LABEL[stageKey] ?? stageKey, matches })
+    rounds.push({ id: stageKey.toLowerCase(), stage: stageOf(stageKey), matches })
   }
   return rounds
 }
@@ -490,9 +477,7 @@ async function getTeam(teamId: string): Promise<{ team: WorldCupTeam; squad: Wor
   const squad: WorldCupSquad = {
     teamId: team.id,
     players: (detail.squad ?? []).map(mapSquadPlayer),
-    quality: quality({
-      note: (detail.squad ?? []).length === 0 ? 'Squad not yet published by the official feed.' : undefined,
-    }),
+    quality: quality(),
   }
 
   return { team, squad, fixtures: teamFixtures }

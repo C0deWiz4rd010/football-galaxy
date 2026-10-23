@@ -35,7 +35,7 @@ describe('World Cup fixture filters', () => {
       search: 'mexico',
       status: 'live',
       group: 'A',
-      round: 'all',
+      stage: 'all',
       hostCity: 'Mexico City',
       teamId: liveMexico.homeTeam.id,
     })

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import { normalizeImageSrc } from '@/lib/visualAssets'
+import { HIGH_FETCH_PRIORITY } from '@/lib/fetchPriority'
 
 type AssetImageProps = Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'src'> & {
   src?: string
@@ -50,7 +51,7 @@ export function AssetImage({ src, fallbackSrc, className, priority = false, load
       {...props}
       sources={sources}
       loading={priority ? 'eager' : (loading ?? 'lazy')}
-      fetchPriority={priority ? 'high' : undefined}
+      {...(priority ? HIGH_FETCH_PRIORITY : undefined)}
       decoding={priority ? 'sync' : 'async'}
       className={className}
     />

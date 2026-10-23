@@ -17,7 +17,7 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { Toaster } from '@/components/ui/toast'
-import { useLocale } from '@/contexts/LocaleContext'
+import { type MessageKey, useLocale } from '@/contexts/LocaleContext'
 import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
 import { useLazyDialog } from '@/hooks/useLazyDialog'
 import { getLeague } from '@/lib/leagues'
@@ -75,7 +75,7 @@ function LoadingGrid() {
   return <LoadingSpinner />
 }
 
-function getLayoutTitle(pathname: string, t: (key: string) => string) {
+function getLayoutTitle(pathname: string, t: (key: MessageKey) => string) {
   const segments = pathname.split('/').filter(Boolean)
   const leagueId = segments[0]
 

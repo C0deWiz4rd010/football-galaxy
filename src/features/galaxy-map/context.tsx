@@ -51,7 +51,7 @@ function reducer(state: GalaxyProgress, action: Action): GalaxyProgress {
       const rewardsForLevel = node.levelRewards[targetLevel - 1] ?? []
       const xpGain = rewardsForLevel
         .filter((r) => r.type === 'xp')
-        .reduce((sum, r) => sum + (r.amount ?? 0), 0)
+        .reduce((sum, r) => sum + r.amount, 0)
 
       const newNodeProgress: NodeProgress = {
         level: targetLevel,

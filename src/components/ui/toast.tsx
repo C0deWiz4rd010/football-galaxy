@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react'
 
-import { useLocale } from '@/contexts/LocaleContext'
+import { type MessageKey, useLocale } from '@/contexts/LocaleContext'
 import { cn } from '@/lib/utils'
 
 type ToastVariant = 'error' | 'info' | 'success'
@@ -10,7 +10,7 @@ type ToastVariant = 'error' | 'info' | 'success'
 export interface ToastMessage {
   /** Plain title, or `titleKey` to translate it at render time. */
   title?: string
-  titleKey?: string
+  titleKey?: MessageKey
   description: string
   variant?: ToastVariant
 }

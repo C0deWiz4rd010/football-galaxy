@@ -4,11 +4,13 @@ import { Trophy } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { Badge } from '@/components/ui/badge'
+import { useLocale } from '@/contexts/LocaleContext'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { cn } from '@/lib/utils'
 import type { WorldCupBracketMatch, WorldCupBracketRound, WorldCupTeam } from '@/services/worldCup/types'
 
 import { TeamFlag } from './components'
+import { useWorldCupLabels } from './labels'
 
 function winnerSide(match: WorldCupBracketMatch): 'home' | 'away' | undefined {
   if (typeof match.homeScore !== 'number' || typeof match.awayScore !== 'number' || match.homeScore === match.awayScore) return undefined
@@ -16,16 +18,17 @@ function winnerSide(match: WorldCupBracketMatch): 'home' | 'away' | undefined {
 }
 
 function TeamLine({ team, score, state }: { team?: WorldCupTeam; score?: number; state: 'winner' | 'loser' | 'open' }) {
+  const wc = useWorldCupLabels()
   return (
     <span className={cn('flex items-center justify-between gap-2 px-2 py-1.5', state === 'loser' && 'text-muted-foreground')}>
       <span className="flex min-w-0 items-center gap-2">
         {team && !team.placeholder ? (
           <>
             <TeamFlag team={team} className="h-3.5 w-5" />
-            <span className={cn('truncate', state === 'winner' && 'font-semibold')}>{team.name}</span>
+            <span className={cn('truncate', state === 'winner' && 'font-semibold')}>{wc.team(team)}</span>
           </>
         ) : (
-          <span className="truncate italic text-muted-foreground">TBD</span>
+          <span className="truncate italic text-muted-foreground">{wc.team(team)}</span>
         )}
       </span>
       <span className={cn('font-mono tabular-nums', state === 'winner' ? 'font-bold' : 'font-medium')}>{score ?? '–'}</span>
@@ -61,6 +64,8 @@ function MatchCard({ match }: { match: WorldCupBracketMatch }) {
  */
 export function WorldCupBracketBoard({ rounds }: { rounds: WorldCupBracketRound[] }) {
   const showAll = useMediaQuery('(min-width: 1440px)')
+  const { t } = useLocale()
+  const wc = useWorldCupLabels()
   const [activeId, setActiveId] = useState(rounds[0]?.id)
 
   if (!rounds.length) {
@@ -69,10 +74,8 @@ export function WorldCupBracketBoard({ rounds }: { rounds: WorldCupBracketRound[
         <div className="mx-auto flex size-11 items-center justify-center rounded-md bg-foreground/10 text-warning-fg">
           <Trophy className="size-5" aria-hidden />
         </div>
-        <h2 className="mt-3 text-base font-semibold">The knockout bracket forms after the group stage</h2>
-        <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-          Once the group stage ends, the Round of 32 and every later round will populate here directly from the live feed.
-        </p>
+        <h2 className="mt-3 text-base font-semibold">{t('wcBracketPendingTitle')}</h2>
+        <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">{t('wcBracketPendingBody')}</p>
       </div>
     )
   }
@@ -83,10 +86,10 @@ export function WorldCupBracketBoard({ rounds }: { rounds: WorldCupBracketRound[
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        <Badge variant="outline">{rounds.length} rounds</Badge>
+        <Badge variant="outline">{t('wcRoundsCount', { count: rounds.length })}</Badge>
         {pending > 0 ? (
           <Badge variant="outline" className="border-warning/30 text-warning-fg">
-            {pending} to be decided
+            {t('wcToBeDecided', { count: pending })}
           </Badge>
         ) : null}
       </div>
@@ -96,7 +99,7 @@ export function WorldCupBracketBoard({ rounds }: { rounds: WorldCupBracketRound[
           {rounds.map((round) => (
             <section key={round.id} aria-labelledby={`round-${round.id}`} className="flex flex-col">
               <h2 id={`round-${round.id}`} className="mb-2 text-xs font-semibold uppercase tracking-eyebrow text-muted-foreground">
-                {round.label}
+                {wc.stage(round.stage)}
               </h2>
               {/* Later rounds have fewer matches: spread them to line up with their feeders. */}
               <div className="flex flex-1 flex-col justify-around gap-2">
@@ -109,7 +112,7 @@ export function WorldCupBracketBoard({ rounds }: { rounds: WorldCupBracketRound[
         </div>
       ) : (
         <>
-          <div role="tablist" aria-label="Knockout rounds" className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1">
+          <div role="tablist" aria-label={t('wcKnockoutRounds')} className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1">
             {rounds.map((round) => (
               <button
                 key={round.id}
@@ -126,7 +129,7 @@ export function WorldCupBracketBoard({ rounds }: { rounds: WorldCupBracketRound[
                     : 'border-border/60 text-muted-foreground hover:text-foreground',
                 )}
               >
-                {round.label}
+                {wc.stage(round.stage)}
                 <span className="ml-1.5 text-xs opacity-70">{round.matches.length}</span>
               </button>
             ))}

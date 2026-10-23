@@ -5,7 +5,7 @@ import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContai
 import { axisTick, chartColors, legendStyle, tooltipProps, useChartMotion } from '@/components/charts/chartTheme'
 import { ProfileRadar } from '@/components/charts/ProfileRadar'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { useLocale } from '@/contexts/LocaleContext'
+import { type MessageKey, useLocale } from '@/contexts/LocaleContext'
 import type { Match, Standing, Team } from '@/services/types'
 
 const perGame = (value: number, played: number) => (played > 0 ? value / played : 0)
@@ -29,7 +29,7 @@ export function TeamProfileRadar({ standing, standings }: { standing?: Standing;
   const data = useMemo(() => {
     const rows = standings.filter((row) => row.played > 0)
     if (!standing || standing.played === 0 || rows.length < 2) return []
-    const metrics: Array<{ key: string; of: (row: Standing) => number; invert?: boolean }> = [
+    const metrics: Array<{ key: MessageKey; of: (row: Standing) => number; invert?: boolean }> = [
       { key: 'radarAttack', of: (row) => perGame(row.goalsFor, row.played) },
       { key: 'radarDefense', of: (row) => perGame(row.goalsAgainst, row.played), invert: true },
       { key: 'radarPoints', of: (row) => perGame(row.points, row.played) },

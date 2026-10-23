@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom'
 
 import { Badge } from '@/components/ui/badge'
 import { NotFoundState } from '@/components/shared/StatusStates'
+import { useLocale } from '@/contexts/LocaleContext'
 import {
   useWorldCupBracket,
   useWorldCupDashboard,
@@ -48,6 +49,7 @@ import {
   filterWorldCupFixtures,
   groupWorldCupStandings,
 } from '@/features/world-cup/utils'
+import { useWorldCupLabels } from '@/features/world-cup/labels'
 import { WorldCupBracketBoard } from '@/features/world-cup/BracketBoard'
 import { MatchStatsChart } from '@/features/world-cup/charts'
 import { formatDateTime } from '@/lib/utils'
@@ -58,6 +60,7 @@ import type {
 } from '@/services/worldCup/types'
 
 export function WorldCupOverviewPage() {
+  const { t } = useLocale()
   const { data, error, isPending: isLoading, refetch } = useWorldCupDashboard()
   const grouped = useMemo(() => groupWorldCupStandings(data?.groups ?? []), [data?.groups])
   const spotlightStanding = useMemo(() => {
@@ -68,7 +71,7 @@ export function WorldCupOverviewPage() {
   }, [data?.groups])
 
   if (isLoading && !data) return <WorldCupLoading />
-  if (error && !data) return <WorldCupError error={error.message} onRetry={() => void refetch()} />
+  if (error && !data) return <WorldCupError onRetry={() => void refetch()} />
   if (!data) return null
 
   const featuredMatch = data.liveMatches[0] ?? data.upcomingMatches[0] ?? data.recentMatches[0]
@@ -97,9 +100,9 @@ export function WorldCupOverviewPage() {
         <WorldCupTournamentStatus
           endsAt={data.tournament.endsAt}
           hostCitiesCount={data.tournament.hostCities.length}
+          hostCountries={data.tournament.hostCountries}
           liveCount={data.liveMatches.length}
           matchesCount={data.tournament.matchCount}
-          quality={data.quality}
           recentCount={data.recentMatches.length}
           startsAt={data.tournament.startsAt}
           teamsCount={data.tournament.teamCount}
@@ -118,8 +121,8 @@ export function WorldCupOverviewPage() {
       <section className="stat-card rounded-xl p-4">
         <div className="mb-3 flex items-center justify-between gap-3">
           <div>
-            <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">National teams</p>
-            <h2 className="text-base font-semibold tracking-tight">In the tournament</h2>
+            <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">{t('wcNationalTeams')}</p>
+            <h2 className="text-base font-semibold tracking-tight">{t('wcInTournament')}</h2>
           </div>
           <Badge variant="outline">{data.teams.length}</Badge>
         </div>
@@ -131,7 +134,7 @@ export function WorldCupOverviewPage() {
           </div>
         ) : (
           <p className="rounded-md border border-dashed border-border/70 p-4 text-sm text-muted-foreground">
-            Confirmed national teams will appear here as the live provider publishes the tournament field.
+            {t('wcTeamsPending')}
           </p>
         )}
       </section>
@@ -140,29 +143,26 @@ export function WorldCupOverviewPage() {
 }
 
 export function WorldCupMatchesPage() {
+  const { t } = useLocale()
   const { data, error, isPending: isLoading, refetch } = useWorldCupFixtures()
   const [filters, setFilters] = useState<WorldCupFilterState>(defaultWorldCupFilters)
   const filtered = useMemo(() => filterWorldCupFixtures(data ?? [], filters), [data, filters])
 
   if (isLoading && !data) return <WorldCupLoading />
-  if (error && !data) return <WorldCupError error={error.message} onRetry={() => void refetch()} />
+  if (error && !data) return <WorldCupError onRetry={() => void refetch()} />
 
   return (
     <WorldCupShell>
       <WorldCupPageTitle
-        description="Standalone tournament schedule with live, upcoming, and finished match states."
+        description={t('wcMatchesDescription')}
         icon={<CalendarDays className="size-5" />}
-        title="World Cup 2026 Matches"
+        title={t('wcMatchesTitle')}
       />
       <WorldCupSectionNav />
       <WorldCupMatchFilters filters={filters} fixtures={data ?? []} onChange={setFilters} />
-      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
-        <p>
-          Showing <span className="font-mono font-bold text-foreground">{filtered.length}</span> of{' '}
-          <span className="font-mono font-bold text-foreground">{data?.length ?? 0}</span> matches
-        </p>
-        <p>Live data refreshes every 15 seconds.</p>
-      </div>
+      <p className="text-sm text-muted-foreground">
+        {t('wcShowingMatches', { shown: filtered.length, total: data?.length ?? 0 })}
+      </p>
       <div className="grid gap-3 lg:grid-cols-2">
         {filtered.map((fixture) => (
           <WorldCupMatchCard key={fixture.id} fixture={fixture} />
@@ -170,14 +170,10 @@ export function WorldCupMatchesPage() {
       </div>
       {!filtered.length ? (
         <WorldCupEmptyState
-          actionLabel={data?.length ? 'Reset filters' : undefined}
-          description={
-            data?.length
-              ? 'Try a different team, city, round, or status to widen the match list.'
-              : 'The live feed has not published any World Cup fixtures yet. They will appear here automatically.'
-          }
+          actionLabel={data?.length ? t('wcResetFilters') : undefined}
+          description={data?.length ? t('wcNoMatchesFilteredBody') : t('wcNoMatchesBody')}
           onAction={data?.length ? () => setFilters(defaultWorldCupFilters) : undefined}
-          title={data?.length ? 'No matches match these filters' : 'No matches available yet'}
+          title={data?.length ? t('wcNoMatchesFilteredTitle') : t('wcNoMatchesTitle')}
         />
       ) : null}
     </WorldCupShell>
@@ -185,32 +181,32 @@ export function WorldCupMatchesPage() {
 }
 
 export function WorldCupGroupsPage() {
+  const { t } = useLocale()
   const { data, error, isPending: isLoading, refetch } = useWorldCupGroups()
   const grouped = useMemo(() => groupWorldCupStandings(data ?? []), [data])
 
   if (isLoading && !data) return <WorldCupLoading />
-  if (error && !data) return <WorldCupError error={error.message} onRetry={() => void refetch()} />
+  if (error && !data) return <WorldCupError onRetry={() => void refetch()} />
 
   const groupEntries = Object.entries(grouped)
 
   return (
     <WorldCupShell>
       <WorldCupPageTitle
-        description="All 12 groups stay inside the World Cup area, separate from club league standings."
+        description={t('wcGroupsDescription')}
         icon={<Shield className="size-5" />}
-        title="World Cup 2026 Groups"
+        title={t('wcGroupsTitle')}
       />
       <WorldCupSectionNav />
       <section className="stat-card rounded-xl p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">Qualification logic</p>
-            <h2 className="text-base font-semibold tracking-tight">Top two advance, third-place teams stay under watch</h2>
+            <p className="text-2xs uppercase tracking-eyebrow text-muted-foreground">{t('wcQualification')}</p>
+            <h2 className="text-base font-semibold tracking-tight">{t('wcQualificationRule')}</h2>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Badge variant="outline" className="border-info/30 text-info-fg">Top 2 zone</Badge>
-            <Badge variant="outline" className="border-warning/30 text-warning-fg">Best third-place watch</Badge>
-            <Badge variant="outline">Pending</Badge>
+            <Badge variant="outline" className="border-info/30 text-info-fg">1. / 2.</Badge>
+            <Badge variant="outline" className="border-warning/30 text-warning-fg">{t('wcBestThird')}</Badge>
           </div>
         </div>
       </section>
@@ -222,8 +218,8 @@ export function WorldCupGroupsPage() {
         </div>
       ) : (
         <WorldCupEmptyState
-          description="Group standings publish once the first group matches kick off. They will appear here automatically from the live feed."
-          title="Standings are not published yet"
+          description={t('wcGroupsPending')}
+          title={t('wcStandingsPendingTitle')}
         />
       )}
     </WorldCupShell>
@@ -231,17 +227,18 @@ export function WorldCupGroupsPage() {
 }
 
 export function WorldCupBracketPage() {
+  const { t } = useLocale()
   const { data, error, isPending: isLoading, refetch } = useWorldCupBracket()
 
   if (isLoading && !data) return <WorldCupLoading />
-  if (error && !data) return <WorldCupError error={error.message} onRetry={() => void refetch()} />
+  if (error && !data) return <WorldCupError onRetry={() => void refetch()} />
 
   return (
     <WorldCupShell>
       <WorldCupPageTitle
-        description="The knockout board builds live from the group-stage results — no placeholder fixtures."
+        description={t('wcBracketDescription')}
         icon={<Trophy className="size-5" />}
-        title="World Cup 2026 Bracket"
+        title={t('wcBracketTitle')}
       />
       <WorldCupSectionNav />
       <WorldCupBracketBoard rounds={data ?? []} />
@@ -250,6 +247,8 @@ export function WorldCupBracketPage() {
 }
 
 export function WorldCupTeamsPage() {
+  const { t } = useLocale()
+  const wc = useWorldCupLabels()
   const { data, error, isPending: isLoading, refetch } = useWorldCupTeams()
   const [search, setSearch] = useState('')
   const [group, setGroup] = useState('all')
@@ -259,6 +258,7 @@ export function WorldCupTeamsPage() {
       const matchesSearch =
         !query ||
         team.name.toLowerCase().includes(query) ||
+        wc.team(team).toLowerCase().includes(query) ||
         team.code.toLowerCase().includes(query) ||
         team.country.toLowerCase().includes(query) ||
         (team.group ?? '').toLowerCase().includes(query)
@@ -266,34 +266,24 @@ export function WorldCupTeamsPage() {
 
       return matchesSearch && matchesGroup
     })
-  }, [data, group, search])
+  }, [data, group, search, wc])
 
   if (isLoading && !data) return <WorldCupLoading />
-  if (error && !data) return <WorldCupError error={error.message} onRetry={() => void refetch()} />
+  if (error && !data) return <WorldCupError onRetry={() => void refetch()} />
 
   return (
     <WorldCupShell>
       <WorldCupPageTitle
-        description="National teams only. This route never links into club-team pages."
+        description={t('wcTeamsDescription')}
         icon={<Users className="size-5" />}
-        title="World Cup 2026 Teams"
+        title={t('wcTeamsTitle')}
       />
       <WorldCupSectionNav />
-      <WorldCupTeamFilters
-        group={group}
-        onGroupChange={setGroup}
-        onSearchChange={setSearch}
-        search={search}
-        teams={data ?? []}
-      />
+      <WorldCupTeamFilters onSearchChange={setSearch} search={search} />
       <WorldCupTeamGroupRail activeGroup={group} onSelectGroup={setGroup} teams={data ?? []} />
-      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
-        <p>
-          Showing <span className="font-mono font-bold text-foreground">{filteredTeams.length}</span> of{' '}
-          <span className="font-mono font-bold text-foreground">{data?.length ?? 0}</span> teams
-        </p>
-        <p>Team links always stay inside the World Cup area.</p>
-      </div>
+      <p className="text-sm text-muted-foreground">
+        {t('wcShowingTeams', { shown: filteredTeams.length, total: data?.length ?? 0 })}
+      </p>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {filteredTeams.map((team) => (
           <WorldCupTeamCard key={team.id} team={team} />
@@ -301,12 +291,8 @@ export function WorldCupTeamsPage() {
       </div>
       {!filteredTeams.length ? (
         <WorldCupEmptyState
-          actionLabel={data?.length ? 'Reset team filters' : undefined}
-          description={
-            data?.length
-              ? 'Try another country name, code, or group to find teams in the tournament list.'
-              : 'The live provider has not published the World Cup team list yet. Teams will appear here automatically.'
-          }
+          actionLabel={data?.length ? t('wcResetFilters') : undefined}
+          description={data?.length ? t('wcNoTeamsFilteredBody') : t('wcNoTeamsBody')}
           onAction={
             data?.length
               ? () => {
@@ -315,7 +301,7 @@ export function WorldCupTeamsPage() {
                 }
               : undefined
           }
-          title={data?.length ? 'No teams match these filters' : 'No teams available yet'}
+          title={data?.length ? t('wcNoTeamsFilteredTitle') : t('wcNoTeamsTitle')}
         />
       ) : null}
     </WorldCupShell>
@@ -324,65 +310,75 @@ export function WorldCupTeamsPage() {
 
 export function WorldCupMatchDetailPage() {
   const { matchId } = useParams()
+  const { t } = useLocale()
+  const wc = useWorldCupLabels()
   const { data, error, isPending: isLoading, refetch } = useWorldCupFixture(matchId)
 
   if (isNotFoundError(error)) return <NotFoundState backTo="/world-cup-2026/matches" />
 
   if (isLoading && !data) return <WorldCupLoading />
-  if (error && !data) return <WorldCupError error={error.message} onRetry={() => void refetch()} />
+  if (error && !data) return <WorldCupError onRetry={() => void refetch()} />
   if (!data) return null
 
   return (
     <WorldCupShell>
       <WorldCupPageTitle
-        description={[data.round, data.city, formatDateTime(data.utcDate)].filter(Boolean).join(' · ')}
+        description={[wc.round(data), formatDateTime(data.utcDate)].join(' · ')}
         icon={<Goal className="size-5" />}
         quality={data.quality}
-        title={`${data.homeTeam.name} vs ${data.awayTeam.name}`}
+        title={`${wc.team(data.homeTeam)} – ${wc.team(data.awayTeam)}`}
       />
       <WorldCupSectionNav />
       <section className="stat-card rounded-xl p-5">
         <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr]">
-          <TeamScore team={data.homeTeam} score={data.homeScore} align="left" />
+          <TeamScore team={data.homeTeam} align="left" />
           <div className="flex flex-col items-center justify-center">
             <Badge variant={data.status === 'LIVE' ? 'soft' : 'outline'}>
-              {data.status === 'LIVE' ? `${data.elapsed ?? 0}'` : data.status}
+              {data.status === 'LIVE' ? `${data.elapsed ?? 0}'` : wc.status(data.status)}
             </Badge>
-            <p className="mt-2 font-mono text-4xl font-bold">{data.homeScore ?? '-'}:{data.awayScore ?? '-'}</p>
+            <p className="mt-2 font-mono text-4xl font-bold">{data.homeScore ?? '–'}:{data.awayScore ?? '–'}</p>
           </div>
-          <TeamScore team={data.awayTeam} score={data.awayScore} align="right" />
+          <TeamScore team={data.awayTeam} align="right" />
         </div>
       </section>
       <MatchMetaGrid fixture={data} />
       <WorldCupScoreBreakdown fixture={data} />
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <Timeline fixture={data} />
-        <aside className="flex flex-col gap-4">
-          <StatisticsPanel fixture={data} />
-          <LineupsPanel lineups={data.lineups ?? []} />
-        </aside>
-      </div>
+      {hasMatchDetails(data) ? (
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+          <Timeline fixture={data} />
+          <aside className="flex flex-col gap-4">
+            <StatisticsPanel fixture={data} />
+            <LineupsPanel lineups={data.lineups ?? []} />
+          </aside>
+        </div>
+      ) : (
+        <p className="rounded-md border border-dashed border-border/70 p-4 text-sm text-muted-foreground">
+          {t('wcNoMatchDetails')}
+        </p>
+      )}
     </WorldCupShell>
   )
 }
 
 export function WorldCupTeamDetailPage() {
   const { teamId } = useParams()
+  const { t } = useLocale()
+  const wc = useWorldCupLabels()
   const { data, error, isPending: isLoading, refetch } = useWorldCupTeam(teamId)
 
   if (isNotFoundError(error)) return <NotFoundState backTo="/world-cup-2026/teams" />
 
   if (isLoading && !data) return <WorldCupLoading />
-  if (error && !data) return <WorldCupError error={error.message} onRetry={() => void refetch()} />
+  if (error && !data) return <WorldCupError onRetry={() => void refetch()} />
   if (!data) return null
 
   return (
     <WorldCupShell>
       <WorldCupPageTitle
-        description={`World Cup team profile · Group ${data.team.group ?? 'TBD'}`}
+        description={t('wcTeamDescription', { group: wc.group(data.team.group) })}
         icon={<Shield className="size-5" />}
         quality={data.squad.quality}
-        title={data.team.placeholder ? 'Qualifier pending' : data.team.name}
+        title={data.team.placeholder ? t('wcQualificationPending') : wc.team(data.team)}
       />
       <WorldCupSectionNav />
       <WorldCupTeamProfile team={data.team} playersCount={data.squad.players.length} />
@@ -392,7 +388,7 @@ export function WorldCupTeamDetailPage() {
           <WorldCupDataStatus quality={data.squad.quality} />
           <section className="stat-card rounded-xl p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 className="text-base font-semibold">Team fixtures</h2>
+              <h2 className="text-base font-semibold">{t('wcTeamFixtures')}</h2>
               <Badge variant="outline">{data.fixtures.length}</Badge>
             </div>
             <div className="grid gap-2">
@@ -402,7 +398,7 @@ export function WorldCupTeamDetailPage() {
             </div>
             {!data.fixtures.length ? (
               <p className="rounded-md border border-dashed border-border/70 p-3 text-sm text-muted-foreground">
-                Fixtures appear here once this team is linked to provider matches.
+                {t('wcTeamFixturesEmpty')}
               </p>
             ) : null}
           </section>
@@ -412,90 +408,80 @@ export function WorldCupTeamDetailPage() {
   )
 }
 
+function hasMatchDetails(fixture: WorldCupFixture) {
+  return fixture.events.length > 0 || (fixture.statistics?.length ?? 0) > 0 || (fixture.lineups?.length ?? 0) > 0
+}
+
 function Timeline({ fixture }: { fixture: WorldCupFixture }) {
+  const { t } = useLocale()
+  if (!fixture.events.length) return null
   return (
     <section className="stat-card rounded-xl p-4">
-      <h2 className="text-base font-semibold">Timeline</h2>
+      <h2 className="text-base font-semibold">{t('wcTimeline')}</h2>
       <div className="mt-3 flex flex-col gap-2">
-        {fixture.events.length ? (
-          fixture.events.map((event) => (
-            <div key={event.id} className="surface-soft flex items-center gap-3 rounded-md p-2.5 text-sm">
-              <span className="font-mono text-xs text-muted-foreground">{event.minute}'</span>
-              <span className="font-medium">{event.detail}</span>
-              <span className="text-muted-foreground">{event.playerName ?? event.teamName ?? 'Event'}</span>
-            </div>
-          ))
-        ) : (
-          <p className="rounded-md border border-dashed border-border/70 p-4 text-sm text-muted-foreground">
-            No live event timeline is available for this match yet.
-          </p>
-        )}
+        {fixture.events.map((event) => (
+          <div key={event.id} className="surface-soft flex items-center gap-3 rounded-md p-2.5 text-sm">
+            <span className="font-mono text-xs text-muted-foreground">{event.minute}'</span>
+            <span className="font-medium">{event.detail}</span>
+            <span className="text-muted-foreground">{event.playerName ?? event.teamName ?? t('wcEvent')}</span>
+          </div>
+        ))}
       </div>
     </section>
   )
 }
 
 function StatisticsPanel({ fixture }: { fixture: WorldCupFixture }) {
+  const { t } = useLocale()
   const statistics = fixture.statistics ?? []
+  if (!statistics.length) return null
   return (
     <section className="stat-card rounded-xl p-4">
-      <h2 className="text-base font-semibold">Match stats</h2>
-      {statistics.length ? (
-        <div className="mt-3">
-          <MatchStatsChart
-            awayName={fixture.awayTeam.code || fixture.awayTeam.name}
-            awayTeamId={fixture.awayTeam.id}
-            homeName={fixture.homeTeam.code || fixture.homeTeam.name}
-            homeTeamId={fixture.homeTeam.id}
-            statistics={statistics}
-          />
-        </div>
-      ) : null}
+      <h2 className="text-base font-semibold">{t('wcMatchStats')}</h2>
+      <div className="mt-3">
+        <MatchStatsChart
+          awayName={fixture.awayTeam.code || fixture.awayTeam.name}
+          awayTeamId={fixture.awayTeam.id}
+          homeName={fixture.homeTeam.code || fixture.homeTeam.name}
+          homeTeamId={fixture.homeTeam.id}
+          statistics={statistics}
+        />
+      </div>
       <div className="mt-3 flex flex-col gap-2">
-        {statistics.length ? (
-          statistics.slice(0, 12).map((stat) => (
-            <div
-              key={`${stat.teamId}-${stat.type}`}
-              className="surface-soft flex items-center justify-between gap-3 rounded-md p-2 text-sm"
-            >
-              <span className="truncate text-muted-foreground">{stat.teamName} · {stat.type}</span>
-              <span className="font-mono font-bold">{stat.value}</span>
-            </div>
-          ))
-        ) : (
-          <p className="rounded-md border border-dashed border-border/70 p-3 text-sm text-muted-foreground">
-            Stats appear when the provider returns match statistics.
-          </p>
-        )}
+        {statistics.slice(0, 12).map((stat) => (
+          <div
+            key={`${stat.teamId}-${stat.type}`}
+            className="surface-soft flex items-center justify-between gap-3 rounded-md p-2 text-sm"
+          >
+            <span className="truncate text-muted-foreground">{stat.teamName} · {stat.type}</span>
+            <span className="font-mono font-bold">{stat.value}</span>
+          </div>
+        ))}
       </div>
     </section>
   )
 }
 
 function LineupsPanel({ lineups }: { lineups: WorldCupLineup[] }) {
+  const { t } = useLocale()
+  if (!lineups.length) return null
   return (
     <section className="stat-card rounded-xl p-4">
-      <h2 className="text-base font-semibold">Lineups</h2>
+      <h2 className="text-base font-semibold">{t('wcLineups')}</h2>
       <div className="mt-3 flex flex-col gap-3">
-        {lineups.length ? (
-          lineups.map((lineup) => (
-            <div key={lineup.teamId} className="surface-soft rounded-md p-3">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="text-sm font-semibold">{lineup.teamName}</h3>
-                <Badge variant="outline">{lineup.formation ?? 'Formation pending'}</Badge>
-              </div>
-              <div className="mt-2 grid gap-1 text-xs text-muted-foreground">
-                {lineup.starters.slice(0, 6).map((player) => (
-                  <span key={player.id}>{player.number ?? '-'} · {player.name} · {player.position ?? 'Role'}</span>
-                ))}
-              </div>
+        {lineups.map((lineup) => (
+          <div key={lineup.teamId} className="surface-soft rounded-md p-3">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold">{lineup.teamName}</h3>
+              <Badge variant="outline">{lineup.formation ?? t('wcFormationPending')}</Badge>
             </div>
-          ))
-        ) : (
-          <p className="rounded-md border border-dashed border-border/70 p-3 text-sm text-muted-foreground">
-            Lineups appear close to kickoff when available.
-          </p>
-        )}
+            <div className="mt-2 grid gap-1 text-xs text-muted-foreground">
+              {lineup.starters.slice(0, 6).map((player) => (
+                <span key={player.id}>{[player.number ?? '–', player.name, player.position].filter(Boolean).join(' · ')}</span>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   )

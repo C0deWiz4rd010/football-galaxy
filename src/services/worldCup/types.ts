@@ -1,4 +1,4 @@
-export type WorldCupDataProvider = 'api-football' | 'football-data-org' | 'snapshot'
+export type WorldCupDataProvider = 'football-data-org'
 
 export type WorldCupMatchStatus = 'SCHEDULED' | 'LIVE' | 'FINISHED' | 'POSTPONED'
 
@@ -9,13 +9,10 @@ export interface DataQualityMeta {
   fetchedAt: string
   lastUpdated: string
   isLive: boolean
-  confidence: 'official' | 'snapshot'
-  note?: string
 }
 
 export interface WorldCupTeam {
   id: string
-  apiFootballId?: number
   name: string
   code: string
   country: string
@@ -83,12 +80,13 @@ export interface WorldCupMatchStatistic {
   value: string | number
 }
 
+export type WorldCupStage = 'group' | 'round-of-32' | 'round-of-16' | 'quarter-final' | 'semi-final' | 'third-place' | 'final' | 'unknown'
+
 export interface WorldCupFixture {
   id: string
-  apiFootballId?: number
-  round: string
   group?: string
-  stage: 'group' | 'round-of-32' | 'round-of-16' | 'quarter-final' | 'semi-final' | 'third-place' | 'final' | 'unknown'
+  /** Display labels are localized in the UI (features/world-cup/labels). */
+  stage: WorldCupStage
   utcDate: string
   status: WorldCupMatchStatus
   elapsed?: number
@@ -132,7 +130,6 @@ export interface WorldCupGroupStanding {
 
 export interface WorldCupBracketMatch {
   id: string
-  label: string
   utcDate?: string
   homeTeam?: WorldCupTeam
   awayTeam?: WorldCupTeam
@@ -143,7 +140,7 @@ export interface WorldCupBracketMatch {
 
 export interface WorldCupBracketRound {
   id: string
-  label: string
+  stage: WorldCupStage
   matches: WorldCupBracketMatch[]
 }
 
@@ -203,7 +200,7 @@ export interface WorldCupFilterState {
   search: string
   status: 'all' | 'live' | 'scheduled' | 'finished'
   group: string
-  round: string
+  stage: 'all' | WorldCupStage
   hostCity: string
   teamId: string
 }

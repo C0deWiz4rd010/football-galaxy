@@ -9,23 +9,30 @@ export const defaultWorldCupFilters: WorldCupFilterState = {
   search: '',
   status: 'all',
   group: 'all',
-  round: 'all',
+  stage: 'all',
   hostCity: 'all',
   teamId: 'all',
 }
 
-export function filterWorldCupFixtures(fixtures: WorldCupFixture[], filters: WorldCupFilterState) {
+/**
+ * `describe` adds the localized labels (team names, round) to the searchable
+ * text, so users can search in the language they see.
+ */
+export function filterWorldCupFixtures(
+  fixtures: WorldCupFixture[],
+  filters: WorldCupFilterState,
+  describe: (fixture: WorldCupFixture) => string = () => '',
+) {
   const query = filters.search.trim().toLowerCase()
   return fixtures.filter((fixture) => {
     const matchesSearch =
       !query ||
-      fixture.homeTeam.name.toLowerCase().includes(query) ||
-      fixture.awayTeam.name.toLowerCase().includes(query) ||
-      fixture.round.toLowerCase().includes(query) ||
-      (fixture.city ?? '').toLowerCase().includes(query)
+      [fixture.homeTeam.name, fixture.awayTeam.name, fixture.city ?? '', describe(fixture)].some((text) =>
+        text.toLowerCase().includes(query),
+      )
     const matchesStatus = filters.status === 'all' || fixture.status.toLowerCase() === filters.status
     const matchesGroup = filters.group === 'all' || fixture.group === filters.group
-    const matchesRound = filters.round === 'all' || fixture.round === filters.round
+    const matchesRound = filters.stage === 'all' || fixture.stage === filters.stage
     const matchesCity = filters.hostCity === 'all' || fixture.city === filters.hostCity
     const matchesTeam =
       filters.teamId === 'all' ||

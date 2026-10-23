@@ -5,14 +5,15 @@
 import { BarChart3, CalendarDays, Globe2, Grid3X3, LayoutDashboard, RadioTower, Settings, Shield, Trophy, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
+import type { MessageKey } from '@/i18n/de'
 import type { LeagueId } from '@/services/types'
 
 export interface NavItem {
   to: string
   /** Locale key of the label. */
-  labelKey: string
+  labelKey: MessageKey
   /** Shorter label for tight grids (mobile menu). */
-  shortLabelKey?: string
+  shortLabelKey?: MessageKey
   icon: LucideIcon
   /** Match only the exact path (overview routes with children). */
   end?: boolean

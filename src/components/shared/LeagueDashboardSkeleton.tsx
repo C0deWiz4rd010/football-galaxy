@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useLocale } from '@/contexts/LocaleContext'
 import type { League } from '@/services/types'
+import { HIGH_FETCH_PRIORITY } from '@/lib/fetchPriority'
 
 /**
  * Layout-matched skeleton for `LeagueDashboard`. The league header is static
@@ -24,7 +25,7 @@ export function LeagueDashboardSkeleton({ league }: { league?: League }) {
                 alt={`${league.name} logo`}
                 width={56}
                 height={56}
-                fetchPriority="high"
+                {...HIGH_FETCH_PRIORITY}
                 className="h-14 w-14 rounded-lg bg-white/90 object-contain p-2 ring-1 ring-border"
               />
               <div className="min-w-0">
