@@ -2,7 +2,7 @@ import { queryOptions, useQueries, useQuery } from '@tanstack/react-query'
 
 import { useDataSource } from '@/contexts/DataSourceContext'
 import * as football from '@/services/footballData'
-import { queryKeys } from '@/services/queryKeys'
+import { queryKeys, staleTimes } from '@/services/queryKeys'
 import type { LeagueId, LeagueSummary, Match, Player, Squad, Standing, Team } from '@/services/types'
 
 /** Query option builders: shared by hooks and route prefetching. */
@@ -12,38 +12,42 @@ export const footballQueries = {
       queryKey: queryKeys.football.summary(leagueId, season),
       queryFn: () => football.getLeagueSummary({ leagueId, season }),
       enabled: Boolean(leagueId),
+      staleTime: staleTimes.table,
     }),
   standings: (leagueId: LeagueId | undefined, season: string) =>
     queryOptions<Standing[]>({
       queryKey: queryKeys.football.standings(leagueId, season),
       queryFn: () => football.getStandings({ leagueId, season }),
       enabled: Boolean(leagueId),
+      staleTime: staleTimes.table,
     }),
   matches: (leagueId: LeagueId | undefined, season: string) =>
     queryOptions<Match[]>({
       queryKey: queryKeys.football.matches(leagueId, season),
       queryFn: () => football.getMatches({ leagueId, season }),
       enabled: Boolean(leagueId),
+      staleTime: staleTimes.schedule,
     }),
   team: (leagueId: LeagueId | undefined, season: string, teamId: string | undefined) =>
     queryOptions<Team>({
       queryKey: queryKeys.football.team(leagueId, season, teamId),
       queryFn: () => football.getTeam({ leagueId, season, teamId }),
       enabled: Boolean(leagueId && teamId),
+      staleTime: staleTimes.clubMetadata,
     }),
   squad: (leagueId: LeagueId | undefined, season: string, teamId: string | undefined) =>
     queryOptions<Squad>({
       queryKey: queryKeys.football.squad(leagueId, season, teamId),
       queryFn: () => football.getSquad({ leagueId, season, teamId }),
       enabled: Boolean(leagueId && teamId),
-      // Rosters change rarely.
-      staleTime: 30 * 60_000,
+      staleTime: staleTimes.roster,
     }),
   player: (leagueId: LeagueId | undefined, season: string, playerId: string | undefined) =>
     queryOptions<Player>({
       queryKey: queryKeys.football.player(leagueId, season, playerId),
       queryFn: () => football.getPlayer({ leagueId, season, playerId }),
       enabled: Boolean(leagueId && playerId),
+      staleTime: staleTimes.roster,
     }),
 }
 
@@ -78,14 +82,16 @@ export function usePlayer(leagueId: LeagueId | undefined, playerId: string | und
   return useQuery(footballQueries.player(leagueId, season, playerId))
 }
 
-/** Club fixtures and results for one team (its own ESPN schedule). */
+/**
+ * One club's fixtures and results: a view on the league's season query, so the
+ * team and player pages share its cache with the dashboard (no extra requests).
+ */
 export function useTeamMatches(leagueId: LeagueId | undefined, teamId: string | undefined) {
   const { season } = useDataSource()
   return useQuery({
-    queryKey: [...queryKeys.football.team(leagueId, season, teamId), 'matches'],
-    queryFn: () => football.getTeamMatches({ leagueId, season, teamId }),
+    ...footballQueries.matches(leagueId, season),
     enabled: Boolean(leagueId && teamId),
-    staleTime: 10 * 60_000,
+    select: (matches: Match[]) => matches.filter((match) => match.homeTeam.id === teamId || match.awayTeam.id === teamId),
   })
 }
 

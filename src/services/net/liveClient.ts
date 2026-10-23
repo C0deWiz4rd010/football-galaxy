@@ -9,11 +9,13 @@
  *   promise, so rapid navigation never fires the same upstream call twice.
  * - **Concurrency limit** — at most `maxConcurrent` requests run at once; the
  *   rest queue. This keeps bursty navigation from hammering the free tiers.
- * - **Per-host throttle** — an optional minimum interval between requests to the
- *   same host (football-data.org is 10 req/min).
- * - **Retry with backoff** — transient failures (429, 5xx, network errors) are
- *   retried with exponential backoff, honouring the upstream `Retry-After`
- *   header when present. Caller aborts are never retried.
+ * - **Per-host rate limit** — a sliding window per host (football-data.org's
+ *   free tier allows 10 requests per minute).
+ * - **Retry with backoff** — 5xx and network errors are retried with
+ *   exponential backoff. A 429 is retried only when the upstream says the
+ *   limit resets within a few seconds (`Retry-After` / football-data's
+ *   `X-RequestCounter-Reset`); otherwise it fails fast instead of burning
+ *   retries that cannot succeed. Caller aborts are never retried.
  * - **Timeout** — every attempt is aborted after `timeoutMs` so a hung upstream
  *   cannot hold a concurrency slot forever.
  *
@@ -55,16 +57,17 @@ const RETRY_BASE_MS = 500
 const RETRY_MAX_MS = 8000
 
 /**
- * Per-host minimum interval (ms) between request *starts*. Hosts not listed
- * here are unthrottled. football-data.org's free tier is 10 req/min, so we
- * space its calls out defensively; the proxy cache absorbs the rest.
+ * Per-host request budget: at most `limit` request starts per `windowMs`.
+ * Hosts not listed are unthrottled. Short bursts stay fast (the proxy cache
+ * answers many of them); the 11th call within a minute waits for the window.
  */
-const HOST_MIN_INTERVAL_MS: Record<string, number> = {
-  'api.football-data.org': 600,
+const HOST_RATE_LIMIT: Record<string, { limit: number; windowMs: number }> = {
+  'api.football-data.org': { limit: 10, windowMs: 60_000 },
 }
 
 const inFlight = new Map<string, Promise<unknown>>()
-const lastHostStart = new Map<string, number>()
+/** Reserved start times per rate-limited host, oldest first. */
+const hostStarts = new Map<string, number[]>()
 
 let active = 0
 const waiters: Array<() => void> = []
@@ -102,17 +105,22 @@ function releaseSlot(): void {
 }
 
 /**
- * Reserve the next start time for a throttled host and wait for it. The slot is
- * reserved synchronously so concurrent callers queue up one interval apart, and
- * the wait happens *before* a concurrency slot is taken so throttled hosts never
- * block requests to other hosts.
+ * Reserve a start time inside the host's sliding window and wait for it. The
+ * slot is reserved synchronously so concurrent callers queue up behind each
+ * other, and the wait happens *before* a concurrency slot is taken so a
+ * rate-limited host never blocks requests to other hosts.
  */
 async function respectHostThrottle(host: string): Promise<void> {
-  const minInterval = HOST_MIN_INTERVAL_MS[host]
-  if (!minInterval) return
+  const rule = HOST_RATE_LIMIT[host]
+  if (!rule) return
   const now = Date.now()
-  const nextStart = Math.max(now, (lastHostStart.get(host) ?? 0) + minInterval)
-  lastHostStart.set(host, nextStart)
+  const starts = (hostStarts.get(host) ?? []).filter((start) => start > now - rule.windowMs)
+  // With `limit` starts in the window, the next may begin one window after
+  // the start `limit` places back.
+  const blocking = starts.length >= rule.limit ? starts[starts.length - rule.limit] : undefined
+  const nextStart = blocking === undefined ? now : Math.max(now, blocking + rule.windowMs)
+  starts.push(nextStart)
+  hostStarts.set(host, starts)
   if (nextStart > now) await delay(nextStart - now)
 }
 
@@ -146,20 +154,25 @@ async function fetchWithTimeout(
   }
 }
 
-function backoffMs(attempt: number, retryAfterHeader: string | null): number {
-  if (retryAfterHeader) {
-    const seconds = Number(retryAfterHeader)
-    if (Number.isFinite(seconds) && seconds >= 0) {
-      return Math.min(seconds * 1000, RETRY_MAX_MS)
-    }
-  }
+function backoffMs(attempt: number): number {
   const exponential = RETRY_BASE_MS * 2 ** attempt
   const jitter = Math.random() * RETRY_BASE_MS
   return Math.min(exponential + jitter, RETRY_MAX_MS)
 }
 
 function isRetryableStatus(status: number): boolean {
-  return status === 429 || status === 408 || status >= 500
+  return status === 408 || status >= 500
+}
+
+/**
+ * Wait before retrying a 429, or -1 to give up: only when the upstream names a
+ * reset within RETRY_MAX_MS — an immediate retry would just be rejected again.
+ */
+function rateLimitWaitMs(headers: Headers): number {
+  const value = headers.get('retry-after') ?? headers.get('x-requestcounter-reset')
+  const seconds = value === null ? Number.NaN : Number(value)
+  if (!Number.isFinite(seconds) || seconds < 0) return -1
+  return seconds * 1000 <= RETRY_MAX_MS ? seconds * 1000 : -1
 }
 
 async function runOnce<T>(
@@ -187,15 +200,16 @@ async function runOnce<T>(
       }
 
       lastError = new LiveHttpError(response.status, host)
-      if (isRetryableStatus(response.status) && attempt < maxRetries) {
-        waitMs = backoffMs(attempt, response.headers.get('retry-after'))
+      if (attempt < maxRetries) {
+        if (response.status === 429) waitMs = rateLimitWaitMs(response.headers)
+        else if (isRetryableStatus(response.status)) waitMs = backoffMs(attempt)
       }
     } catch (error) {
       lastError = error
       // A caller abort means nobody wants the result any more.
       if (isAbortError(error)) break
       if (attempt < maxRetries) {
-        waitMs = backoffMs(attempt, null)
+        waitMs = backoffMs(attempt)
       }
     } finally {
       releaseSlot()
@@ -242,7 +256,7 @@ export function fetchLiveJson<T>(
 /** Testing helper — clears dedupe + throttle state between test cases. */
 export function __resetLiveClientState(): void {
   inFlight.clear()
-  lastHostStart.clear()
+  hostStarts.clear()
   waiters.length = 0
   active = 0
 }

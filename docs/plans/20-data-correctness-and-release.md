@@ -233,3 +233,13 @@ Wiederverwenden:
 Gate: Lint, `tsc -b`, Tests, Build grün. Browser: WM (Turnierbaum, Spiele, Gruppen, Detail), Bundesliga-Dashboard und -Teamseite, Premier-League-Spielerseite.
 
 **Notiert für spätere Phasen:** englisches Länder-Badge im Liga-Kopf („Germany“), Live-Statuslabels („FT“) und Formlabels („Top Form“) noch englisch → Phase 5.
+
+### Phase 2 – erledigt (2026-10-23)
+- **1** `liveClient`: football-data.org als gleitendes Fenster mit 10 Starts pro 60 s (vorher 600 ms Abstand = 100/min). Ein 429 wird nur wiederholt, wenn `Retry-After`/`X-RequestCounter-Reset` ≤ 8 s meldet, sonst bricht die Anfrage sofort ab. Der Node-Proxy setzt `access-control-expose-headers`, damit der Browser die Header lesen kann.
+- **2** Trainer/Stadion (TheSportsDB + football-data.org) nicht mehr im Liga-Kern, nur noch über `getTeam` auf Team-/Trainerseiten. Dashboard, Explorer und Vergleich rufen football-data.org gar nicht mehr auf.
+- **3** Saisonspiele: ESPN-Liga-Scoreboard pro Saisonmonat (`dates=YYYYMM`, 12 Aufrufe, jedes Spiel einmal) statt 2 Spielplänen × 20 Klubs (40 Aufrufe, jedes Spiel doppelt). Vollständigkeit geprüft: 380/306 Spiele je Liga, beendete Spiele = Summe Spiele/2 der Tabellen. Ein fehlender Monat lässt die Abfrage scheitern statt eine lückenhafte Form zu zeigen. Team-Spiele sind ein `select` auf diese Abfrage (kein eigener Request).
+- **4** Query-Keys zentral (`search`, `proxyHealth`), `staleTimes` je Datentyp (Tabelle 5 min, Spielplan 15 min, Kader/Spieler 30 min, Klub-Metadaten 6 h).
+
+**Messung (frischer Cache, Premier League):** Dashboard 16 Datenanfragen + Health-Check (vorher ≈ 46, davon 3 an football-data.org); Team-Seite danach 3 (Metadaten ×2, Kader), Spiele aus dem Cache.
+
+Gate: Lint, `tsc -b`, 79 Tests, Build grün.

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { getLiveProxyConfig } from '@/services/config/liveProxy'
+import { queryKeys } from '@/services/queryKeys'
 
 export type ProxyHealth = 'checking' | 'ok' | 'offline' | 'disabled'
 
@@ -23,7 +24,7 @@ export function useProxyHealth(): ProxyHealth {
   const healthUrl = healthUrlFrom(baseUrl)
 
   const query = useQuery({
-    queryKey: ['proxy-health', healthUrl],
+    queryKey: queryKeys.proxyHealth(healthUrl),
     queryFn: async ({ signal }) => {
       const timeout = AbortSignal.timeout(3000)
       // AbortSignal.any is missing on older iOS Safari; the timeout alone is enough there.

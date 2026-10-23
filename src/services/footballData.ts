@@ -86,9 +86,6 @@ export function getTeam(params: FootballQueryParams = {}): Promise<Team> {
   return espn.getTeam(requireLeague(params.leagueId), params.teamId)
 }
 
-export function getTeamMatches(params: FootballQueryParams = {}): Promise<Match[]> {
-  return espn.getTeamMatches(requireLeague(params.leagueId), params.teamId)
-}
 
 export function getSquad(params: FootballQueryParams = {}): Promise<Squad> {
   return espn.getSquad(requireLeague(params.leagueId), params.teamId)

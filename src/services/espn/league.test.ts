@@ -85,12 +85,12 @@ function routes(url: string): unknown {
       ],
     }
   }
-  if (url.includes('/teams/359/schedule')) {
-    return url.includes('fixture=true')
-      ? { events: [event('e3', '359', '382', 'pre', '0', '0', '2026-10-10T14:00Z')] }
-      : { events: [event('e1', '359', '382', 'post', '2', '1', '2026-08-20T14:00Z'), event('e2', '382', '359', 'post', '0', '0', '2026-09-01T14:00Z')] }
-  }
-  if (url.includes('/schedule')) return { events: [] }
+  // Season months (`dates=YYYYMM`); the year depends on the clock, the month does not.
+  const month = /scoreboard\?dates=\d{4}(\d{2})/.exec(url)?.[1]
+  if (month === '08') return { events: [event('e1', '359', '382', 'post', '2', '1', '2026-08-20T14:00Z')] }
+  if (month === '09') return { events: [event('e2', '382', '359', 'post', '0', '0', '2026-09-01T14:00Z')] }
+  if (month === '10') return { events: [event('e3', '359', '382', 'pre', '0', '0', '2026-10-10T14:00Z')] }
+  if (month) return { events: [] }
   if (url.includes('/athletes/9')) return { athlete: { id: '9', displayName: 'Erling Haaland', team: { id: '382' } } }
   if (url.includes('/athletes/404')) throw new LiveHttpError(404, 'espn')
   if (url.includes('/teams/382/roster')) {
@@ -123,20 +123,26 @@ describe('ESPN league provider', () => {
     vi.clearAllMocks()
   })
 
-  it('builds a mock-free summary from five upstream calls', async () => {
+  it('builds a mock-free summary from four upstream calls', async () => {
     const summary = await league.getLeagueSummary('premier-league')
 
     expect(summary.standings.map((row) => row.team.name)).toEqual(['Arsenal', 'Manchester City'])
     expect(summary.standings[0]).toMatchObject({ points: 6, played: 2, form: [] })
-    expect(summary.teams.find((item) => item.id === '359')).toMatchObject({ stadium: 'Emirates Stadium', manager: 'Mikel Arteta', primaryColor: '#ff0000' })
+    expect(summary.teams.find((item) => item.id === '359')).toMatchObject({ primaryColor: '#ff0000' })
+    expect(summary.teams.find((item) => item.id === '359')?.stadium).toBeUndefined()
     expect(summary.topScorers[0]).toMatchObject({ goals: 5, player: { id: 'espn-9', name: 'Erling Haaland', teamId: '382' } })
     expect(summary.topAssists[0]?.player.name).toBe('Bukayo Saka')
     expect(summary.playerPool).toHaveLength(2)
     // Two clubs play a two-matchday season, so the next round is clamped to 2.
     expect(summary.season.currentMatchday).toBe(2)
     expect(summary.recentMatches[0]).toMatchObject({ status: 'SCHEDULED', homeScore: undefined })
-    // teams, standings, scoreboard, statistics (TheSportsDB metadata is mocked)
+    // teams, standings, scoreboard, statistics — club metadata waits for team pages
     expect(fetchMock).toHaveBeenCalledTimes(4)
+  })
+
+  it('adds stadium and coach on the team page', async () => {
+    const team = await league.getTeam('premier-league', '359')
+    expect(team).toMatchObject({ stadium: 'Emirates Stadium', manager: 'Mikel Arteta' })
   })
 
   it('flags a failed leaders feed instead of returning an empty leaderboard', async () => {
@@ -151,11 +157,12 @@ describe('ESPN league provider', () => {
     expect(summary.unavailable).toEqual(['leaders'])
   })
 
-  it('derives form from club schedules', async () => {
-    const matches = await league.getTeamMatches('premier-league', '359')
+  it('derives form from the season scoreboard (one call per month)', async () => {
+    const matches = (await league.getMatches('premier-league')).filter((match) => [match.homeTeam.id, match.awayTeam.id].includes('359'))
     expect(matches.map((match) => match.status)).toEqual(['FINISHED', 'FINISHED', 'SCHEDULED'])
     expect(league.formFromMatches(matches, '359').map((item) => item.result)).toEqual(['W', 'D'])
     expect(league.formFromMatches(matches, '382').map((item) => item.result)).toEqual(['L', 'D'])
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes('scoreboard?dates='))).toHaveLength(12)
   })
 
   it('resolves a player via the athlete lookup and the club roster', async () => {
@@ -167,5 +174,17 @@ describe('ESPN league provider', () => {
     await expect(league.getTeam('premier-league', 'nope')).rejects.toMatchObject({ notFound: true })
     await expect(league.getPlayer('premier-league', 'espn-404')).rejects.toMatchObject({ notFound: true })
     await expect(league.getPlayer('premier-league', 'mock-player-1')).rejects.toMatchObject({ notFound: true })
+  })
+})
+
+describe('seasonMonths', () => {
+  it('covers July to June of the season', async () => {
+    const { seasonMonths } = await import('./league')
+    const months = seasonMonths(2026)
+    expect(months).toHaveLength(12)
+    expect(months[0]).toBe('202607')
+    expect(months[5]).toBe('202612')
+    expect(months[6]).toBe('202701')
+    expect(months[11]).toBe('202706')
   })
 })

@@ -1,6 +1,7 @@
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { searchFootball, type SearchHit } from '@/services/espn/search'
+import { queryKeys, staleTimes } from '@/services/queryKeys'
 import type { LeagueSummary } from '@/services/types'
 
 export const MIN_SEARCH_LENGTH = 2
@@ -41,7 +42,7 @@ export function useFootballSearch(query: string) {
   const queryClient = useQueryClient()
   const normalized = query.trim().toLowerCase()
   return useQuery({
-    queryKey: ['search', normalized],
+    queryKey: queryKeys.search(normalized),
     queryFn: async ({ signal }) => {
       const summaries = queryClient
         .getQueriesData<LeagueSummary>({ queryKey: ['football'] })
@@ -58,7 +59,7 @@ export function useFootballSearch(query: string) {
       }
     },
     enabled: normalized.length >= MIN_SEARCH_LENGTH,
-    staleTime: 10 * 60_000,
+    staleTime: staleTimes.search,
     placeholderData: keepPreviousData,
     // Search results are throwaway: never persist them, and the palette shows
     // its own inline error instead of a toast.

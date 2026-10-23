@@ -45,7 +45,7 @@ describe('fetchLiveJson', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(1)
   })
 
-  it('retries on a 429 and then resolves', async () => {
+  it('retries a 429 whose limit resets within seconds', async () => {
     vi.useFakeTimers()
     const fetchImpl = vi
       .fn()
@@ -114,5 +114,25 @@ describe('fetchLiveJson', () => {
     const fetchImpl = vi.fn(async () => errorResponse(404))
     await expect(fetchLiveJson('https://example.com/missing', { fetchImpl })).rejects.toMatchObject({ status: 404 })
     expect(fetchImpl).toHaveBeenCalledTimes(1)
+  })
+  it('fails fast on a 429 without a near reset instead of retrying', async () => {
+    const fetchImpl = vi.fn(async () => errorResponse(429, '45'))
+    await expect(fetchLiveJson('https://example.com/limited', { fetchImpl })).rejects.toMatchObject({ status: 429 })
+    expect(fetchImpl).toHaveBeenCalledTimes(1)
+  })
+
+  it('allows ten football-data.org calls per minute and queues the eleventh', async () => {
+    vi.useFakeTimers()
+    const fetchImpl = vi.fn(async () => jsonResponse({ ok: true }))
+    const calls = Array.from({ length: 11 }, (_, index) =>
+      fetchLiveJson(`https://api.football-data.org/v4/x/${index}`, { fetchImpl }),
+    )
+
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(fetchImpl).toHaveBeenCalledTimes(10)
+
+    await vi.advanceTimersByTimeAsync(60_000)
+    await Promise.all(calls)
+    expect(fetchImpl).toHaveBeenCalledTimes(11)
   })
 })

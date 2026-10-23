@@ -21,4 +21,18 @@ export const queryKeys = {
   },
   liveScores: (leagueId: LeagueId | 'all') => ['live-scores', leagueId] as const,
   worldCup: (name: WorldCupQueryName, params: WorldCupQueryParams = {}) => ['world-cup-2026', name, params] as const,
+  search: (query: string) => ['search', query] as const,
+  proxyHealth: (url: string | null) => ['proxy-health', url] as const,
 }
+
+/**
+ * How long each kind of data counts as fresh. Tables move with every result,
+ * schedules and rosters a few times a week, club metadata almost never.
+ */
+export const staleTimes = {
+  table: 5 * 60_000,
+  schedule: 15 * 60_000,
+  roster: 30 * 60_000,
+  clubMetadata: 6 * 60 * 60_000,
+  search: 10 * 60_000,
+} as const

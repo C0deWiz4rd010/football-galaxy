@@ -70,11 +70,16 @@ function writeCache(key, entry) {
   }
 }
 
+// The app runs on another origin in development; without this the browser
+// hides the rate-limit and cache headers from the client.
+const EXPOSED_HEADERS = 'x-proxy-cache, retry-after, x-requestcounter-reset, x-requests-available-minute'
+
 function sendCached(response, entry, freshness) {
   response.statusCode = 200
   response.setHeader('access-control-allow-origin', '*')
   response.setHeader('access-control-allow-methods', 'GET,OPTIONS')
   response.setHeader('access-control-allow-headers', 'content-type')
+  response.setHeader('access-control-expose-headers', EXPOSED_HEADERS)
   response.setHeader('x-proxy-cache', freshness)
   if (entry.contentType) {
     response.setHeader('content-type', entry.contentType)
@@ -215,6 +220,8 @@ const server = createServer(async (request, response) => {
     response.setHeader('access-control-allow-origin', '*')
     response.setHeader('access-control-allow-methods', 'GET,OPTIONS')
     response.setHeader('access-control-allow-headers', 'content-type')
+    response.setHeader('access-control-expose-headers', EXPOSED_HEADERS)
+    copyHeaderIfPresent(response, upstream, 'retry-after')
     copyHeaderIfPresent(response, upstream, 'content-type')
     copyHeaderIfPresent(response, upstream, 'cache-control')
     copyHeaderIfPresent(response, upstream, 'etag')

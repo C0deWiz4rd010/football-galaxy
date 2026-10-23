@@ -2,20 +2,22 @@
  * Primary league data provider, built on ESPN's keyless soccer API.
  *
  * Request budget per view (all through the shared fetch client + proxy cache):
- * - league dashboard: teams, standings, scoreboard, stat leaders, TheSportsDB
- *   club metadata → 5 calls (previously ~45: every roster plus image lookups);
- * - season results / form: one schedule per team, loaded as a separate,
- *   non-blocking query;
- * - team page: one schedule (+ fixtures) and one roster;
+ * - league dashboard: teams, standings, scoreboard, stat leaders → 4 calls
+ *   (previously ~45: every roster plus image lookups);
+ * - season results / form: the league scoreboard once per season month (12
+ *   calls, previously two schedules for each of the 20 clubs = 40), loaded
+ *   as a separate, non-blocking query;
+ * - team page: club metadata (cached per league) and one roster; its matches
+ *   come from the season query above;
  * - player page: one athlete lookup plus that club's (cached) roster.
  */
 import { leagues } from '@/lib/leagues'
 import { standingsIssues } from '@/lib/dataInvariants'
-import { currentMatchdayFromTable, currentSeasonId, seasonInfo } from '@/lib/season'
+import { currentMatchdayFromTable, currentSeasonId, seasonInfo, seasonStartYear } from '@/lib/season'
 import { createTeamCrest } from '@/lib/visualAssets'
 import { LiveHttpError, fetchLiveJson } from '@/services/net/liveClient'
 import { createPromiseCache } from '@/services/net/promiseCache'
-import { emptyTeamMetaIndex, findTeamMeta, getTeamMetaIndex, type TeamMetaIndex } from '@/services/thesportsdb/teams'
+import { emptyTeamMetaIndex, findTeamMeta, getTeamMetaIndex } from '@/services/thesportsdb/teams'
 import { withWikidataPortrait } from '@/services/wikidata'
 
 import { NotFoundError } from '../errors'
@@ -61,19 +63,8 @@ interface LeagueCore {
 const FAILED = Symbol('failed')
 
 const coreCache = createPromiseCache<LeagueId, LeagueCore>(2 * 60_000)
-const scheduleCache = createPromiseCache<string, Match[]>(10 * 60_000)
+const seasonCache = createPromiseCache<LeagueId, Match[]>(10 * 60_000)
 const rosterCache = createPromiseCache<string, Squad>(30 * 60_000)
-
-/**
- * Stadium/coach metadata is a nice-to-have on the dashboard: don't hold the
- * table back for slow sources. Team pages wait for it (see getTeam).
- */
-const META_WAIT_MS = 800
-
-function metaWithin(league: ReturnType<typeof leagueConfig>, ms: number): Promise<TeamMetaIndex> {
-  const index = getTeamMetaIndex(league).catch(emptyTeamMetaIndex)
-  return Promise.race([index, new Promise<TeamMetaIndex>((resolve) => setTimeout(() => resolve(emptyTeamMetaIndex()), ms))])
-}
 
 function leagueConfig(leagueId: LeagueId) {
   return leagues.find((league) => league.id === leagueId)!
@@ -82,26 +73,22 @@ function leagueConfig(leagueId: LeagueId) {
 const hexColor = (color: string | undefined, fallback?: string) =>
   color ? (color.startsWith('#') ? color : `#${color}`) : fallback
 
-function mapTeam(raw: EspnTeam, leagueId: LeagueId, meta: ReturnType<typeof findTeamMeta>, index: number): Team | null {
+function mapTeam(raw: EspnTeam, leagueId: LeagueId, index: number): Team | null {
   if (!raw.id) return null
   const name = raw.displayName ?? raw.name ?? raw.shortDisplayName
   if (!name) return null
   const league = leagueConfig(leagueId)
   const shortName = raw.abbreviation ?? raw.shortDisplayName ?? name.slice(0, 3).toUpperCase()
   const logo = raw.logos?.find((item) => item.href && !item.rel?.includes('dark'))?.href ?? raw.logo
-  const crestSources = [logo, meta?.badge].filter((item): item is string => Boolean(item))
+  const crestSources = logo ? [logo] : []
   return {
     id: raw.id,
     espnId: raw.id,
-    theSportsDbId: meta?.theSportsDbId,
     leagueId,
     name,
     shortName,
     crest: crestSources[0] ?? createTeamCrest(shortName, league.color, '#f4f4f5', index),
     crestSources,
-    manager: meta?.manager,
-    stadium: meta?.stadium,
-    capacity: meta?.capacity,
     primaryColor: hexColor(raw.color, league.color),
     secondaryColor: hexColor(raw.alternateColor, '#0f172a'),
   }
@@ -188,21 +175,19 @@ export function mapEvent(event: EspnEvent, leagueId: LeagueId, teamsById: Map<st
 async function loadCore(leagueId: LeagueId): Promise<LeagueCore> {
   return coreCache.get(leagueId, async () => {
     const slug = espnSlugByLeague[leagueId]
-    const league = leagueConfig(leagueId)
-    const [teamsRaw, standingsRaw, scoreboardRaw, statisticsRaw, metaIndex] = await Promise.all([
+    // Stadium and coach (TheSportsDB, football-data.org) are only shown on team
+    // pages, so getTeam adds them there; the table never waits for them.
+    const [teamsRaw, standingsRaw, scoreboardRaw, statisticsRaw] = await Promise.all([
       fetchLiveJson<unknown>(`${SITE}/${slug}/teams`),
       fetchLiveJson<unknown>(`${WEB}/${slug}/standings`),
       fetchLiveJson<unknown>(`${SITE}/${slug}/scoreboard`).catch(() => FAILED),
       fetchLiveJson<unknown>(`${SITE}/${slug}/statistics`).catch(() => FAILED),
-      metaWithin(league, META_WAIT_MS),
     ])
 
-    const metaFor = (team: EspnTeam) =>
-      findTeamMeta(metaIndex, team.id, [team.displayName, team.shortDisplayName, team.name])
     const teamRows = teamsResponseSchema.parse(teamsRaw).sports?.[0]?.leagues?.[0]?.teams ?? []
     const teams = teamRows
       .map((row, index) =>
-        row.team ? mapTeam(row.team, leagueId, metaFor(row.team), index) : null,
+        row.team ? mapTeam(row.team, leagueId, index) : null,
       )
       .filter((team): team is Team => Boolean(team))
     const teamsById = new Map(teams.map((team) => [team.id, team]))
@@ -212,7 +197,7 @@ async function loadCore(leagueId: LeagueId): Promise<LeagueCore> {
       .map((entry, index) => {
         const team =
           teamsById.get(entry.team?.id ?? '') ??
-          (entry.team ? mapTeam(entry.team, leagueId, metaFor(entry.team), index) : null)
+          (entry.team ? mapTeam(entry.team, leagueId, index) : null)
         return team ? mapStanding(entry, team, leagueId, index) : null
       })
       .filter((standing): standing is Standing => Boolean(standing))
@@ -269,22 +254,37 @@ async function loadCore(leagueId: LeagueId): Promise<LeagueCore> {
   })
 }
 
-/** All matches of one club this season: results plus upcoming fixtures. */
-async function loadTeamSchedule(leagueId: LeagueId, teamId: string, teamsById: Map<string, Team>): Promise<Match[]> {
-  return scheduleCache.get(`${leagueId}:${teamId}`, async () => {
+/**
+ * `YYYYMM` for every month of the season (July–June). ESPN's scoreboard takes a
+ * month or a calendar year but no date range, and a calendar year would drag
+ * in half of the previous season.
+ */
+export function seasonMonths(startYear: number): string[] {
+  return Array.from({ length: 12 }, (_, index) => {
+    const month = ((6 + index) % 12) + 1
+    const year = month >= 7 ? startYear : startYear + 1
+    return `${year}${String(month).padStart(2, '0')}`
+  })
+}
+
+/**
+ * Every league match of the current season, results and fixtures. Any month
+ * failing fails the whole load: an incomplete season would silently skew form
+ * and rounds.
+ */
+async function loadSeasonMatches(leagueId: LeagueId, teamsById: Map<string, Team>): Promise<Match[]> {
+  return seasonCache.get(leagueId, async () => {
     const slug = espnSlugByLeague[leagueId]
-    const [results, upcoming] = await Promise.all([
-      fetchLiveJson<unknown>(`${SITE}/${slug}/teams/${teamId}/schedule`),
-      fetchLiveJson<unknown>(`${SITE}/${slug}/teams/${teamId}/schedule?fixture=true`).catch(() => ({})),
-    ])
-    const events = [
-      ...(eventsResponseSchema.safeParse(results).data?.events ?? []),
-      ...(eventsResponseSchema.safeParse(upcoming).data?.events ?? []),
-    ]
+    const startYear = seasonStartYear()
+    const months = await Promise.all(
+      seasonMonths(startYear).map((month) => fetchLiveJson<unknown>(`${SITE}/${slug}/scoreboard?dates=${month}&limit=500`)),
+    )
     const byId = new Map<string, Match>()
-    for (const event of events) {
-      const match = mapEvent(event, leagueId, teamsById)
-      if (match) byId.set(match.id, match)
+    for (const raw of months) {
+      for (const event of eventsResponseSchema.safeParse(raw).data?.events ?? []) {
+        const match = mapEvent(event, leagueId, teamsById)
+        if (match) byId.set(match.id, match)
+      }
     }
     return [...byId.values()].sort((a, b) => a.utcDate.localeCompare(b.utcDate))
   })
@@ -366,7 +366,7 @@ export async function getStandings(leagueId: LeagueId): Promise<Standing[]> {
 
 export async function getTeam(leagueId: LeagueId, teamId: string | undefined): Promise<Team> {
   const team = findTeam(await loadCore(leagueId), leagueId, teamId)
-  // The core may have been built before the metadata arrived: fill the gaps.
+  // Club metadata is loaded for team pages only (one cached index per league).
   const meta = findTeamMeta(await getTeamMetaIndex(leagueConfig(leagueId)).catch(emptyTeamMetaIndex), team.espnId ?? team.id, [team.name, team.shortName])
   if (!meta) return team
   return {
@@ -379,28 +379,14 @@ export async function getTeam(leagueId: LeagueId, teamId: string | undefined): P
   }
 }
 
-export async function getTeamMatches(leagueId: LeagueId, teamId: string | undefined): Promise<Match[]> {
-  const core = await loadCore(leagueId)
-  const team = findTeam(core, leagueId, teamId)
-  return loadTeamSchedule(leagueId, team.id, teamsMap(core))
-}
-
 /**
- * Every finished league match this season, assembled from all club schedules
- * (ESPN has no season-wide results endpoint), merged with the live scoreboard.
+ * Every league match this season (results and fixtures), with the current
+ * scoreboard window on top so live scores are as fresh as the dashboard's.
  */
 export async function getMatches(leagueId: LeagueId): Promise<Match[]> {
   const core = await loadCore(leagueId)
-  const teamsById = teamsMap(core)
-  const schedules = await Promise.allSettled(core.teams.map((team) => loadTeamSchedule(leagueId, team.id, teamsById)))
-  const byId = new Map<string, Match>()
-  for (const result of schedules) {
-    if (result.status === 'fulfilled') for (const match of result.value) byId.set(match.id, match)
-  }
+  const byId = new Map((await loadSeasonMatches(leagueId, teamsMap(core))).map((match) => [match.id, match]))
   for (const match of core.fixtures) byId.set(match.id, match)
-  if (!byId.size && schedules.every((result) => result.status === 'rejected')) {
-    throw new Error(`ESPN schedules are unavailable for ${leagueId}.`)
-  }
   return [...byId.values()].sort((a, b) => a.utcDate.localeCompare(b.utcDate))
 }
 
